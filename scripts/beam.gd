@@ -19,7 +19,6 @@ const MASK_WORLD_AND_PROPS: int = 1 | 4
 
 ## Where the beam visibly starts, relative to the camera (lower right, like a hand).
 const BEAM_ORIGIN_LOCAL := Vector3(0.22, -0.2, -0.35)
-const REJECT_FLASH_SECONDS: float = 0.3
 const ARC_SEGMENTS: int = 20
 const ARC_HALF_WIDTH: float = 0.012
 
@@ -32,9 +31,10 @@ var _aimed: Prop = null
 ## The click that recaptures the mouse is swallowed by player.gd, so it can't
 ## accidentally grab something.
 var _grab_armed: bool = false
-## The last too-heavy object we shuddered, so holding the button on it shudders once.
+## A too-heavy object the beam is straining against. Set when you press on it,
+## cleared when you let go of the button: the red beam stays latched to it and
+## it keeps shuddering the whole time.
 var _rejected: Prop = null
-var _reject_flash_left: float = 0.0
 var _state: AimState = AimState.IDLE
 var _detail: String = ""
 
@@ -79,9 +79,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_hold_distance = maxf(_hold_distance - Game.tune.hold_distance_step, _min_hold_distance(held))
 
 
-func _physics_process(delta: float) -> void:
-	_reject_flash_left = maxf(_reject_flash_left - delta, 0.0)
-
+func _physics_process(_delta: float) -> void:
 	if held != null:
 		if _grab_armed:
 			_drive_held()
@@ -90,17 +88,29 @@ func _physics_process(delta: float) -> void:
 
 	if held == null:
 		_aimed = _find_aimed_prop()
-		if _grab_armed and _aimed != null:
+		if _rejected != null:
+			_strain_against_rejected()
+		elif _grab_armed and _aimed != null:
 			if _aimed.mass <= lift_limit:
 				_grab(_aimed)
-			elif _aimed != _rejected:
+			else:
 				_rejected = _aimed
-				_aimed.shudder()
-				_reject_flash_left = REJECT_FLASH_SECONDS
-		if not _grab_armed:
-			_rejected = null
+				_rejected.shudder()
 
 	_update_aim_state()
+
+
+## While latched onto something too heavy: keep it shuddering until the button
+## is released (or you walk out of reach). While latched, sweeping the crosshair
+## over other objects doesn't grab them; let go and click again for that.
+func _strain_against_rejected() -> void:
+	var too_far: bool = _camera.global_position.distance_to(_rejected.global_position) \
+		> Game.tune.beam_reach + _rejected.hold_radius
+	if not _grab_armed or too_far:
+		_rejected = null
+		_grab_armed = false  # a fresh click is needed after letting go
+		return
+	_rejected.shudder()
 
 
 ## Raises the lift limit. Stage 3 calls this on each capture.
@@ -173,6 +183,9 @@ func _update_aim_state() -> void:
 	if held != null:
 		state = AimState.HOLDING
 		detail = "%.1f kg" % held.mass
+	elif _rejected != null:
+		state = AimState.TOO_HEAVY
+		detail = "TOO HEAVY  %.0f kg  (lift %.0f kg)" % [_rejected.mass, lift_limit]
 	elif _aimed != null:
 		if _aimed.mass <= lift_limit:
 			state = AimState.CAN_GRAB
@@ -190,7 +203,7 @@ func _update_aim_state() -> void:
 func _update_beam_mesh() -> void:
 	var end_body: Prop = held
 	var color := Color(0.35, 0.85, 1.0)
-	if end_body == null and _reject_flash_left > 0.0 and _rejected != null:
+	if end_body == null and _rejected != null:
 		end_body = _rejected
 		color = Color(1.0, 0.2, 0.15)
 	if end_body == null:
@@ -199,7 +212,7 @@ func _update_beam_mesh() -> void:
 	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
 	var end: Vector3 = end_body.global_position
 	# The bend: aim_point is where you're pulling the object to (the hold point,
-	# or for the too-heavy flash, the spot on your aim at the object's distance).
+	# or for a too-heavy object, the spot on your aim at the object's distance).
 	# The curve is pulled toward a point part-way from the hand to aim_point. When
 	# the object is at aim_point that point lies on the straight line and the beam
 	# is straight; when the object lags behind a swing, the beam bows toward it.

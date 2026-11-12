@@ -139,8 +139,21 @@ func _run() -> void:
 	_check("sofa is not grabbed", _beam.held == null, "held=%s" % _beam.held)
 	_check("sofa shudders", sofa._shudder_left > 0.0, "")
 	_check("red reject beam is shown", _beam._beam_mesh.visible, "")
-	await _wait(0.5)
+	await _wait(0.8)
+	_check("red beam stays latched while button held", _beam._beam_mesh.visible and _beam._rejected == sofa, "")
+	_check("sofa keeps shuddering while button held", sofa._shudder_left > 0.0, "")
+	# Look away to a crate while still holding: must stay latched, not grab the crate.
+	_aim_at(props.get_node("CrateD").global_position)
+	await _wait(0.2)
+	_check("looking away keeps the latch (no sweep-grab)", _beam.held == null and _beam._rejected == sofa,
+		"held=%s" % _beam.held)
+	_check("crosshair stays TOO_HEAVY while latched", _beam._state == Beam.AimState.TOO_HEAVY, "state=%s" % _beam._state)
 	_release("grab")
+	await _wait(0.05)
+	await get_tree().process_frame
+	_check("releasing the button drops the red beam", not _beam._beam_mesh.visible and _beam._rejected == null, "")
+	_aim_at(sofa.global_position)
+	await _wait(0.05)
 	_check("shudder does not move the sofa body", sofa.global_position.distance_to(sofa_start) < 0.01,
 		"moved %.3f" % sofa.global_position.distance_to(sofa_start))
 

@@ -6,7 +6,8 @@ extends CharacterBody3D
 ## States:
 ##   HIDDEN   - still and uncatchable. Watches the props around it ("covers").
 ##   FLEEING  - uncovered: hops out and runs away from the player.
-##   SEEKING  - runs to the nearest object to cower beside.
+##   SEEKING  - runs round to the far side of a nearby object, where the
+##              player can't see it, and cowers there.
 ##   COWERING - still and trembling, catchable. Bolts again if disturbed.
 ##   CAPTURED - flying into the beam; removed when the animation ends.
 ##
@@ -35,6 +36,14 @@ const CHECK_INTERVAL: float = 0.1
 const BUMPABLE_RADIUS: float = 0.5
 ## Give props time to settle after the scene loads before recording covers.
 const SETTLE_TIME: float = 0.5
+## How far away a fleeing creature will consider props to hide behind.
+const HIDE_SEARCH_RADIUS: float = 5.0
+## Gap between the creature and the prop it hides behind.
+const HIDE_GAP: float = 0.12
+## What blocks the player's view: walls, props and clutter.
+const MASK_SIGHT: int = 1 | 4 | 16
+## How tall the creature is above its centre, for "can the player see my top?".
+const TOP_OFFSET: float = 0.08
 const BODY_COLORS: Array[Color] = [
 	Color(0.45, 0.95, 0.4), Color(1.0, 0.55, 0.75), Color(1.0, 0.85, 0.25),
 	Color(0.45, 0.8, 1.0), Color(0.85, 0.55, 1.0), Color(1.0, 0.6, 0.3),
@@ -50,6 +59,8 @@ var _tell_left: float = 0.0
 var _state_left: float = 0.0
 var _flee_dir: Vector3 = Vector3.ZERO
 var _seek_target: Prop = null
+## Which way to go round an obstacle that's dead ahead (+1 or -1).
+var _detour_sign: float = 1.0
 var _base_pitch: float = 1.0
 
 @onready var _visual: Node3D = $Visual
@@ -119,17 +130,25 @@ func _update_fleeing(delta: float) -> void:
 
 func _update_seeking(delta: float) -> void:
 	_state_left -= delta
-	if not is_instance_valid(_seek_target):
+	if not is_instance_valid(_seek_target) or _seek_target.is_held:
 		_start_cowering()
 		return
-	var to_target: Vector3 = _seek_target.global_position - global_position
+	# Recomputed every tick, because "behind" depends on where the player is now.
+	var to_target: Vector3 = _hide_point(_seek_target, _player_eye()) - global_position
 	to_target.y = 0.0
-	var arrived: bool = to_target.length() < _seek_target.hold_radius + 0.2
-	# Bumping into anything also counts as "found somewhere".
-	if arrived or is_on_wall() or _state_left <= 0.0:
+	if to_target.length() < 0.12 or _state_left <= 0.0:
 		_start_cowering()
 		return
-	_move(to_target.normalized(), Game.tune.flee_speed * 0.7, delta)
+	var dir: Vector3 = to_target.normalized()
+	if is_on_wall():
+		# move_and_slide already slides along whatever we bumped, but if we're
+		# running straight into it that leaves no sideways motion, so pick a side.
+		var normal: Vector3 = _flat(get_wall_normal())
+		var along: Vector3 = dir.slide(normal)
+		if along.length() < 0.3:
+			along = normal.cross(Vector3.UP) * _detour_sign
+		dir = _flat(along)
+	_move(dir, Game.tune.flee_speed * 0.7, delta)
 
 
 func _update_cowering(delta: float) -> void:
@@ -182,7 +201,8 @@ func _bump_covers_out_of_the_way() -> void:
 func _start_seeking() -> void:
 	state = State.SEEKING
 	_state_left = Game.tune.seek_time
-	_seek_target = _nearest_prop()
+	_seek_target = _best_hiding_prop()
+	_detour_sign = 1.0 if randf() < 0.5 else -1.0
 
 
 func _start_cowering() -> void:
@@ -323,19 +343,84 @@ func _nearest_cover() -> Prop:
 	return best
 
 
-## The closest prop on or near the floor that isn't being held.
-func _nearest_prop() -> Prop:
+## Picks the prop to hide behind. Every nearby prop on the floor is scored by
+## how far away its hiding spot is, with big penalties for spots the player can
+## see from where they're standing, or that are close enough to the player to
+## startle us straight away. Low things like books don't block the view, so
+## they lose to anything that does.
+func _best_hiding_prop() -> Prop:
+	var eye: Vector3 = _player_eye()
+	var player := _player()
 	var best: Prop = null
-	var best_distance: float = INF
+	var best_score: float = INF
 	for node in get_tree().get_nodes_in_group("props"):
 		var prop := node as Prop
 		if prop.is_held or prop.global_position.y > 1.2:
 			continue
-		var d: float = global_position.distance_to(prop.global_position)
-		if d < best_distance:
+		if global_position.distance_to(prop.global_position) > HIDE_SEARCH_RADIUS:
+			continue
+		var spot: Vector3 = _hide_point(prop, eye)
+		if spot == Vector3.INF:
+			continue  # the far side is a wall
+		var score: float = global_position.distance_to(spot)
+		if not _hidden_at(spot, eye):
+			score += 100.0
+		if player != null and _flat_distance(spot, player.global_position) < Game.tune.startle_distance + 0.4:
+			score += 50.0
+		if score < best_score:
 			best = prop
-			best_distance = d
+			best_score = score
 	return best
+
+
+## The spot just behind `prop` as seen from `eye`, at floor level, found by
+## feeling for the prop's far surface with a ray (so long sofas and thin boxes
+## both work). Returns Vector3.INF if that spot is inside or past a wall.
+func _hide_point(prop: Prop, eye: Vector3) -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var centre := Vector3(prop.global_position.x, global_position.y, prop.global_position.z)
+	var away: Vector3 = _flat(centre - eye)
+	if away == Vector3.ZERO:
+		away = Vector3.FORWARD
+	# Cast from beyond the prop back toward its centre; the first thing hit on
+	# the way in is the prop's back face.
+	var outside: Vector3 = centre + away * (prop.hold_radius + 1.0)
+	var query := PhysicsRayQueryParameters3D.create(outside, centre, MASK_PROPS)
+	var hit: Dictionary = space.intersect_ray(query)
+	var spot: Vector3
+	if not hit.is_empty() and hit.collider == prop:
+		spot = Vector3(hit.position.x, centre.y, hit.position.z) + away * (0.09 + HIDE_GAP)
+	else:
+		spot = centre + away * (prop.hold_radius + HIDE_GAP)
+	# Is there a wall between the prop and that spot (prop pushed against a wall)?
+	var wall_query := PhysicsRayQueryParameters3D.create(centre, spot + away * 0.09, 1)
+	if not space.intersect_ray(wall_query).is_empty():
+		return Vector3.INF
+	return spot
+
+
+## True if something blocks the view from `eye` to both the middle and the top
+## of a creature standing at `spot`.
+func _hidden_at(spot: Vector3, eye: Vector3) -> bool:
+	var space := get_world_3d().direct_space_state
+	for point: Vector3 in [spot, spot + Vector3.UP * TOP_OFFSET]:
+		var query := PhysicsRayQueryParameters3D.create(eye, point, MASK_SIGHT)
+		if space.intersect_ray(query).is_empty():
+			return false
+	return true
+
+
+## Where the player sees from (their head), or a point high in the room.
+func _player_eye() -> Vector3:
+	var player := _player()
+	if player == null:
+		return Vector3(0.0, 1.6, 0.0)
+	var head := player.get_node_or_null("Head") as Node3D
+	return head.global_position if head != null else player.global_position + Vector3.UP * 1.55
+
+
+func _flat_distance(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
 func _move(direction: Vector3, speed: float, delta: float) -> void:

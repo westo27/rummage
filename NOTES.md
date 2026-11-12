@@ -116,6 +116,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage4 | ping range and cooldown, both gates, wardrobe off the doorway, side room, win, timer, restart |
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
+| check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 
@@ -138,7 +139,25 @@ tell whether any of it is fun or readable. Not verified:
   creatures cornered behind heavy furniture, and a held wardrobe swept through a
   room full of clutter. None of these were tried.
 
+## Where creatures hide after fleeing
+
+When a creature stops fleeing it looks at every floor prop within 5 m and
+picks the nearest spot on the far side of one, as seen from the player's head.
+Spots the player can see, spots against a wall, and spots within startle range
+of the player all lose. "Can see" means a ray from the head to the creature's
+middle and top is blocked by a wall, prop or clutter, so a flat book doesn't
+count as cover but a bin or crate does. The spot is re-aimed every tick while
+it runs, so if you move, it heads for the new far side. The constants are at
+the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
+
 ## Known quirks (deliberate or tolerated)
+
+- A cowering creature doesn't move again when you walk round to see it, so
+  you can still catch it. It only picks a hiding spot while it's seeking.
+- "Behind" means behind from where you stand, not outside where you're looking.
+  A creature can still cower in plain view off to your side if that's the
+  only cover. If nothing nearby hides it (seek time runs out), it cowers
+  wherever it is.
 
 - Furniture doesn't block catching an exposed creature, only walls do, so a
   creature half behind a crate can still be caught. I chose generous over exact.

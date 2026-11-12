@@ -1,19 +1,21 @@
-extends SceneTree
+extends Node
 ## Headless smoke test for stage 1. Not part of the game.
-## Run: Godot --headless --path . --script res://tests/check_stage1.gd
+## Run: Godot --headless --path . res://tests/check_stage1.tscn
+## (A scene rather than --script, so the Game autoload is loaded first.)
 ## Loads the main scene, simulates key presses, and prints PASS/FAIL lines.
 
 var _failures: int = 0
 
 
-func _initialize() -> void:
+func _ready() -> void:
 	_run.call_deferred()
 
 
 func _run() -> void:
 	var main: Node = (load("res://scenes/main.tscn") as PackedScene).instantiate()
-	root.add_child(main)
-	current_scene = main
+	# Stage 1 checks the bare room shell, so remove the furniture first.
+	main.get_node("MainRoomProps").free()
+	get_tree().root.add_child(main)
 	var player := main.get_node("Player") as CharacterBody3D
 
 	await _wait(1.0)
@@ -72,13 +74,13 @@ func _run() -> void:
 		"pos=%s" % player.global_position)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
-	quit(_failures)
+	get_tree().quit(_failures)
 
 
 func _wait(seconds: float) -> void:
 	var frames: int = int(seconds * Engine.physics_ticks_per_second)
 	for i in frames:
-		await physics_frame
+		await get_tree().physics_frame
 
 
 func _check(label: String, ok: bool, detail: String) -> void:

@@ -19,6 +19,16 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
+# _input runs for every node before any _unhandled_input does. The recapture
+# click is handled here so it's swallowed before the beam (which listens in
+# _unhandled_input) ever sees it, and so can't also fire the grab beam.
+func _input(event: InputEvent) -> void:
+	var captured: bool = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if event is InputEventMouseButton and event.pressed and not captured:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		get_viewport().set_input_as_handled()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	var captured: bool = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 
@@ -31,12 +41,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	elif event.is_action_pressed("release_mouse"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-
-	elif event is InputEventMouseButton and event.pressed and not captured:
-		# Clicking the window recaptures the mouse. Marking the event handled stops
-		# it reaching other scripts, so this click won't also fire the grab beam.
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		get_viewport().set_input_as_handled()
 
 
 # _physics_process runs at a fixed 60 Hz in step with the physics engine;

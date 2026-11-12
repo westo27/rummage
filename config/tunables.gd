@@ -21,4 +21,30 @@ extends Resource
 @export var walk_speed: float = 4.5
 @export var run_speed: float = 7.5
 ## Radians of turn per pixel of mouse movement.
-@export var mouse_sensitivity: float = 0.0025
+@export var mouse_sensitivity: float = 0.0010
+
+@export_group("Beam")
+## How far the beam can reach to grab something, in metres.
+@export var beam_reach: float = 7.0
+## Held object velocity = (distance from hold point) × this. Higher = snappier.
+@export var hold_stiffness: float = 12.0
+## Held top speed = hold_speed_base / (1 + mass / hold_speed_mass_scale).
+@export var hold_speed_base: float = 14.0
+@export var hold_speed_mass_scale: float = 8.0
+## Throw speed = throw_speed_base / (1 + mass / throw_speed_mass_scale).
+@export var throw_speed_base: float = 16.0
+@export var throw_speed_mass_scale: float = 6.0
+## Closest the hold point gets to the camera (plus the object's own hold_radius).
+@export var min_hold_distance: float = 0.9
+## Metres the hold point moves per mouse-wheel notch.
+@export var hold_distance_step: float = 0.35
+## If a held object gets stuck this far from the hold point (e.g. pushed into a
+## wall), the beam lets go rather than straining forever.
+@export var beam_break_distance: float = 3.0
+## Fraction of a held object's spin removed each physics tick, so things
+## don't twirl wildly in the beam.
+@export_range(0.0, 1.0) var held_spin_damping: float = 0.15
+
+@export_group("Lift")
+## Heaviest mass (kg) the beam can lift at the start.
+@export var start_lift_limit: float = 10.0

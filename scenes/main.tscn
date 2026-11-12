@@ -1,7 +1,9 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://btj88t08362ec"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://colu8grbm03lu" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="3_hud"]
+[ext_resource type="PackedScene" path="res://scenes/main_room_props.tscn" id="4_props"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -19,70 +21,74 @@ albedo_color = Color(0.48, 0.37, 0.27, 1)
 [sub_resource type="StandardMaterial3D" id="Mat_floor_side"]
 albedo_color = Color(0.32, 0.42, 0.36, 1)
 
-[node name="Main" type="Node3D"]
+[node name="Main" type="Node3D" unique_id=467943378]
 script = ExtResource("1_main")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1357483862]
 environment = SubResource("Environment_main")
 
-[node name="House" type="Node3D" parent="."]
+[node name="House" type="Node3D" parent="." unique_id=1233747681]
 
-[node name="Walls" type="CSGCombiner3D" parent="House"]
+[node name="Walls" type="CSGCombiner3D" parent="House" unique_id=1273875573]
 use_collision = true
 collision_mask = 0
 
-[node name="MainOuter" type="CSGBox3D" parent="House/Walls"]
+[node name="MainOuter" type="CSGBox3D" parent="House/Walls" unique_id=2033055321]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 size = Vector3(12.8, 3.4, 10.8)
 material = SubResource("Mat_wall")
 
-[node name="SideOuter" type="CSGBox3D" parent="House/Walls"]
+[node name="SideOuter" type="CSGBox3D" parent="House/Walls" unique_id=425652361]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 1.5, 0)
 size = Vector3(5.8, 3.4, 5.8)
 material = SubResource("Mat_wall")
 
-[node name="MainInner" type="CSGBox3D" parent="House/Walls"]
+[node name="MainInner" type="CSGBox3D" parent="House/Walls" unique_id=1096790886]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
 operation = 2
 size = Vector3(12, 3.5, 10)
 material = SubResource("Mat_wall")
 
-[node name="SideInner" type="CSGBox3D" parent="House/Walls"]
+[node name="SideInner" type="CSGBox3D" parent="House/Walls" unique_id=149734929]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 1.25, 0)
 operation = 2
 size = Vector3(5, 3.5, 5)
 material = SubResource("Mat_wall")
 
-[node name="Doorway" type="CSGBox3D" parent="House/Walls"]
+[node name="Doorway" type="CSGBox3D" parent="House/Walls" unique_id=1214729767]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 1.1, 0)
 operation = 2
 size = Vector3(0.8, 2.2, 1.4)
 material = SubResource("Mat_wall")
 
-[node name="FloorMain" type="CSGBox3D" parent="House"]
+[node name="FloorMain" type="CSGBox3D" parent="House" unique_id=542267513]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
 use_collision = true
 collision_mask = 0
 size = Vector3(12.8, 0.3, 10.8)
 material = SubResource("Mat_floor_main")
 
-[node name="FloorSide" type="CSGBox3D" parent="House"]
+[node name="FloorSide" type="CSGBox3D" parent="House" unique_id=1019375681]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, -0.15, 0)
 use_collision = true
 collision_mask = 0
 size = Vector3(5.8, 0.3, 5.8)
 material = SubResource("Mat_floor_side")
 
-[node name="LightMain" type="OmniLight3D" parent="."]
+[node name="LightMain" type="OmniLight3D" parent="." unique_id=383430837]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
 light_energy = 1.6
 shadow_enabled = true
 omni_range = 12.0
 
-[node name="LightSide" type="OmniLight3D" parent="."]
+[node name="LightSide" type="OmniLight3D" parent="." unique_id=1277577741]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 2.6, 0)
 light_color = Color(1, 0.9, 0.75, 1)
 omni_range = 6.0
 
-[node name="Player" parent="." instance=ExtResource("2_player")]
+[node name="Player" parent="." unique_id=936560623 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.5)
+
+[node name="MainRoomProps" parent="." instance=ExtResource("4_props")]
+
+[node name="HUD" parent="." instance=ExtResource("3_hud")]

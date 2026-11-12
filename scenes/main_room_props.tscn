@@ -1,0 +1,229 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/props/book.tscn" id="book"]
+[ext_resource type="PackedScene" path="res://scenes/props/crate.tscn" id="crate"]
+[ext_resource type="PackedScene" path="res://scenes/props/small_box.tscn" id="small_box"]
+[ext_resource type="PackedScene" path="res://scenes/props/cushion.tscn" id="cushion"]
+[ext_resource type="PackedScene" path="res://scenes/props/ball.tscn" id="ball"]
+[ext_resource type="PackedScene" path="res://scenes/props/bookcase.tscn" id="bookcase"]
+[ext_resource type="PackedScene" path="res://scenes/props/table.tscn" id="table"]
+[ext_resource type="PackedScene" path="res://scenes/props/sofa.tscn" id="sofa"]
+[ext_resource type="PackedScene" path="res://scenes/props/wardrobe.tscn" id="wardrobe"]
+
+[node name="MainRoomProps" type="Node3D"]
+
+[node name="Sofa" parent="." instance=ExtResource("sofa")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.427, -4.5)
+
+[node name="Wardrobe" parent="." instance=ExtResource("wardrobe")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.68, 1.052, 0)
+
+[node name="Bookcase" parent="." instance=ExtResource("bookcase")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.78, 0.902, -1.5)
+
+[node name="Table" parent="." instance=ExtResource("table")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.3895, 0.2)
+
+[node name="ShelfBook01" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -2.22)
+mass = 0.66
+
+[node name="ShelfBook02" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -2.174)
+mass = 0.58
+
+[node name="ShelfBook03" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -2.128)
+mass = 0.83
+
+[node name="ShelfBook04" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -2.082)
+mass = 0.54
+
+[node name="ShelfBook05" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -2.036)
+mass = 0.77
+
+[node name="ShelfBook06" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -1.3)
+mass = 0.68
+
+[node name="ShelfBook07" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -1.254)
+mass = 0.53
+
+[node name="ShelfBook08" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -1.208)
+mass = 0.75
+
+[node name="ShelfBook09" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.164, -1.162)
+mass = 0.52
+
+[node name="ShelfBook10" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -2.22)
+mass = 0.72
+
+[node name="ShelfBook11" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -2.174)
+mass = 0.53
+
+[node name="ShelfBook12" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -2.128)
+mass = 0.55
+
+[node name="ShelfBook13" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -2.082)
+mass = 0.71
+
+[node name="ShelfBook14" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -2.036)
+mass = 0.91
+
+[node name="ShelfBook15" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -1.3)
+mass = 0.56
+
+[node name="ShelfBook16" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -1.254)
+mass = 0.61
+
+[node name="ShelfBook17" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -1.208)
+mass = 0.81
+
+[node name="ShelfBook18" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 0.764, -1.162)
+mass = 0.97
+
+[node name="ShelfBook19" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -2.22)
+mass = 0.79
+
+[node name="ShelfBook20" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -2.174)
+mass = 0.7
+
+[node name="ShelfBook21" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -2.128)
+mass = 0.99
+
+[node name="ShelfBook22" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -2.082)
+mass = 0.52
+
+[node name="ShelfBook23" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -2.036)
+mass = 0.93
+
+[node name="ShelfBook24" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -1.3)
+mass = 0.64
+
+[node name="ShelfBook25" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -1.254)
+mass = 0.57
+
+[node name="ShelfBook26" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -1.208)
+mass = 0.56
+
+[node name="ShelfBook27" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.67, 1.364, -1.162)
+mass = 0.65
+
+[node name="FloorPileA_1" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 2.0063, 0.022, 1.4936)
+mass = 0.79
+
+[node name="FloorPileA_2" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 2.0028, 0.063, 1.4974)
+mass = 0.77
+
+[node name="FloorPileA_3" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 1.9913, 0.104, 1.4912)
+mass = 0.6
+
+[node name="FloorPileA_4" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 2.0036, 0.145, 1.4986)
+mass = 0.66
+
+[node name="FloorPileA_5" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 2.0017, 0.186, 1.4991)
+mass = 0.65
+
+[node name="FloorPileB_1" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -3.7941, 0.022, 3.804)
+mass = 0.62
+
+[node name="FloorPileB_2" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -3.7985, 0.063, 3.8005)
+mass = 0.94
+
+[node name="FloorPileB_3" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -3.7954, 0.104, 3.7958)
+mass = 0.99
+
+[node name="FloorPileB_4" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -3.8076, 0.145, 3.7984)
+mass = 0.88
+
+[node name="TablePile_1" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -1.807, 0.797, 0.1998)
+mass = 0.52
+
+[node name="TablePile_2" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -1.7966, 0.838, 0.2053)
+mass = 0.79
+
+[node name="TablePile_3" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -1.7925, 0.879, 0.1963)
+mass = 0.85
+
+[node name="CrateA" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.302, -1.5)
+
+[node name="CrateB" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.302, 2.5)
+
+[node name="CrateC" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6, 0.302, 3.8)
+
+[node name="CrateD" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0.302, -4.2)
+
+[node name="CrateF" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 0.302, 0.8)
+
+[node name="CrateE" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0.904, -4.2)
+
+[node name="BoxStack_Low1" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.202, -3.6)
+
+[node name="BoxStack_Low2" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 0.202, -3.6)
+
+[node name="BoxStack_Low3" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7, 0.202, -3.6)
+
+[node name="BoxStack_Mid1" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.025, 0.604, -3.6)
+
+[node name="BoxStack_Mid2" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.475, 0.604, -3.6)
+
+[node name="BoxStack_Top" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 1.006, -3.6)
+
+[node name="CushionL" parent="." instance=ExtResource("cushion")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.529, -4.4)
+
+[node name="CushionR" parent="." instance=ExtResource("cushion")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.529, -4.4)
+
+[node name="BallFloor" parent="." instance=ExtResource("ball")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.122, 0.5)
+
+[node name="BallTable" parent="." instance=ExtResource("ball")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.899, 0.35)

@@ -1,0 +1,203 @@
+class_name Beam
+extends Node3D
+## The grab beam: aim, grab, hold, throw, and the lift limit.
+##
+## Lives under the camera in player.tscn. It never reparents or teleports the
+## held object: each physics tick it sets the object's velocity towards a hold
+## point in front of the camera, so walls and other objects still stop it.
+
+## Signals are Godot's events: the beam announces changes and doesn't care who
+## listens. main.gd connects these to the HUD. Like dispatching a Laravel event.
+signal aim_changed(state: AimState, detail: String)
+signal lift_limit_changed(kg: float)
+
+enum AimState { IDLE, CAN_GRAB, TOO_HEAVY, HOLDING, CREATURE }
+
+## Collision layers are bit flags: layer 1 = value 1, layer 2 = 2, layer 3 = 4,
+## layer 4 = 8. The ray only "sees" bodies on layers included in its mask.
+const MASK_WORLD_AND_PROPS: int = 1 | 4
+
+## Where the beam visibly starts, relative to the camera (lower right, like a hand).
+const BEAM_ORIGIN_LOCAL := Vector3(0.22, -0.2, -0.35)
+const REJECT_FLASH_SECONDS: float = 0.3
+
+var lift_limit: float = 0.0
+var held: Prop = null
+
+var _hold_distance: float = 0.0
+var _aimed: Prop = null
+## The grab button only counts if its press reached this script as an event.
+## The click that recaptures the mouse is swallowed by player.gd, so it can't
+## accidentally grab something.
+var _grab_armed: bool = false
+## The last too-heavy object we shuddered, so holding the button on it shudders once.
+var _rejected: Prop = null
+var _reject_flash_left: float = 0.0
+var _state: AimState = AimState.IDLE
+var _detail: String = ""
+
+@onready var _camera: Camera3D = get_parent() as Camera3D
+## `owner` is the root of the scene file this node was saved in (here, the
+## Player node in player.tscn), however deep the node sits in that tree.
+@onready var _player: CharacterBody3D = owner as CharacterBody3D
+@onready var _beam_mesh: MeshInstance3D = $BeamMesh
+@onready var _beam_material: StandardMaterial3D = _beam_mesh.material_override as StandardMaterial3D
+
+
+func _ready() -> void:
+	lift_limit = Game.tune.start_lift_limit
+	# top_level makes the beam mesh ignore its parent's transform, so we can place
+	# it in world coordinates without the camera's movement being added on top.
+	_beam_mesh.top_level = true
+	_beam_mesh.visible = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("grab"):
+		_grab_armed = true
+	elif event.is_action_released("grab"):
+		_grab_armed = false
+
+	if held == null:
+		return
+	if event.is_action_pressed("throw"):
+		_throw()
+	elif event.is_action_pressed("beam_further"):
+		_hold_distance = minf(_hold_distance + Game.tune.hold_distance_step, Game.tune.beam_reach)
+	elif event.is_action_pressed("beam_nearer"):
+		_hold_distance = maxf(_hold_distance - Game.tune.hold_distance_step, _min_hold_distance(held))
+
+
+func _physics_process(delta: float) -> void:
+	_reject_flash_left = maxf(_reject_flash_left - delta, 0.0)
+
+	if held != null:
+		if _grab_armed:
+			_drive_held()
+		else:
+			_release()
+
+	if held == null:
+		_aimed = _find_aimed_prop()
+		if _grab_armed and _aimed != null:
+			if _aimed.mass <= lift_limit:
+				_grab(_aimed)
+			elif _aimed != _rejected:
+				_rejected = _aimed
+				_aimed.shudder()
+				_reject_flash_left = REJECT_FLASH_SECONDS
+		if not _grab_armed:
+			_rejected = null
+
+	_update_aim_state()
+	_update_beam_mesh()
+
+
+## Raises the lift limit. Stage 3 calls this on each capture.
+func add_lift(kg: float) -> void:
+	lift_limit += kg
+	lift_limit_changed.emit(lift_limit)
+
+
+func _find_aimed_prop() -> Prop:
+	var from: Vector3 = _camera.global_position
+	var to: Vector3 = from + _forward() * Game.tune.beam_reach
+	var query := PhysicsRayQueryParameters3D.create(from, to, MASK_WORLD_AND_PROPS, [_player.get_rid()])
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return null
+	# `as Prop` gives null if the ray hit a wall rather than a prop.
+	return hit.collider as Prop
+
+
+func _grab(prop: Prop) -> void:
+	held = prop
+	_rejected = null
+	var distance: float = _camera.global_position.distance_to(prop.global_position)
+	_hold_distance = clampf(distance, _min_hold_distance(prop), Game.tune.beam_reach)
+	prop.start_hold(_player)
+	# A sleeping body ignores velocity changes, so make sure it's awake.
+	prop.sleeping = false
+
+
+func _drive_held() -> void:
+	var target: Vector3 = _camera.global_position + _forward() * _hold_distance
+	var error: Vector3 = target - held.global_position
+	if error.length() > Game.tune.beam_break_distance:
+		_release()
+		_grab_armed = false  # need a fresh click to grab again
+		return
+	var top_speed: float = Game.tune.hold_speed_base / (1.0 + held.mass / Game.tune.hold_speed_mass_scale)
+	held.linear_velocity = (error * Game.tune.hold_stiffness).limit_length(top_speed)
+	held.angular_velocity *= 1.0 - Game.tune.held_spin_damping
+
+
+## Letting go just stops driving the object; it keeps whatever velocity it had,
+## which is what makes swing-and-release flings work.
+func _release() -> void:
+	held.end_hold()
+	held = null
+
+
+func _throw() -> void:
+	var speed: float = Game.tune.throw_speed_base / (1.0 + held.mass / Game.tune.throw_speed_mass_scale)
+	held.linear_velocity = _forward() * speed
+	_release()
+	# Without this, still holding the left button would instantly re-grab the
+	# object you just threw.
+	_grab_armed = false
+
+
+func _min_hold_distance(prop: Prop) -> float:
+	return Game.tune.min_hold_distance + prop.hold_radius
+
+
+## The camera looks down its own -Z axis (a Godot convention).
+func _forward() -> Vector3:
+	return -_camera.global_transform.basis.z
+
+
+func _update_aim_state() -> void:
+	var state: AimState = AimState.IDLE
+	var detail: String = ""
+	if held != null:
+		state = AimState.HOLDING
+		detail = "%.1f kg" % held.mass
+	elif _aimed != null:
+		if _aimed.mass <= lift_limit:
+			state = AimState.CAN_GRAB
+			detail = "%.1f kg" % _aimed.mass
+		else:
+			state = AimState.TOO_HEAVY
+			detail = "TOO HEAVY  %.0f kg  (lift %.0f kg)" % [_aimed.mass, lift_limit]
+	# Only announce real changes, so the HUD isn't redrawn 60 times a second.
+	if state != _state or detail != _detail:
+		_state = state
+		_detail = detail
+		aim_changed.emit(state, detail)
+
+
+func _update_beam_mesh() -> void:
+	var end_body: Prop = held
+	var color := Color(0.35, 0.85, 1.0)
+	if end_body == null and _reject_flash_left > 0.0 and _rejected != null:
+		end_body = _rejected
+		color = Color(1.0, 0.2, 0.15)
+	if end_body == null:
+		_beam_mesh.visible = false
+		return
+	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
+	var end: Vector3 = end_body.global_position
+	var length: float = start.distance_to(end)
+	if length < 0.01:
+		_beam_mesh.visible = false
+		return
+	var dir: Vector3 = (end - start) / length
+	var up: Vector3 = Vector3.UP if absf(dir.y) < 0.99 else Vector3.FORWARD
+	# A 1×1×1 box, pointed along the beam and stretched to its length.
+	# A basis is three axis vectors; scaling each one stretches the box along it.
+	var aim := Basis.looking_at(dir, up)
+	var stretched := Basis(aim.x * 0.012, aim.y * 0.012, aim.z * length)
+	_beam_mesh.global_transform = Transform3D(stretched, (start + end) * 0.5)
+	_beam_material.albedo_color = color
+	_beam_mesh.visible = true

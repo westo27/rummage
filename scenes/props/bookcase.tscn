@@ -1,0 +1,94 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat"]
+albedo_color = Color(0.42, 0.3, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_0"]
+size = Vector3(0.02, 1.8, 1.52)
+
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(0.02, 1.8, 1.52)
+
+[sub_resource type="BoxMesh" id="Mesh_1"]
+size = Vector3(0.4, 1.8, 0.04)
+
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.4, 1.8, 0.04)
+
+[sub_resource type="BoxMesh" id="Mesh_2"]
+size = Vector3(0.38, 0.04, 1.52)
+
+[sub_resource type="BoxShape3D" id="Shape_2"]
+size = Vector3(0.38, 0.04, 1.52)
+
+[node name="Bookcase" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 9
+script = ExtResource("1_prop")
+hold_radius = 0.9
+
+[node name="Mesh0" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.19, 0, 0)
+mesh = SubResource("Mesh_0")
+material_override = SubResource("Mat")
+
+[node name="Shape0" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.19, 0, 0)
+shape = SubResource("Shape_0")
+
+[node name="Mesh1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.78)
+mesh = SubResource("Mesh_1")
+material_override = SubResource("Mat")
+
+[node name="Shape1" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.78)
+shape = SubResource("Shape_1")
+
+[node name="Mesh2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.78)
+mesh = SubResource("Mesh_1")
+material_override = SubResource("Mat")
+
+[node name="Shape2" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.78)
+shape = SubResource("Shape_1")
+
+[node name="Mesh3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, -0.88, 0)
+mesh = SubResource("Mesh_2")
+material_override = SubResource("Mat")
+
+[node name="Shape3" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, -0.88, 0)
+shape = SubResource("Shape_2")
+
+[node name="Mesh4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, -0.28, 0)
+mesh = SubResource("Mesh_2")
+material_override = SubResource("Mat")
+
+[node name="Shape4" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, -0.28, 0)
+shape = SubResource("Shape_2")
+
+[node name="Mesh5" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.32, 0)
+mesh = SubResource("Mesh_2")
+material_override = SubResource("Mat")
+
+[node name="Shape5" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.32, 0)
+shape = SubResource("Shape_2")
+
+[node name="Mesh6" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.88, 0)
+mesh = SubResource("Mesh_2")
+material_override = SubResource("Mat")
+
+[node name="Shape6" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.88, 0)
+shape = SubResource("Shape_2")

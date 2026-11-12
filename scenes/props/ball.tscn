@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat"]
+albedo_color = Color(0.85, 0.75, 0.2, 1)
+
+[sub_resource type="SphereMesh" id="Mesh_0"]
+radius = 0.12
+height = 0.24
+
+[sub_resource type="SphereShape3D" id="Shape_0"]
+radius = 0.12
+
+[node name="Ball" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.3
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.12
+tint_variation = 0.4
+
+[node name="Mesh0" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("Mesh_0")
+material_override = SubResource("Mat")
+
+[node name="Shape0" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("Shape_0")

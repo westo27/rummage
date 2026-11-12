@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat"]
+albedo_color = Color(0.3, 0.22, 0.16, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_0"]
+size = Vector3(0.6, 2.1, 1.8)
+
+[sub_resource type="BoxShape3D" id="Shape_0"]
+size = Vector3(0.6, 2.1, 1.8)
+
+[node name="Wardrobe" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 115
+script = ExtResource("1_prop")
+hold_radius = 1.2
+keep_upright_until_grabbed = true
+
+[node name="Mesh0" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("Mesh_0")
+material_override = SubResource("Mat")
+
+[node name="Shape0" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("Shape_0")

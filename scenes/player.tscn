@@ -1,10 +1,17 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/beam.gd" id="2_beam"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 radius = 0.35
 height = 1.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_beam"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_beam"]
+shading_mode = 0
+albedo_color = Color(0.35, 0.85, 1, 1)
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
@@ -22,3 +29,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
 current = true
 fov = 75.0
 near = 0.05
+
+[node name="Beam" type="Node3D" parent="Head/Camera3D"]
+script = ExtResource("2_beam")
+
+[node name="BeamMesh" type="MeshInstance3D" parent="Head/Camera3D/Beam"]
+cast_shadow = 0
+mesh = SubResource("BoxMesh_beam")
+material_override = SubResource("Mat_beam")

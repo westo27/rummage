@@ -51,3 +51,34 @@ extends Resource
 @export_group("Lift")
 ## Heaviest mass (kg) the beam can lift at the start.
 @export var start_lift_limit: float = 10.0
+## Added to the lift limit per creature caught. With 21 creatures in the main
+## room and a 10 kg start: the 60 kg sofa unlocks at 8 caught (66 kg) and the
+## 115 kg wardrobe at 15 caught (115 kg).
+@export var lift_per_capture: float = 7.0
+
+@export_group("Creatures")
+## Running speed while fleeing, m/s.
+@export var flee_speed: float = 3.2
+## A revealed creature runs away for a random time in this range, in seconds…
+@export var flee_time_min: float = 2.0
+@export var flee_time_max: float = 3.5
+## …then spends up to this long running to a nearby object to cower beside.
+@export var seek_time: float = 2.5
+## Upward speed of the startled hop when a creature is uncovered.
+@export var pop_speed: float = 3.5
+## A cowering creature bolts again if the player gets this close (metres).
+@export var startle_distance: float = 1.3
+## A hidden creature gives itself away (squeak + rattle/glow/hop) at random
+## intervals in this range, in seconds.
+@export var tell_interval_min: float = 7.0
+@export var tell_interval_max: float = 18.0
+## Moving a covering object more than this (metres) uncovers the creature.
+@export var disturb_distance: float = 0.06
+## A prop flying faster than this (m/s) past a creature startles it.
+@export var knock_speed: float = 1.5
+## A covering object jolted to this speed (m/s), e.g. by something thrown at
+## it, startles the creature under it even if it barely moves. (Not used for
+## the sofa's creatures, so its gate can't be skipped by pelting it.)
+@export var jolt_speed: float = 0.35
+## Loudness of creature squeaks, in decibels (0 = full, -10 = quieter).
+@export var squeak_volume_db: float = -4.0

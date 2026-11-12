@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://c7s7up63u3f7a"]
 
-[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+[ext_resource type="Script" uid="uid://i1aa07ki5bbi" path="res://scripts/prop.gd" id="1_prop"]
 
 [sub_resource type="StandardMaterial3D" id="Mat"]
 albedo_color = Color(0.45, 0.25, 0.32, 1)
@@ -29,82 +29,82 @@ size = Vector3(0.1, 0.2, 0.1)
 [sub_resource type="BoxShape3D" id="Shape_3"]
 size = Vector3(0.1, 0.2, 0.1)
 
-[node name="Sofa" type="RigidBody3D"]
+[node name="Sofa" type="RigidBody3D" unique_id=1689533735]
 collision_layer = 4
 collision_mask = 7
-mass = 60
+mass = 60.0
 script = ExtResource("1_prop")
 hold_radius = 1.2
 keep_upright_until_grabbed = true
 
-[node name="Mesh0" type="MeshInstance3D" parent="."]
+[node name="Mesh0" type="MeshInstance3D" parent="." unique_id=314207876]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
-mesh = SubResource("Mesh_0")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_0")
 
-[node name="Shape0" type="CollisionShape3D" parent="."]
+[node name="Shape0" type="CollisionShape3D" parent="." unique_id=1221653505]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 shape = SubResource("Shape_0")
 
-[node name="Mesh1" type="MeshInstance3D" parent="."]
+[node name="Mesh1" type="MeshInstance3D" parent="." unique_id=1108367870]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.225, -0.35)
-mesh = SubResource("Mesh_1")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_1")
 
-[node name="Shape1" type="CollisionShape3D" parent="."]
+[node name="Shape1" type="CollisionShape3D" parent="." unique_id=745654646]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.225, -0.35)
 shape = SubResource("Shape_1")
 
-[node name="Mesh2" type="MeshInstance3D" parent="."]
+[node name="Mesh2" type="MeshInstance3D" parent="." unique_id=2021286686]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.125, 0.1)
-mesh = SubResource("Mesh_2")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_2")
 
-[node name="Shape2" type="CollisionShape3D" parent="."]
+[node name="Shape2" type="CollisionShape3D" parent="." unique_id=2037317088]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.125, 0.1)
 shape = SubResource("Shape_2")
 
-[node name="Mesh3" type="MeshInstance3D" parent="."]
+[node name="Mesh3" type="MeshInstance3D" parent="." unique_id=1558296330]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.125, 0.1)
-mesh = SubResource("Mesh_2")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_2")
 
-[node name="Shape3" type="CollisionShape3D" parent="."]
+[node name="Shape3" type="CollisionShape3D" parent="." unique_id=1767235272]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.125, 0.1)
 shape = SubResource("Shape_2")
 
-[node name="Mesh4" type="MeshInstance3D" parent="."]
+[node name="Mesh4" type="MeshInstance3D" parent="." unique_id=970326877]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, -0.325, -0.35)
-mesh = SubResource("Mesh_3")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_3")
 
-[node name="Shape4" type="CollisionShape3D" parent="."]
+[node name="Shape4" type="CollisionShape3D" parent="." unique_id=2120732539]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, -0.325, -0.35)
 shape = SubResource("Shape_3")
 
-[node name="Mesh5" type="MeshInstance3D" parent="."]
+[node name="Mesh5" type="MeshInstance3D" parent="." unique_id=1317384711]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, -0.325, 0.35)
-mesh = SubResource("Mesh_3")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_3")
 
-[node name="Shape5" type="CollisionShape3D" parent="."]
+[node name="Shape5" type="CollisionShape3D" parent="." unique_id=493869226]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, -0.325, 0.35)
 shape = SubResource("Shape_3")
 
-[node name="Mesh6" type="MeshInstance3D" parent="."]
+[node name="Mesh6" type="MeshInstance3D" parent="." unique_id=150230145]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.325, -0.35)
-mesh = SubResource("Mesh_3")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_3")
 
-[node name="Shape6" type="CollisionShape3D" parent="."]
+[node name="Shape6" type="CollisionShape3D" parent="." unique_id=714212089]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.325, -0.35)
 shape = SubResource("Shape_3")
 
-[node name="Mesh7" type="MeshInstance3D" parent="."]
+[node name="Mesh7" type="MeshInstance3D" parent="." unique_id=120720533]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.325, 0.35)
-mesh = SubResource("Mesh_3")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_3")
 
-[node name="Shape7" type="CollisionShape3D" parent="."]
+[node name="Shape7" type="CollisionShape3D" parent="." unique_id=970184773]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -0.325, 0.35)
 shape = SubResource("Shape_3")

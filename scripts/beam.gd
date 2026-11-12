@@ -16,6 +16,8 @@ enum AimState { IDLE, CAN_GRAB, TOO_HEAVY, HOLDING, CREATURE }
 ## Collision layers are bit flags: layer 1 = value 1, layer 2 = 2, layer 3 = 4,
 ## layer 4 = 8. The ray only "sees" bodies on layers included in its mask.
 const MASK_WORLD_AND_PROPS: int = 1 | 4
+const MASK_WORLD: int = 1
+const MASK_CREATURES: int = 8
 
 ## Where the beam visibly starts, relative to the camera (lower right, like a hand).
 const BEAM_ORIGIN_LOCAL := Vector3(0.22, -0.2, -0.35)
@@ -27,6 +29,8 @@ var held: Prop = null
 
 var _hold_distance: float = 0.0
 var _aimed: Prop = null
+var _aimed_creature: Creature = null
+var _capture_sound := AudioStreamPlayer.new()
 ## The grab button only counts if its press reached this script as an event.
 ## The click that recaptures the mouse is swallowed by player.gd, so it can't
 ## accidentally grab something.
@@ -54,6 +58,11 @@ func _ready() -> void:
 	_beam_mesh.top_level = true
 	_beam_mesh.global_transform = Transform3D.IDENTITY
 	_beam_mesh.visible = false
+	# Non-positional player for the capture sound. A node created in code must be
+	# added to the tree with add_child before it does anything.
+	_capture_sound.stream = Tones.capture()
+	_capture_sound.volume_db = -6.0
+	add_child(_capture_sound)
 
 
 # The beam line is purely visual, so it's redrawn every rendered frame (_process)
@@ -87,9 +96,14 @@ func _physics_process(_delta: float) -> void:
 			_release()
 
 	if held == null:
-		_aimed = _find_aimed_prop()
+		# Creatures are checked first, and only if nothing is found do we look
+		# for a prop, so a creature beside the sofa is never blocked by the sofa.
+		_aimed_creature = _find_aimed_creature() if _rejected == null else null
+		_aimed = _find_aimed_prop() if _aimed_creature == null else null
 		if _rejected != null:
 			_strain_against_rejected()
+		elif _grab_armed and _aimed_creature != null:
+			_capture(_aimed_creature)
 		elif _grab_armed and _aimed != null:
 			if _aimed.mass <= lift_limit:
 				_grab(_aimed)
@@ -113,10 +127,43 @@ func _strain_against_rejected() -> void:
 	_rejected.shudder()
 
 
-## Raises the lift limit. Stage 3 calls this on each capture.
+## Raises the lift limit. main.gd calls this on each capture.
 func add_lift(kg: float) -> void:
 	lift_limit += kg
 	lift_limit_changed.emit(lift_limit)
+
+
+## Looks for an exposed creature under the crosshair. Two rays:
+## 1. Only the creatures layer, hitting only Areas (each exposed creature's
+##    PickZone, a sphere bigger than its body, so aiming can be a bit sloppy).
+## 2. A line-of-sight check against walls and floor only. Furniture is ignored
+##    on purpose: being generous here matters more than being exact.
+func _find_aimed_creature() -> Creature:
+	var from: Vector3 = _camera.global_position
+	var to: Vector3 = from + _forward() * Game.tune.beam_reach
+	var query := PhysicsRayQueryParameters3D.create(from, to, MASK_CREATURES)
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	var space := get_world_3d().direct_space_state
+	var hit: Dictionary = space.intersect_ray(query)
+	if hit.is_empty():
+		return null
+	# The ray hit the PickZone; its parent node is the creature.
+	var creature := (hit.collider as Node).get_parent() as Creature
+	if creature == null:
+		return null
+	var sight := PhysicsRayQueryParameters3D.create(from, creature.global_position, MASK_WORLD, [_player.get_rid()])
+	if not space.intersect_ray(sight).is_empty():
+		return null
+	return creature
+
+
+func _capture(creature: Creature) -> void:
+	creature.capture(_camera.to_global(BEAM_ORIGIN_LOCAL))
+	_capture_sound.play()
+	# Need a fresh click before grabbing anything else, so a capture with the
+	# button held doesn't immediately grab the crate behind it.
+	_grab_armed = false
 
 
 func _find_aimed_prop() -> Prop:
@@ -183,6 +230,9 @@ func _update_aim_state() -> void:
 	if held != null:
 		state = AimState.HOLDING
 		detail = "%.1f kg" % held.mass
+	elif _aimed_creature != null:
+		state = AimState.CREATURE
+		detail = "Catch!"
 	elif _rejected != null:
 		state = AimState.TOO_HEAVY
 		detail = "TOO HEAVY  %.0f kg  (lift %.0f kg)" % [_rejected.mass, lift_limit]

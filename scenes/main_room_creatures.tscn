@@ -1,0 +1,72 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/creature.tscn" id="creature"]
+
+[node name="MainRoomCreatures" type="Node3D"]
+
+[node name="UnderSofa1" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 0.092, -4.55)
+reveal_on_knock = false
+
+[node name="UnderSofa2" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.23, 0.092, -4.55)
+reveal_on_knock = false
+
+[node name="UnderSofa3" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.23, 0.092, -4.55)
+reveal_on_knock = false
+
+[node name="UnderSofa4" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0.092, -4.55)
+reveal_on_knock = false
+
+[node name="UnderCrateA" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.092, -1.5)
+
+[node name="UnderCrateB" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.092, 2.5)
+
+[node name="UnderCrateD" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0.092, -4.2)
+
+[node name="InsideCrateE" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 0.692, -4.2)
+
+[node name="BehindBooks1" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.86, 0.132, -2.128)
+
+[node name="BehindBooks2" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.86, 0.132, -1.231)
+
+[node name="BehindBooks3" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.86, 0.732, -2.128)
+
+[node name="BehindBooks4" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.86, 1.332, -2.128)
+
+[node name="BehindBooks5" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.86, 1.332, -1.231)
+
+[node name="BehindBoxStack" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.25, 0.092, -3.95)
+
+[node name="UnderBin01" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0.092, 2.4)
+
+[node name="UnderBin02" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0.092, -2.6)
+
+[node name="UnderBin03" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.092, 1.6)
+
+[node name="UnderBin04" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 0.092, -2.4)
+
+[node name="UnderBin06" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 0.092, -3.2)
+
+[node name="UnderBin07" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.092, 4.4)
+
+[node name="UnderBin09" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.092, 0.9)

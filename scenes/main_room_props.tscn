@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/props/table.tscn" id="table"]
 [ext_resource type="PackedScene" path="res://scenes/props/sofa.tscn" id="sofa"]
 [ext_resource type="PackedScene" path="res://scenes/props/wardrobe.tscn" id="wardrobe"]
+[ext_resource type="PackedScene" path="res://scenes/props/bin.tscn" id="bin"]
 
 [node name="MainRoomProps" type="Node3D"]
 
@@ -227,3 +228,33 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.122, 0.5)
 
 [node name="BallTable" parent="." instance=ExtResource("ball")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.899, 0.35)
+
+[node name="Bin01" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 0.177, 2.4)
+
+[node name="Bin02" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0.177, -2.6)
+
+[node name="Bin03" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.177, 1.6)
+
+[node name="Bin04" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 0.177, -2.4)
+
+[node name="Bin05" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.177, 3.9)
+
+[node name="Bin06" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 0.177, -3.2)
+
+[node name="Bin07" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.177, 4.4)
+
+[node name="Bin08" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 0.177, 4.4)
+
+[node name="Bin09" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.177, 0.9)
+
+[node name="Bin10" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.177, 0)

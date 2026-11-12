@@ -16,6 +16,8 @@ var _start_transform: Transform3D
 
 func _ready() -> void:
 	_start_transform = global_transform
+	# Lets creatures find the player with get_first_node_in_group("player").
+	add_to_group("player")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 

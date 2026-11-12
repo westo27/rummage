@@ -6,6 +6,7 @@ extends CanvasLayer
 @onready var _crosshair: Crosshair = $Crosshair
 @onready var _aim_label: Label = $AimLabel
 @onready var _lift_label: Label = $LiftLabel
+@onready var _caught_label: Label = $CaughtLabel
 
 
 func set_aim(state: Beam.AimState, detail: String) -> void:
@@ -16,3 +17,7 @@ func set_aim(state: Beam.AimState, detail: String) -> void:
 
 func set_lift_limit(kg: float) -> void:
 	_lift_label.text = "Lift: %.0f kg" % kg
+
+
+func set_caught(caught: int, total: int) -> void:
+	_caught_label.text = "Caught: %d / %d" % [caught, total]

@@ -15,6 +15,9 @@ func _ready() -> void:
 
 func _run() -> void:
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	# Stage 2 tests the beam on props alone. Creatures would (correctly) take aim
+	# priority when one flees in front of a target, so take them out.
+	_main.get_node("MainRoomCreatures").free()
 	get_tree().root.add_child(_main)
 	_player = _main.get_node("Player")
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")

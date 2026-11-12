@@ -5,6 +5,9 @@ extends Node3D
 @onready var _beam: Beam = $Player/Head/Camera3D/Beam
 @onready var _hud: Hud = $HUD
 
+var _caught: int = 0
+var _total_creatures: int = 0
+
 
 # Godot calls _ready on children before their parent, so by the time this runs
 # the beam and HUD have already set themselves up.
@@ -20,6 +23,18 @@ func _ready() -> void:
 	_beam.aim_changed.connect(_hud.set_aim)
 	_beam.lift_limit_changed.connect(_hud.set_lift_limit)
 	_hud.set_lift_limit(_beam.lift_limit)
+
+	# Each creature added itself to the "creatures" group in its own _ready.
+	for creature: Creature in get_tree().get_nodes_in_group("creatures"):
+		creature.captured.connect(_on_creature_captured)
+		_total_creatures += 1
+	_hud.set_caught(_caught, _total_creatures)
+
+
+func _on_creature_captured(_creature: Creature) -> void:
+	_caught += 1
+	_beam.add_lift(Game.tune.lift_per_capture)
+	_hud.set_caught(_caught, _total_creatures)
 
 
 # _unhandled_input only receives events nothing else (such as UI) has consumed.

@@ -87,3 +87,12 @@ extends Resource
 @export var jolt_speed: float = 0.35
 ## Loudness of creature squeaks, in decibels (0 = full, -10 = quieter).
 @export var squeak_volume_db: float = -4.0
+
+@export_group("Ping")
+## Seconds between pings (Q).
+@export var ping_cooldown: float = 8.0
+## Hidden creatures within this many metres answer a ping.
+@export var ping_radius: float = 4.5
+## Each creature answers after (its distance × this) seconds, so the answers
+## ripple outward like sonar and nearer ones come first.
+@export var ping_delay_per_metre: float = 0.07

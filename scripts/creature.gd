@@ -235,6 +235,14 @@ func _give_tell() -> void:
 			hop()
 
 
+## Called by the ping (Q): squeak and glow, without revealing.
+func answer_ping() -> void:
+	if state != State.HIDDEN:
+		return
+	squeak(1.1)
+	flash()
+
+
 func squeak(pitch: float) -> void:
 	_voice.pitch_scale = _base_pitch * pitch
 	_voice.play()

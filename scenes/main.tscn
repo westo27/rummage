@@ -5,6 +5,9 @@
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="3_hud"]
 [ext_resource type="PackedScene" path="res://scenes/main_room_props.tscn" id="4_props"]
 [ext_resource type="PackedScene" path="res://scenes/main_room_creatures.tscn" id="5_creatures"]
+[ext_resource type="PackedScene" path="res://scenes/side_room_props.tscn" id="6_side_props"]
+[ext_resource type="PackedScene" path="res://scenes/side_room_creatures.tscn" id="7_side_creatures"]
+[ext_resource type="Script" path="res://scripts/ping.gd" id="8_ping"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -93,5 +96,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.5)
 [node name="MainRoomProps" parent="." instance=ExtResource("4_props")]
 
 [node name="MainRoomCreatures" parent="." instance=ExtResource("5_creatures")]
+
+[node name="SideRoomProps" parent="." instance=ExtResource("6_side_props")]
+
+[node name="SideRoomCreatures" parent="." instance=ExtResource("7_side_creatures")]
+
+[node name="Ping" type="Node" parent="."]
+script = ExtResource("8_ping")
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]

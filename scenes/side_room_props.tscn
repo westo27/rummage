@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/props/ball.tscn" id="ball"]
+[ext_resource type="PackedScene" path="res://scenes/props/bin.tscn" id="bin"]
+[ext_resource type="PackedScene" path="res://scenes/props/book.tscn" id="book"]
+[ext_resource type="PackedScene" path="res://scenes/props/crate.tscn" id="crate"]
+[ext_resource type="PackedScene" path="res://scenes/props/small_box.tscn" id="small_box"]
+
+[node name="SideRoomProps" type="Node3D"]
+
+[node name="SideCrateNE" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.302, -1.8)
+
+[node name="SideCrateSW" parent="." instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 0.302, 1.8)
+
+[node name="SideBinSE" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.177, 1.8)
+
+[node name="SideBinNW" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.177, -1.8)
+
+[node name="SideBoxA" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 0.202, -0.23)
+
+[node name="SideBoxB" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 0.202, 0.23)
+
+[node name="SideBoxTop" parent="." instance=ExtResource("small_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 0.604, 0)
+
+[node name="SideBook1" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 9, 0.022, 0.6)
+mass = 0.6
+
+[node name="SideBook2" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 9, 0.063, 0.6)
+mass = 0.7
+
+[node name="SideBook3" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 9, 0.104, 0.6)
+mass = 0.8
+
+[node name="SideBall" parent="." instance=ExtResource("ball")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.122, -0.8)

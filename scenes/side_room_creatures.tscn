@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/creature.tscn" id="creature"]
+
+[node name="SideRoomCreatures" type="Node3D"]
+
+[node name="UnderSideCrateNE" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.092, -1.8)
+
+[node name="UnderSideCrateSW" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 0.092, 1.8)
+
+[node name="UnderSideBinSE" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.092, 1.8)
+
+[node name="BehindSideBoxes" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.15, 0.092, 0)

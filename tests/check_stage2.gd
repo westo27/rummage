@@ -57,6 +57,9 @@ func _run() -> void:
 	var hold_point: Vector3 = _camera_pos() + _forward() * _beam._hold_distance
 	_check("held crate follows hold point", crate.global_position.distance_to(hold_point) < 0.15,
 		"off by %.3f m" % crate.global_position.distance_to(hold_point))
+	await get_tree().process_frame
+	var steady_bend: float = _arc_bend()
+	_check("beam arc is nearly straight when object keeps up", steady_bend < 0.06, "bend %.3f m" % steady_bend)
 
 	# --- Throw: speed = 16 / (1 + 7/6) = 7.38 m/s ---
 	_aim_at(Vector3(2.5, 1.5, -4.0))
@@ -114,6 +117,10 @@ func _run() -> void:
 	for i in 8:
 		_player.rotation.y += 0.06
 		await get_tree().physics_frame
+	await get_tree().process_frame
+	var swing_bend: float = _arc_bend()
+	_check("beam arc bends while the object lags a swing", swing_bend > 0.1, "bend %.3f m" % swing_bend)
+	_check("arc bows toward the aim direction", _arc_bows_toward_aim(), "")
 	_release("grab")
 	await get_tree().physics_frame
 	_check("release keeps swing velocity", book.linear_velocity.length() > 3.0,
@@ -165,6 +172,32 @@ func _camera_pos() -> Vector3:
 
 func _forward() -> Vector3:
 	return -(_main.get_node("Player/Head/Camera3D") as Camera3D).global_transform.basis.z
+
+
+## Returns [start, middle, end] of the drawn beam ribbon (each = average of a vertex pair).
+func _arc_points() -> Array[Vector3]:
+	var mesh := _beam._beam_mesh.mesh as ImmediateMesh
+	var v: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var mid: int = (v.size() / 2) / 2 * 2  # first vertex of the middle pair
+	return [(v[0] + v[1]) * 0.5, (v[mid] + v[mid + 1]) * 0.5, (v[v.size() - 2] + v[v.size() - 1]) * 0.5]
+
+
+## How far the ribbon's middle sits from the straight line between its ends.
+func _arc_bend() -> float:
+	var p: Array[Vector3] = _arc_points()
+	var closest: Vector3 = Geometry3D.get_closest_point_to_segment(p[1], p[0], p[2])
+	return p[1].distance_to(closest)
+
+
+## True if the curve's middle is closer to the aim ray than the straight chord's middle is.
+func _arc_bows_toward_aim() -> bool:
+	var p: Array[Vector3] = _arc_points()
+	var eye: Vector3 = _camera_pos()
+	var ray_end: Vector3 = eye + _forward() * 20.0
+	var chord_mid: Vector3 = (p[0] + p[2]) * 0.5
+	var d_curve: float = p[1].distance_to(Geometry3D.get_closest_point_to_segment(p[1], eye, ray_end))
+	var d_chord: float = chord_mid.distance_to(Geometry3D.get_closest_point_to_segment(chord_mid, eye, ray_end))
+	return d_curve < d_chord
 
 
 ## Turns the player body (yaw) and head (pitch) to look at a world point.

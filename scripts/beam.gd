@@ -20,6 +20,8 @@ const MASK_WORLD_AND_PROPS: int = 1 | 4
 ## Where the beam visibly starts, relative to the camera (lower right, like a hand).
 const BEAM_ORIGIN_LOCAL := Vector3(0.22, -0.2, -0.35)
 const REJECT_FLASH_SECONDS: float = 0.3
+const ARC_SEGMENTS: int = 20
+const ARC_HALF_WIDTH: float = 0.012
 
 var lift_limit: float = 0.0
 var held: Prop = null
@@ -46,10 +48,19 @@ var _detail: String = ""
 
 func _ready() -> void:
 	lift_limit = Game.tune.start_lift_limit
-	# top_level makes the beam mesh ignore its parent's transform, so we can place
-	# it in world coordinates without the camera's movement being added on top.
+	# top_level makes the beam mesh ignore its parent's transform, so its vertices
+	# can be world positions without the camera's movement being added on top.
+	# It keeps whatever world transform it had at that moment, so reset it.
 	_beam_mesh.top_level = true
+	_beam_mesh.global_transform = Transform3D.IDENTITY
 	_beam_mesh.visible = false
+
+
+# The beam line is purely visual, so it's redrawn every rendered frame (_process)
+# rather than every physics tick; on a 144 Hz monitor that keeps the hand end
+# glued to the camera instead of stepping at 60 Hz.
+func _process(_delta: float) -> void:
+	_update_beam_mesh()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -90,7 +101,6 @@ func _physics_process(delta: float) -> void:
 			_rejected = null
 
 	_update_aim_state()
-	_update_beam_mesh()
 
 
 ## Raises the lift limit. Stage 3 calls this on each capture.
@@ -188,16 +198,37 @@ func _update_beam_mesh() -> void:
 		return
 	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
 	var end: Vector3 = end_body.global_position
-	var length: float = start.distance_to(end)
-	if length < 0.01:
-		_beam_mesh.visible = false
-		return
-	var dir: Vector3 = (end - start) / length
-	var up: Vector3 = Vector3.UP if absf(dir.y) < 0.99 else Vector3.FORWARD
-	# A 1×1×1 box, pointed along the beam and stretched to its length.
-	# A basis is three axis vectors; scaling each one stretches the box along it.
-	var aim := Basis.looking_at(dir, up)
-	var stretched := Basis(aim.x * 0.012, aim.y * 0.012, aim.z * length)
-	_beam_mesh.global_transform = Transform3D(stretched, (start + end) * 0.5)
+	# The bend: aim_point is where you're pulling the object to (the hold point,
+	# or for the too-heavy flash, the spot on your aim at the object's distance).
+	# The curve is pulled toward a point part-way from the hand to aim_point. When
+	# the object is at aim_point that point lies on the straight line and the beam
+	# is straight; when the object lags behind a swing, the beam bows toward it.
+	var aim_distance: float = _hold_distance if held != null else _camera.global_position.distance_to(end)
+	var aim_point: Vector3 = _camera.global_position + _forward() * aim_distance
+	var control: Vector3 = start.lerp(aim_point, Game.tune.beam_arc_bend)
+	_draw_arc(start, control, end)
 	_beam_material.albedo_color = color
 	_beam_mesh.visible = true
+
+
+## Draws a thin ribbon along a quadratic Bézier curve (start → end, pulled
+## toward control). ImmediateMesh is a mesh you rebuild from scratch each frame,
+## like drawing on a canvas. The mesh node is top_level with no transform, so
+## these vertices are plain world positions.
+func _draw_arc(start: Vector3, control: Vector3, end: Vector3) -> void:
+	var mesh := _beam_mesh.mesh as ImmediateMesh
+	mesh.clear_surfaces()
+	# A triangle strip turns each new pair of points into two more triangles.
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP, _beam_material)
+	var eye: Vector3 = _camera.global_position
+	for i in ARC_SEGMENTS + 1:
+		var t: float = float(i) / ARC_SEGMENTS
+		var u: float = 1.0 - t
+		var point: Vector3 = u * u * start + 2.0 * u * t * control + t * t * end
+		var tangent: Vector3 = 2.0 * u * (control - start) + 2.0 * t * (end - control)
+		# Spread the ribbon sideways, perpendicular to both the curve and the
+		# line to the eye, so it always faces the camera and never looks edge-on.
+		var side: Vector3 = tangent.cross(eye - point).normalized() * ARC_HALF_WIDTH
+		mesh.surface_add_vertex(point - side)
+		mesh.surface_add_vertex(point + side)
+	mesh.surface_end()

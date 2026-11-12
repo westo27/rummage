@@ -44,6 +44,9 @@ extends Resource
 ## Fraction of a held object's spin removed each physics tick, so things
 ## don't twirl wildly in the beam.
 @export_range(0.0, 1.0) var held_spin_damping: float = 0.15
+## How strongly the beam line curves toward where you're aiming when the held
+## object lags behind. 0 = always straight; around 0.5–0.8 reads well.
+@export_range(0.0, 1.0) var beam_arc_bend: float = 0.6
 
 @export_group("Lift")
 ## Heaviest mass (kg) the beam can lift at the start.

@@ -154,10 +154,10 @@ the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
 
 - A cowering creature doesn't move again when you walk round to see it, so
   you can still catch it. It only picks a hiding spot while it's seeking.
-- "Behind" means behind from where you stand, not outside where you're looking.
-  A creature can still cower in plain view off to your side if that's the
-  only cover. If nothing nearby hides it (seek time runs out), it cowers
-  wherever it is.
+- "Behind" means hidden from where you stand. Which way you're facing doesn't
+  matter. If no prop within 5 m can hide it, a creature takes the nearest spot
+  anyway, and if the seek time runs out first it cowers wherever it is. Either
+  way it can end up in plain view.
 
 - Furniture doesn't block catching an exposed creature, only walls do, so a
   creature half behind a crate can still be caught. I chose generous over exact.

@@ -82,12 +82,7 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < Game.tune.fall_reset_y:
 		global_position = Vector3(0.0, 0.3, 0.0)
 		velocity = Vector3.ZERO
-
-
-# Visual-only trembling while cowering, every rendered frame.
-func _process(_delta: float) -> void:
-	if state == State.COWERING:
-		_visual.position = Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)) * 0.01
+		reset_physics_interpolation()  # teleport: don't draw a glide
 
 
 # ---------------------------------------------------------------- states
@@ -139,6 +134,9 @@ func _update_seeking(delta: float) -> void:
 
 func _update_cowering(delta: float) -> void:
 	_move(Vector3.ZERO, 0.0, delta)  # just gravity, in case it's on something
+	# Tremble (visual only). Done here in the physics tick rather than per frame
+	# because physics interpolation only expects transforms to change in ticks.
+	_visual.position = Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)) * 0.01
 	_check_left -= delta
 	if _check_left > 0.0:
 		return
@@ -204,7 +202,9 @@ func capture(toward: Vector3) -> void:
 	collision_mask = 0
 	# A tween animates properties over time without writing a per-frame loop.
 	# set_parallel runs both animations at once; chain() then waits for them.
-	var tween := create_tween().set_parallel(true)
+	# TWEEN_PROCESS_PHYSICS steps it in physics ticks, which is what physics
+	# interpolation expects for anything that moves.
+	var tween := create_tween().set_parallel(true).set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_visual, "global_position", toward, 0.25)
 	tween.tween_property(_visual, "scale", Vector3.ONE * 0.15, 0.25)
 	tween.chain().tween_callback(_finish_capture)
@@ -251,7 +251,7 @@ func flash() -> void:
 
 
 func hop() -> void:
-	var tween := create_tween()
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_visual, "position:y", 0.08, 0.1)
 	tween.tween_property(_visual, "position:y", 0.0, 0.12)
 

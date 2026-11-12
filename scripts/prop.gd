@@ -51,9 +51,8 @@ func _ready() -> void:
 	if keep_upright_until_grabbed:
 		axis_lock_angular_x = true
 		axis_lock_angular_z = true
-	# These two callbacks run every frame/tick once enabled. Most props sit still,
-	# so they stay off until something needs them.
-	set_process(false)
+	# _physics_process runs every tick once enabled. Most props sit still, so it
+	# stays off until a shudder or a player-collision check needs it.
 	set_physics_process(false)
 
 
@@ -67,7 +66,6 @@ func start_hold(holder: PhysicsBody3D) -> void:
 	_ignored_body = holder
 	add_collision_exception_with(holder)
 	holder.add_collision_exception_with(self)
-	set_physics_process(false)
 
 
 ## Called by the beam when it lets go (dropped, thrown, or snapped off).
@@ -83,30 +81,37 @@ func end_hold() -> void:
 ## the sofa can't nudge it and disturb what's hiding under it.
 func shudder() -> void:
 	_shudder_left = SHUDDER_SECONDS
-	set_process(true)
+	set_physics_process(true)
 
 
-func _process(delta: float) -> void:
+# Runs only while there's something to do (see the end), then switches itself off.
+# The shudder is done here in the physics tick rather than per frame because
+# physics interpolation (see player.gd) only expects transforms to change in ticks.
+func _physics_process(delta: float) -> void:
+	if _shudder_left > 0.0:
+		_update_shudder(delta)
+	if _ignored_body != null and not is_held:
+		_restore_player_collision_when_clear()
+	var waiting_for_player: bool = _ignored_body != null and not is_held
+	if _shudder_left <= 0.0 and not waiting_for_player:
+		set_physics_process(false)
+
+
+func _update_shudder(delta: float) -> void:
 	_shudder_left -= delta
 	var strength: float = maxf(_shudder_left, 0.0) / SHUDDER_SECONDS * SHUDDER_AMOUNT
 	for i in _meshes.size():
 		var jitter := Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * strength
 		_meshes[i].position = _mesh_rest_positions[i] + jitter
-	if _shudder_left <= 0.0:
-		set_process(false)
 
 
-func _physics_process(_delta: float) -> void:
-	if _ignored_body == null:
-		set_physics_process(false)
-		return
+func _restore_player_collision_when_clear() -> void:
 	var player_centre: Vector3 = _ignored_body.global_position + Vector3.UP * 0.85
 	var clear_distance: float = hold_radius + 0.9
 	if global_position.distance_to(player_centre) > clear_distance:
 		remove_collision_exception_with(_ignored_body)
 		_ignored_body.remove_collision_exception_with(self)
 		_ignored_body = null
-		set_physics_process(false)
 
 
 ## Light props go on the "clutter" layer, which the player's movement ignores

@@ -41,7 +41,9 @@ func _run() -> void:
 	# --- Tells: force one creature's tell timer ---
 	var shy: Creature = _creatures.get_node("UnderBin01")
 	shy._tell_left = 0.0
-	await _wait(0.05)
+	# One tick only: the squeak is under 0.1 s long and could finish before a
+	# slower check looks.
+	await get_tree().physics_frame
 	_check("a hidden creature's tell plays a squeak", shy._voice.playing, "")
 	_check("giving a tell doesn't reveal it", shy.state == Creature.State.HIDDEN, "state=%s" % shy.state)
 
@@ -184,7 +186,9 @@ func _flat_dir(p: Vector3) -> Vector3:
 
 
 func _camera_pos() -> Vector3:
-	return (_main.get_node("Player/Head/Camera3D") as Camera3D).global_position
+	# The head, not the camera: the camera is top_level and only catches up with
+	# a teleported player on the next tick, while the head moves instantly.
+	return (_main.get_node("Player/Head") as Node3D).global_position
 
 
 func _aim_at(target: Vector3) -> void:

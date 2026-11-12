@@ -21,7 +21,7 @@ extends Resource
 @export var walk_speed: float = 4.5
 @export var run_speed: float = 7.5
 ## Radians of turn per pixel of mouse movement.
-@export var mouse_sensitivity: float = 0.0003
+@export var mouse_sensitivity: float = 0.0004
 ## Props this light or lighter are "clutter": the player walks through them,
 ## kicking them aside, instead of being blocked. Heavier props block the player.
 @export var player_push_max_mass: float = 3.0

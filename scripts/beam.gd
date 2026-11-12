@@ -260,7 +260,9 @@ func _update_beam_mesh() -> void:
 		_beam_mesh.visible = false
 		return
 	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
-	var end: Vector3 = end_body.global_position
+	# Where the object is *drawn* this frame (see physics interpolation in
+	# player.gd), so the beam stays attached instead of wobbling against it.
+	var end: Vector3 = end_body.get_global_transform_interpolated().origin
 	# The bend: aim_point is where you're pulling the object to (the hold point,
 	# or for a too-heavy object, the spot on your aim at the object's distance).
 	# The curve is pulled toward a point part-way from the hand to aim_point. When

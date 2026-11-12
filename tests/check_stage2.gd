@@ -183,7 +183,9 @@ func _run() -> void:
 
 
 func _camera_pos() -> Vector3:
-	return (_main.get_node("Player/Head/Camera3D") as Camera3D).global_position
+	# The head, not the camera: the camera is top_level and only catches up with
+	# a teleported player on the next tick, while the head moves instantly.
+	return (_main.get_node("Player/Head") as Node3D).global_position
 
 
 func _forward() -> Vector3:

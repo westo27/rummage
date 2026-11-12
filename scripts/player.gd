@@ -7,6 +7,14 @@ extends CharacterBody3D
 ## Turning is split over two nodes: left/right (yaw) rotates the whole body,
 ## up/down (pitch) rotates only the Head node. Doing both on one node would
 ## tilt the movement direction when you look down.
+##
+## Smoothness: physics runs at 60 Hz but the screen may refresh at 144+ Hz.
+## Physics interpolation (Project Settings > Physics > Common) makes Godot draw
+## moving bodies part-way between their last two physics positions, so they
+## glide instead of stepping. The camera is the exception: it's top_level with
+## interpolation switched off, and placed by hand every frame (_place_camera):
+## position from the interpolated head, rotation straight from the mouse. That
+## way looking around responds instantly instead of being smoothed a tick behind.
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -30,6 +38,20 @@ func _ready() -> void:
 	# Lets creatures find the player with get_first_node_in_group("player").
 	add_to_group("player")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_place_camera(head.global_position)
+
+
+# Every rendered frame: put the camera at the head's *drawn* (interpolated)
+# position, so it moves as smoothly as everything else.
+func _process(_delta: float) -> void:
+	_place_camera(head.get_global_transform_interpolated().origin)
+
+
+func _place_camera(origin: Vector3) -> void:
+	# Euler angles (pitch, yaw, roll) applied in Godot's usual Y-then-X order:
+	# turn left/right first, then tilt up/down. Same result as body + head.
+	var look := Basis.from_euler(Vector3(head.rotation.x, rotation.y, 0.0))
+	camera.global_transform = Transform3D(look, origin)
 
 
 # _input runs for every node before any _unhandled_input does. The recapture
@@ -77,6 +99,11 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < Game.tune.fall_reset_y:
 		_reset_to_start()
 
+	# The beam (a child, so its physics tick runs after this one) aims from the
+	# camera. Put the camera at the exact physics position for that, rather than
+	# the in-between drawn position _process will use for the next frame.
+	_place_camera(head.global_position)
+
 
 ## Light props ("clutter", see prop.gd) don't block the player's movement, so
 ## instead we look for any we're walking into and fling them ahead, a bit
@@ -111,3 +138,6 @@ func _reset_to_start() -> void:
 	global_transform = _start_transform
 	head.rotation = Vector3.ZERO
 	velocity = Vector3.ZERO
+	# A teleport, not movement: tell interpolation not to draw a glide from the
+	# old spot to the new one.
+	reset_physics_interpolation()

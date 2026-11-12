@@ -20,6 +20,12 @@ extends RigidBody3D
 ## a gated object and skip the gate.
 @export var keep_upright_until_grabbed: bool = false
 
+## Collision layer bit values: layer N has value 2^(N-1). See NOTES.md.
+const LAYER_WORLD: int = 1
+const LAYER_PLAYER: int = 2
+const LAYER_PROPS: int = 4
+const LAYER_CLUTTER: int = 16
+
 const SHUDDER_SECONDS: float = 0.35
 const SHUDDER_AMOUNT: float = 0.035
 
@@ -35,6 +41,7 @@ var _ignored_body: PhysicsBody3D = null
 func _ready() -> void:
 	# Groups are tags: any script can later ask for get_tree().get_nodes_in_group("props").
 	add_to_group("props")
+	_assign_collision_layer()
 	for child in get_children():
 		if child is MeshInstance3D:
 			_meshes.append(child)
@@ -100,6 +107,23 @@ func _physics_process(_delta: float) -> void:
 		_ignored_body.remove_collision_exception_with(self)
 		_ignored_body = null
 		set_physics_process(false)
+
+
+## Light props go on the "clutter" layer, which the player's movement ignores
+## (player.gd kicks them aside instead). Without this, a 1 kg book on its edge
+## stops the player dead, because a CharacterBody3D treats every rigid body as
+## an immovable wall. Heavier props stay on "props" and block the player.
+##
+## Two bodies collide if either one's mask includes the other's layer, so the
+## clutter mask must leave out the player for the player to pass through.
+## This overrides the layer/mask written in the prop's .tscn.
+func _assign_collision_layer() -> void:
+	if mass <= Game.tune.player_push_max_mass:
+		collision_layer = LAYER_CLUTTER
+		collision_mask = LAYER_WORLD | LAYER_PROPS | LAYER_CLUTTER
+	else:
+		collision_layer = LAYER_PROPS
+		collision_mask = LAYER_WORLD | LAYER_PLAYER | LAYER_PROPS | LAYER_CLUTTER
 
 
 func _apply_random_tint() -> void:

@@ -15,7 +15,7 @@ enum AimState { IDLE, CAN_GRAB, TOO_HEAVY, HOLDING, CREATURE }
 
 ## Collision layers are bit flags: layer 1 = value 1, layer 2 = 2, layer 3 = 4,
 ## layer 4 = 8. The ray only "sees" bodies on layers included in its mask.
-const MASK_WORLD_AND_PROPS: int = 1 | 4
+const MASK_WORLD_AND_PROPS: int = 1 | 4 | 16  # world, props, clutter
 const MASK_WORLD: int = 1
 const MASK_CREATURES: int = 8
 

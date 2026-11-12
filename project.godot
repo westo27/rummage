@@ -21,6 +21,8 @@ Game="*res://scripts/game.gd"
 
 [display]
 
+window/size/viewport_width=2560
+window/size/viewport_height=1440
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
@@ -30,6 +32,7 @@ window/stretch/aspect="expand"
 3d_physics/layer_2="player"
 3d_physics/layer_3="props"
 3d_physics/layer_4="creatures"
+3d_physics/layer_5="clutter"
 
 [physics]
 

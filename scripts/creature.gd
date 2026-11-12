@@ -23,7 +23,7 @@ enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 @export var reveal_on_knock: bool = true
 
 const LAYER_CREATURES: int = 8
-const MASK_PROPS: int = 4
+const MASK_PROPS: int = 4 | 16  # heavy props and light "clutter" props
 ## How far around a hidden creature to look for the props that cover it.
 const COVER_RADIUS_HIDDEN: float = 0.3
 ## Cowering creatures watch a wider area, so things landing near them count.

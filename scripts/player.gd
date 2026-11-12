@@ -12,6 +12,17 @@ extends CharacterBody3D
 @onready var camera: Camera3D = $Head/Camera3D
 
 var _start_transform: Transform3D
+## A capsule a little fatter than the player's own, used to find clutter we're
+## walking into. Built once and reused every tick.
+var _kick_query := PhysicsShapeQueryParameters3D.new()
+
+
+func _init() -> void:
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.5
+	capsule.height = 1.7
+	_kick_query.shape = capsule
+	_kick_query.collision_mask = 16  # the "clutter" layer
 
 
 func _ready() -> void:
@@ -61,9 +72,39 @@ func _physics_process(delta: float) -> void:
 	velocity.z = direction.z * speed
 
 	move_and_slide()
+	_kick_clutter()
 
 	if global_position.y < Game.tune.fall_reset_y:
 		_reset_to_start()
+
+
+## Light props ("clutter", see prop.gd) don't block the player's movement, so
+## instead we look for any we're walking into and fling them ahead, a bit
+## faster than we're moving, so we wade through the mess instead of snagging.
+func _kick_clutter() -> void:
+	var walk := Vector3(velocity.x, 0.0, velocity.z)
+	if walk.length() < 0.5:
+		return
+	var walk_dir: Vector3 = walk.normalized()
+	var kick_speed: float = walk.length() * Game.tune.player_kick_factor
+
+	_kick_query.transform = global_transform.translated_local(Vector3(0.0, 0.85, 0.0))
+	var hits: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(_kick_query, 16)
+	for hit in hits:
+		var prop := hit.collider as Prop
+		if prop == null or prop.is_held:
+			continue
+		var away: Vector3 = prop.global_position - global_position
+		away.y = 0.0
+		if away.dot(walk_dir) <= 0.0:
+			continue  # it's behind us; leave it
+		var push_dir: Vector3 = (away.normalized() + walk_dir).normalized()
+		# Only ever speed it up along the push, never slow down something
+		# already flying away, and only give the little upward hop once.
+		var current: float = prop.linear_velocity.dot(push_dir)
+		if current < kick_speed:
+			prop.linear_velocity += push_dir * (kick_speed - current) + Vector3.UP * 1.0
+			prop.sleeping = false
 
 
 func _reset_to_start() -> void:

@@ -5,13 +5,22 @@ extends Node
 ## every scene, so any script can write `Game.tune.walk_speed`. Think of it as
 ## a service container entry. It survives scene reloads (the R restart).
 ##
-## It does two jobs: hands out the tunables, and defines the controls.
+## It does three jobs: hands out the tunables, holds the player's saved
+## settings, and defines the controls.
 
 var tune: Tunables = preload("res://config/tunables.tres")
+## The player's own preferences (look sensitivity, volume, invert). Lives here
+## so it survives scene changes and restarts. See scripts/settings.gd.
+var settings: Settings
 
 
 func _ready() -> void:
 	_setup_input_map()
+	# Settings reads its default sensitivity from `tune`, so it's built after
+	# the preload above has run.
+	settings = Settings.new()
+	settings.load_from_disk()
+	settings.apply_audio()
 
 
 ## Controls are defined here in code rather than in Project Settings > Input Map

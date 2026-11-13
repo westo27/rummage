@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/side_room_props.tscn" id="6_side_props"]
 [ext_resource type="PackedScene" path="res://scenes/side_room_creatures.tscn" id="7_side_creatures"]
 [ext_resource type="Script" path="res://scripts/ping.gd" id="8_ping"]
+[ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="9_pause"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -105,3 +106,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.5)
 script = ExtResource("8_ping")
 
 [node name="HUD" parent="." instance=ExtResource("3_hud")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("9_pause")]

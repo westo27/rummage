@@ -1,16 +1,19 @@
 # Project Rummage – concept prototype notes
 
-Godot 4.7.2, GDScript, Jolt Physics. Open the folder in Godot and press F5; the
-main scene is `scenes/main.tscn`.
+Godot 4.7.2, GDScript, Jolt Physics. Open the folder in Godot and press F5; it
+boots into `scenes/title.tscn` and Play loads `scenes/main.tscn`. To skip the
+menu while working, run the main scene on its own with F6.
 
-**Controls:** WASD move, Shift run, mouse look, Esc releases the cursor (click to
-recapture). Hold left mouse to grab, release to drop, right mouse or F to throw,
-mouse wheel to move the held object nearer/further. Click an exposed creature to
-catch it. Q pings. R restarts at any time.
+**Controls:** WASD move, Shift run, mouse look, Esc pauses. Hold left mouse to
+grab, release to drop, right mouse or F to throw, mouse wheel to move the held
+object nearer/further. Click an exposed creature to catch it. Q pings. R
+restarts at any time.
 
 ## Scene tree
 
 ```
+Title  scenes/title.tscn (scripts/title_screen.gd: Play, Settings, Quit)
+
 Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart)
 ├─ WorldEnvironment, LightMain, LightSide
 ├─ House
@@ -28,7 +31,8 @@ Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart
 ├─ SideRoomProps        scenes/side_room_props.tscn
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
-└─ HUD                  scenes/hud.tscn (scripts/hud.gd, scripts/crosshair.gd)
+├─ HUD                  scenes/hud.tscn (scripts/hud.gd, scripts/crosshair.gd)
+└─ PauseMenu            scenes/pause_menu.tscn (scripts/pause_menu.gd)
 ```
 
 - Each prop type is its own scene in `scenes/props/` (book, crate, bin, small_box,
@@ -42,6 +46,40 @@ Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart
 - `scripts/game.gd` is an autoload called `Game`. It holds the tunables and
   defines the controls.
 - `scripts/tones.gd` builds every sound from sine waves. There are no audio files.
+
+## Menus and settings
+
+The menus are built in GDScript, not as .tscn files, because they're the same
+few parts repeated: `scenes/title.tscn` and `scenes/pause_menu.tscn` hold only
+a root node and a script.
+
+- `scripts/ui_style.gd` is the whole look in one place: the palette, the fonts,
+  the panel shapes and the icons. Change a colour here and every menu and the
+  crosshair follow. Icons are drawn from circles, rectangles and triangles in
+  code, so like the rooms the menus use no imported assets.
+- `scripts/menu_panel.gd` is the only kind of button: a big panel with an icon,
+  a label and an accent bar, which rises when pointed at or focused and chimes.
+  It works with the mouse or the keyboard (Tab/arrows to move, Enter to press).
+- `scripts/settings_menu.gd` is the settings page, shared by the title screen
+  and the pause menu. Each setting is a −/+ stepper rather than a slider, so
+  every control is the same panel and nothing needs dragging.
+- `scripts/pause_menu.gd` owns the Esc key: it pauses the tree, frees the
+  cursor and hides the HUD. Its node's process mode is Always, so it keeps
+  running while everything else is frozen.
+- `scripts/settings.gd` holds what the player chose (look sensitivity, invert
+  Y, volume) in `user://settings.cfg`, reachable as `Game.settings`. The
+  `mouse_sensitivity` tunable is now only the default for a brand-new player.
+- Sizes are in the project's 2560x1440 design space (Project Settings >
+  Display), which the window scales to fit, so the numbers in the UI scripts
+  are about twice what they look on a 1080p screen.
+
+`tests/shoot.tscn` renders the title, settings, game and pause screens to PNGs
+in `user://shots` so they can be checked without playing. It needs a real
+window, so run it without `--headless`:
+
+```
+"C:/Program Files/Godot/Godot_v4.7.2-stable_win64.exe" --path . --resolution 1600x900 res://tests/shoot.tscn
+```
 
 ## Tunables
 
@@ -117,6 +155,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
+| check_menus | title panels, settings steppers and saving, pause/resume, restart, quit to title |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 
@@ -131,6 +170,12 @@ tell whether any of it is fun or readable. Not verified:
   *started*, not whether it's audible, pleasant, or easy to locate in 3D.
 - **Visuals:** the glow, the cover rattle, the hop, the tremble, the crosshair
   shapes, the toast and win panel layout, and the lighting are all unseen.
+  (The title, settings, pause and in-game HUD *have* been looked at, via
+  `tests/shoot.tscn`.)
+- **Menu sound:** the hover and select chimes have only been checked as "a
+  sound started", the same as the creature squeaks.
+- **The win screen** is still the prototype's plain box with "Press R to play
+  again". It hasn't been rebuilt out of menu panels like the rest.
 - **Clue quality:** whether tells and ping really let you follow clues instead
   of checking every bin.
 - **Smoothness on a real display:** the numbers are perfect headless, but

@@ -21,6 +21,41 @@ var _toast_left: float = 0.0
 @onready var _win_label: Label = $WinPanel/WinLabel
 
 
+## Sizes here are in the project's 2560x1440 design space, which the window
+## scales to fit, so the numbers are roughly twice what they look on a 1080p
+## screen. The look (font, colours, pill backgrounds) comes from UiStyle, the
+## same place the menus get theirs.
+const READOUT_FONT_SIZE: int = 36
+const AIM_FONT_SIZE: int = 34
+const TOAST_FONT_SIZE: int = 44
+const WIN_FONT_SIZE: int = 50
+
+
+func _ready() -> void:
+	# Lets the pause menu find and hide the HUD without a hard-coded path.
+	add_to_group("hud")
+	# The four corner readouts. They keep their dark outline rather than getting
+	# a panel behind them: during play the walls are pale and the floor is dark,
+	# and an outline survives both without putting boxes on screen.
+	for label: Label in [_lift_label, _caught_label, _timer_label, _ping_label]:
+		label.add_theme_font_override("font", UiStyle.font(600))
+		label.add_theme_font_size_override("font_size", READOUT_FONT_SIZE)
+		label.add_theme_color_override("font_color", UiStyle.CREAM)
+		label.add_theme_constant_override("outline_size", 10)
+	_aim_label.add_theme_constant_override("outline_size", 10)
+	_aim_label.add_theme_font_override("font", UiStyle.font(600))
+	_aim_label.add_theme_font_size_override("font_size", AIM_FONT_SIZE)
+	for label: Label in [_toast_label, _win_label]:
+		label.add_theme_font_override("font", UiStyle.font(700))
+	_toast_label.add_theme_font_size_override("font_size", TOAST_FONT_SIZE)
+	_toast_label.add_theme_color_override("font_color", UiStyle.AMBER)
+	_toast_label.add_theme_constant_override("outline_size", 12)
+	_win_label.add_theme_font_size_override("font_size", WIN_FONT_SIZE)
+	_win_label.add_theme_color_override("font_color", UiStyle.CREAM)
+	_win_panel.add_theme_stylebox_override("panel", UiStyle.panel_box(
+		Color(0.06, 0.12, 0.14, 0.92), 28, 20.0))
+
+
 func _process(delta: float) -> void:
 	if _toast_left > 0.0:
 		_toast_left -= delta

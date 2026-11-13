@@ -69,13 +69,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseMotion and captured:
 		var motion := event as InputEventMouseMotion
-		var sensitivity: float = Game.tune.mouse_sensitivity
+		# From the player's saved settings, not the tunable: the tunable is only
+		# the starting value for a new player. Esc is handled by the pause menu.
+		var sensitivity: float = Game.settings.mouse_sensitivity()
+		var pitch_sign: float = 1.0 if Game.settings.invert_look else -1.0
 		rotate_y(-motion.relative.x * sensitivity)
-		head.rotate_x(-motion.relative.y * sensitivity)
+		head.rotate_x(pitch_sign * motion.relative.y * sensitivity)
 		head.rotation.x = clampf(head.rotation.x, deg_to_rad(-89.0), deg_to_rad(89.0))
-
-	elif event.is_action_pressed("release_mouse"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 # _physics_process runs at a fixed 60 Hz in step with the physics engine;

@@ -49,7 +49,7 @@ func _run() -> void:
 			break
 		if _beam._beam_mesh.visible:
 			beam_shown = true
-			beam_in_its_colour = _beam._beam_material.albedo_color.is_equal_approx(color)
+			beam_in_its_colour = _beam.beam_color().is_equal_approx(color)
 			if _beam_end().distance_to(creature._visual.global_position) < 0.1:
 				beam_reached_it = true
 		await get_tree().physics_frame

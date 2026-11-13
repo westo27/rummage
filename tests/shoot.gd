@@ -71,6 +71,36 @@ func _run() -> void:
 	_shoot("catch_suck")
 	await get_tree().create_timer(1.0).timeout
 
+	# The beam: holding a crate up, then straining red against the sofa.
+	var beam := main.get_node("Player/Head/Camera3D/Beam") as Beam
+	var head := player.get_node("Head") as Node3D
+	var crate := main.get_node("MainRoomProps/CrateA") as Prop
+	player.global_position = Vector3(2.5, 0.05, 0.9)
+	player.reset_physics_interpolation()
+	_look(player, head, crate.global_position + Vector3(0.0, 0.3, 0.0))
+	await _frames(3)
+	beam._grab_armed = true
+	beam._grab(crate, crate.global_position + Vector3(0.0, 0.3, 0.0))
+	_look(player, head, Vector3(2.3, 1.0, -1.0))
+	await get_tree().create_timer(0.8).timeout
+	_shoot("beam_hold")
+	beam._release()
+	# Let go of the button first, or the beam grabs whatever it passes over
+	# (a cushion) on the way to the sofa.
+	beam._grab_armed = false
+	var sofa := main.get_node("MainRoomProps/Sofa") as Prop
+	player.global_position = Vector3(0.3, 0.05, -2.0)
+	player.reset_physics_interpolation()
+	_look(player, head, sofa.global_position + Vector3(0.3, 0.2, 0.0))
+	await _frames(3)
+	beam._grab_armed = true
+	beam._rejected = sofa
+	beam._rejected_local = sofa.to_local(sofa.global_position + Vector3(0.3, 0.2, 0.3))
+	await get_tree().create_timer(0.3).timeout
+	_shoot("beam_strain")
+	beam._rejected = null
+	beam._grab_armed = false
+
 	var pause := main.get_node("PauseMenu") as PauseMenu
 	pause.open()
 	await _frames(12)
@@ -102,6 +132,12 @@ func _panels(root: Node) -> Array[MenuPanel]:
 			found.append(child as MenuPanel)
 		found.append_array(_panels(child))
 	return found
+
+
+func _look(player: Node3D, head: Node3D, target: Vector3) -> void:
+	var dir: Vector3 = (target - head.global_position).normalized()
+	player.rotation.y = atan2(-dir.x, -dir.z)
+	head.rotation.x = asin(dir.y)
 
 
 func _frames(count: int) -> void:

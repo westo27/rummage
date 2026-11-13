@@ -193,6 +193,36 @@ removed.)
 - **Tag bounce**: the bag's tag hops and grows for a moment, and swings,
   whenever the count goes up.
 
+## The beam's look and the bloom
+
+Your direction: an energy beam that glows and pulses like a live wire, casts
+its light onto the room, and a cosy bloom over everything.
+
+- **The beam** is drawn by `shaders/beam.gdshader` on the ribbon beam.gd
+  builds: a white-hot core inside a soft coloured halo, bright pulses sliding
+  from your hand to the object, and a restless flicker. It's brighter than
+  white, which is what the bloom picks up. A second, thin ribbon (the
+  filament) takes a new jagged shape 30 times a second around the core, like
+  a spark. Colours: cyan holding, red straining, the creature's colour when
+  catching. Straining also makes it "agitated": faster pulses, more flicker
+  and a wilder filament.
+- **Light on the room:** two lights travel with the beam, a stronger one
+  just off the grab point and a softer one halfway along, both in the
+  beam's colour and flickering with it, so it tints the object, the floor
+  and nearby walls. There's also a glowing dot where the beam meets the
+  object (`shaders/glow_dot.gdshader`).
+- **Knobs** are constants at the top of beam.gd (`GLOW_HALF_WIDTH`,
+  `FILAMENT_JITTER`, `CRACKLES_PER_SECOND`, `END_LIGHT_ENERGY`,
+  `MID_LIGHT_ENERGY`, the two colours) and uniforms at the top of the shader
+  (`intensity`, pulse speed and spacing in `fragment()`).
+- **Bloom** is on the main scene's WorldEnvironment (select it in main.tscn
+  and look under Glow): soft, wide glow levels, a little bloom haze on
+  everything, and the Screen blend, which lightens rather than burns out.
+  The tone curve is Filmic, so the bright ceiling hotspot rolls off softly
+  instead of clipping to white. Creature glows and the catch sparkles pick
+  up the bloom too. To make it more or less dreamy, change Glow > Intensity
+  (0.8) and Glow > Bloom (0.08).
+
 ## Tunables
 
 Everything you're likely to tweak is in **`config/tunables.tres`**. Click it in
@@ -270,6 +300,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_menus | title panels, settings steppers and saving, pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
+| check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.

@@ -61,6 +61,10 @@ func _process(_delta: float) -> void:
 
 
 func _on_body_entered(_body: Node) -> void:
+	# The bag moving onto the win card takes every ball out of the scene
+	# for a moment, and a bump during that can't play a sound.
+	if not is_inside_tree():
+		return
 	if _last_speed > CLACK_SPEED:
 		_voice.pitch_scale = randf_range(0.85, 1.25)
 		_voice.volume_db = linear_to_db(clampf(_last_speed / 600.0, 0.12, 1.0)) - 6.0

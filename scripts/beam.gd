@@ -26,8 +26,27 @@ const MASK_CREATURES: int = 8
 
 ## Where the beam visibly starts, relative to the camera (lower right, like a hand).
 const BEAM_ORIGIN_LOCAL := Vector3(0.22, -0.2, -0.35)
-const ARC_SEGMENTS: int = 20
-const ARC_HALF_WIDTH: float = 0.012
+const ARC_SEGMENTS: int = 32
+## Half the width of the glowing ribbon: the bright core is a thin line down
+## its middle (drawn by shaders/beam.gdshader) and the rest is soft halo.
+const GLOW_HALF_WIDTH: float = 0.05
+## The crackling filament that twitches around the core, like a live wire.
+const FILAMENT_HALF_WIDTH: float = 0.006
+## How far the filament strays from the beam's line, in metres, calm and
+## straining. It picks a new shape this many times a second.
+const FILAMENT_JITTER: float = 0.018
+const FILAMENT_JITTER_STRAINING: float = 0.05
+const CRACKLES_PER_SECOND: float = 30.0
+const HOLD_COLOR := Color(0.35, 0.85, 1.0)
+const STRAIN_COLOR := Color(1.0, 0.22, 0.15)
+## The lights the beam casts: one where it meets the object, a softer one
+## halfway along. Range in metres and brightness.
+const END_LIGHT_RANGE: float = 2.6
+const END_LIGHT_ENERGY: float = 1.2
+const MID_LIGHT_RANGE: float = 2.2
+const MID_LIGHT_ENERGY: float = 0.7
+## Size of the glowing dot where the beam meets the object.
+const CONTACT_GLOW_SIZE: float = 0.38
 
 var lift_limit: float = 0.0
 var held: Prop = null
@@ -67,7 +86,15 @@ var _detail: String = ""
 ## Player node in player.tscn), however deep the node sits in that tree.
 @onready var _player: CharacterBody3D = owner as CharacterBody3D
 @onready var _beam_mesh: MeshInstance3D = $BeamMesh
-@onready var _beam_material: StandardMaterial3D = _beam_mesh.material_override as StandardMaterial3D
+
+## The look of the beam, built in _ready: see shaders/beam.gdshader.
+var _beam_material: ShaderMaterial
+var _filament: MeshInstance3D
+var _filament_material: ShaderMaterial
+var _contact_glow: MeshInstance3D
+var _contact_material: ShaderMaterial
+var _end_light: OmniLight3D
+var _mid_light: OmniLight3D
 
 
 func _ready() -> void:
@@ -77,7 +104,8 @@ func _ready() -> void:
 	# It keeps whatever world transform it had at that moment, so reset it.
 	_beam_mesh.top_level = true
 	_beam_mesh.global_transform = Transform3D.IDENTITY
-	_beam_mesh.visible = false
+	_build_beam_look()
+	_hide_beam()
 	# Non-positional player for the capture sound. A node created in code must be
 	# added to the tree with add_child before it does anything.
 	_capture_sound.stream = Tones.slurp()
@@ -337,13 +365,15 @@ func _update_beam_mesh() -> void:
 		return
 	var end_body: Prop = held
 	var end_local: Vector3 = _grab_local
-	var color := Color(0.35, 0.85, 1.0)
+	var color: Color = HOLD_COLOR
+	var agitation: float = 0.0
 	if end_body == null and _rejected != null:
 		end_body = _rejected
 		end_local = _rejected_local
-		color = Color(1.0, 0.2, 0.15)
+		color = STRAIN_COLOR
+		agitation = 1.0
 	if end_body == null:
-		_beam_mesh.visible = false
+		_hide_beam()
 		return
 	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
 	# The grab point on the object as it's *drawn* this frame (see physics
@@ -358,9 +388,7 @@ func _update_beam_mesh() -> void:
 	var aim_distance: float = _hold_distance if held != null else _camera.global_position.distance_to(end)
 	var aim_point: Vector3 = _camera.global_position + _forward() * aim_distance
 	var control: Vector3 = start.lerp(aim_point, Game.tune.beam_arc_bend)
-	_draw_arc(start, control, end)
-	_beam_material.albedo_color = color
-	_beam_mesh.visible = true
+	_show_beam(start, control, end, color, agitation)
 
 
 ## The beam while a creature is being sucked in: from the hand to the
@@ -374,21 +402,128 @@ func _draw_catch_beam() -> void:
 	var reach: float = clampf((Time.get_ticks_msec() / 1000.0 - _catch_started) / CATCH_REACH_TIME, 0.0, 1.0)
 	var end: Vector3 = start.lerp(target, reach)
 	var control: Vector3 = start.lerp(end, 0.5) + Vector3.UP * start.distance_to(end) * 0.08
-	_draw_arc(start, control, end)
-	_beam_material.albedo_color = _catching.body_color
-	_beam_mesh.visible = true
+	_show_beam(start, control, end, _catching.body_color, 0.4)
 
 
-## Draws a thin ribbon along a quadratic Bézier curve (start → end, pulled
-## toward control). ImmediateMesh is a mesh you rebuild from scratch each frame,
-## like drawing on a canvas. The mesh node is top_level with no transform, so
-## these vertices are plain world positions.
-func _draw_arc(start: Vector3, control: Vector3, end: Vector3) -> void:
-	var mesh := _beam_mesh.mesh as ImmediateMesh
+## The beam's current colour, for tests.
+func beam_color() -> Color:
+	return _beam_material.get_shader_parameter("beam_color")
+
+
+# ---------------------------------------------------------------- the look
+
+## Builds the parts of the beam that aren't in player.tscn: the shader
+## materials, the crackling filament, the glow where it meets the object,
+## and the two lights it casts. They're all top_level and placed by hand
+## every frame, like the ribbon, so they ignore the camera's own movement.
+## They're never moved in physics ticks, so physics interpolation is off.
+func _build_beam_look() -> void:
+	var beam_shader: Shader = load("res://shaders/beam.gdshader")
+	_beam_material = ShaderMaterial.new()
+	_beam_material.shader = beam_shader
+	_beam_mesh.material_override = _beam_material
+	_beam_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+	_filament_material = ShaderMaterial.new()
+	_filament_material.shader = beam_shader
+	_filament_material.set_shader_parameter("filament", 1.0)
+	_filament_material.set_shader_parameter("intensity", 2.2)
+	_filament = MeshInstance3D.new()
+	_filament.mesh = ImmediateMesh.new()
+	_filament.material_override = _filament_material
+	_filament.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_add_floating(_filament)
+
+	_contact_material = ShaderMaterial.new()
+	_contact_material.shader = load("res://shaders/glow_dot.gdshader")
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE * CONTACT_GLOW_SIZE
+	_contact_glow = MeshInstance3D.new()
+	_contact_glow.mesh = quad
+	_contact_glow.material_override = _contact_material
+	_contact_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_add_floating(_contact_glow)
+
+	_end_light = _make_light(END_LIGHT_RANGE)
+	_mid_light = _make_light(MID_LIGHT_RANGE)
+
+
+func _make_light(light_range: float) -> OmniLight3D:
+	var light := OmniLight3D.new()
+	light.omni_range = light_range
+	# No shadows: cheaper, and a soft glow spilling everywhere reads better.
+	light.shadow_enabled = false
+	_add_floating(light)
+	return light
+
+
+func _add_floating(node: Node3D) -> void:
+	node.top_level = true
+	node.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	add_child(node)
+
+
+func _hide_beam() -> void:
+	for node: Node3D in [_beam_mesh, _filament, _contact_glow, _end_light, _mid_light]:
+		node.visible = false
+
+
+## Draws the whole beam along the curve start → end (bent toward control):
+## the glowing ribbon, the crackling filament, the glow at the far end and the
+## lights. `agitation` is 0 when calm and 1 when straining against something
+## too heavy: faster pulses, more flicker, a wilder filament.
+func _show_beam(start: Vector3, control: Vector3, end: Vector3, color: Color, agitation: float) -> void:
+	var now: float = Time.get_ticks_msec() / 1000.0
+	_draw_ribbon(_beam_mesh.mesh as ImmediateMesh, start, control, end, GLOW_HALF_WIDTH, 0.0, 0)
+	# The filament takes a new random shape a few dozen times a second. The
+	# seed only changes that often, so it jumps between shapes like a spark
+	# rather than wriggling smoothly.
+	var crackle: int = int(now * CRACKLES_PER_SECOND)
+	var jitter: float = lerpf(FILAMENT_JITTER, FILAMENT_JITTER_STRAINING, agitation)
+	_draw_ribbon(_filament.mesh as ImmediateMesh, start, control, end, FILAMENT_HALF_WIDTH, jitter, crackle)
+
+	for material: ShaderMaterial in [_beam_material, _filament_material]:
+		material.set_shader_parameter("beam_color", color)
+		material.set_shader_parameter("agitation", agitation)
+	_contact_material.set_shader_parameter("glow_color", color)
+
+	# The glow where the beam meets the object, swelling slightly with the pulse.
+	_contact_glow.global_position = end
+	_contact_glow.scale = Vector3.ONE * (1.0 + 0.12 * sin(now * 18.0))
+
+	# The lights flicker with the beam, more when straining.
+	var flicker: float = 1.0 - lerpf(0.15, 0.4, agitation) * (0.5 + 0.5 * sin(now * 53.0) * sin(now * 37.0))
+	# Just off the surface, toward the hand, so it lights the object's face.
+	_end_light.global_position = end + (start - end).normalized() * 0.15
+	_end_light.light_color = color
+	_end_light.light_energy = END_LIGHT_ENERGY * flicker
+	# Halfway along the curve.
+	_mid_light.global_position = 0.25 * start + 0.5 * control + 0.25 * end
+	_mid_light.light_color = color
+	_mid_light.light_energy = MID_LIGHT_ENERGY * flicker
+
+	for node: Node3D in [_beam_mesh, _filament, _contact_glow, _end_light, _mid_light]:
+		node.visible = true
+
+
+## Builds one ribbon along a quadratic Bezier curve (start → end, pulled
+## toward control) into `mesh`. ImmediateMesh is a mesh you rebuild from
+## scratch each frame, like drawing on a canvas. The mesh node is top_level
+## with no transform, so these vertices are plain world positions.
+##
+## Each vertex gets a UV: x across the ribbon (0 or 1), y along it (0 at the
+## hand, 1 at the far end). The shader uses those to draw the core, the halo
+## and the pulses. `jitter` pushes each point sideways by a random amount
+## (none at the two ends) for the crackling filament; `seed` picks which
+## random shape.
+func _draw_ribbon(mesh: ImmediateMesh, start: Vector3, control: Vector3, end: Vector3,
+		half_width: float, jitter: float, seed: int) -> void:
 	mesh.clear_surfaces()
 	# A triangle strip turns each new pair of points into two more triangles.
-	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP, _beam_material)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
 	var eye: Vector3 = _camera.global_position
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
 	for i in ARC_SEGMENTS + 1:
 		var t: float = float(i) / ARC_SEGMENTS
 		var u: float = 1.0 - t
@@ -396,7 +531,12 @@ func _draw_arc(start: Vector3, control: Vector3, end: Vector3) -> void:
 		var tangent: Vector3 = 2.0 * u * (control - start) + 2.0 * t * (end - control)
 		# Spread the ribbon sideways, perpendicular to both the curve and the
 		# line to the eye, so it always faces the camera and never looks edge-on.
-		var side: Vector3 = tangent.cross(eye - point).normalized() * ARC_HALF_WIDTH
+		var across: Vector3 = tangent.cross(eye - point).normalized()
+		if jitter > 0.0:
+			point += across * rng.randf_range(-1.0, 1.0) * jitter * sin(PI * t)
+		var side: Vector3 = across * half_width
+		mesh.surface_set_uv(Vector2(0.0, t))
 		mesh.surface_add_vertex(point - side)
+		mesh.surface_set_uv(Vector2(1.0, t))
 		mesh.surface_add_vertex(point + side)
 	mesh.surface_end()

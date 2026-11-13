@@ -9,11 +9,6 @@ height = 1.7
 
 [sub_resource type="ImmediateMesh" id="ArcMesh_beam"]
 
-[sub_resource type="StandardMaterial3D" id="Mat_beam"]
-cull_mode = 2
-shading_mode = 0
-albedo_color = Color(0.35, 0.85, 1, 1)
-
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
 collision_mask = 5
@@ -39,4 +34,3 @@ script = ExtResource("2_beam")
 [node name="BeamMesh" type="MeshInstance3D" parent="Head/Camera3D/Beam"]
 cast_shadow = 0
 mesh = SubResource("ArcMesh_beam")
-material_override = SubResource("Mat_beam")

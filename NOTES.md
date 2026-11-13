@@ -512,8 +512,9 @@ the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
   anyway, and if the seek time runs out first it cowers wherever it is. Either
   way it can end up in plain view.
 
-- Furniture doesn't block catching an exposed creature, only walls do, so a
-  creature half behind a crate can still be caught. I chose generous over exact.
+- You can only catch a creature you can see: its middle or its top must be
+  in clear view past walls and furniture. One cowering behind a box or a
+  wardrobe door can't be caught through it, and the click grabs the box.
 - The player pushes clutter like a snowplough: anything dead ahead gets shoved
   until it reaches a wall.
 - Creatures under the bed ignore jolts and things flying past (so the gate

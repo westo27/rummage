@@ -24,6 +24,10 @@ const MASK_WORLD_AND_PROPS: int = 1 | 4 | 16 | 32  # world, props, clutter, rug
 const MASK_WORLD: int = 1
 const MASK_RUG: int = 32
 const MASK_CREATURES: int = 8
+## What hides a creature from the beam: walls, props and clutter.
+const MASK_SIGHT: int = 1 | 4 | 16
+## How far above a creature's middle its top is, for "can I see it?".
+const SIGHT_TOP: float = 0.08
 
 ## Where the beam starts, relative to the camera: just below the bottom edge
 ## of the screen, a little right of centre, so the beam runs in from off the
@@ -249,10 +253,14 @@ func _find_aimed_creature() -> Creature:
 	var creature := (hit.collider as Node).get_parent() as Creature
 	if creature == null:
 		return null
-	var sight := PhysicsRayQueryParameters3D.create(from, creature.global_position, MASK_WORLD, [_player.get_rid()])
-	if not space.intersect_ray(sight).is_empty():
-		return null
-	return creature
+	# The pick zone is bigger than the creature, so the ray can find one that's
+	# tucked behind a box or a wardrobe door. Only count it if some of it can
+	# really be seen: its middle or its top, past walls and furniture.
+	for spot: Vector3 in [creature.global_position, creature.global_position + Vector3.UP * SIGHT_TOP]:
+		var sight := PhysicsRayQueryParameters3D.create(from, spot, MASK_SIGHT, [_player.get_rid()])
+		if space.intersect_ray(sight).is_empty():
+			return creature
+	return null
 
 
 func _capture(creature: Creature) -> void:

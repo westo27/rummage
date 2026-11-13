@@ -107,6 +107,21 @@ func _run() -> void:
 	_check("opening the door reveals the creature inside", hidden_inside.state != Creature.State.HIDDEN,
 		"state=%s" % hidden_inside.state)
 
+	# --- You can't catch a creature you can't see: the shut door hides it ---
+	var behind_door := _main.get_node("MainRoomCreatures/InWardrobe2") as Creature
+	behind_door._set_catchable(true)  # as if it had been uncovered and hid in there
+	player.global_position = Vector3(4.4, 0.05, 0.45)
+	player.reset_physics_interpolation()
+	look = (behind_door.global_position - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	_check("a creature behind a shut wardrobe door can't be caught", beam._find_aimed_creature() == null,
+		"%s" % beam._find_aimed_creature())
+	_check("the click goes to the door instead", beam._find_aimed_prop() == wardrobe.get_node("DoorB"),
+		"%s" % beam._find_aimed_prop())
+	behind_door._set_catchable(false)
+
 	# --- Pictures hang on the wall; one hides a creature in a hole behind it ---
 	var picture: Prop = _main.get_node("MainRoomProps/PictureWest")
 	var behind := _main.get_node("MainRoomCreatures/BehindPicture") as Creature

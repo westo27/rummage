@@ -300,8 +300,8 @@ static func clack(variant: int = 0) -> AudioStreamWAV:
 		return _cache[key]
 	# Two glass marbles hitting: a bright, sharp crack with a very short ring
 	# at two unrelated high pitches (unrelated is what makes it glass rather
-	# than a note). Tom picked this one ("A, bright crack") from five
-	# candidates; tests/render_clacks.tscn renders them all.
+	# than a note). tests/render_clacks.tscn renders the alternatives that
+	# were compared.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 500 + variant
 	var ring_a: float = 2600.0 * rng.randf_range(0.93, 1.07)

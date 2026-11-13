@@ -16,9 +16,8 @@ signal landed(speed: float)
 const RADIUS: float = 21.0
 ## Slower bumps than this (px/s) are settling, not impacts, and make no sound.
 const CLACK_SPEED: float = 70.0
-## How far below full volume the hardest clack plays (dB). Was 5; Tom wanted
-## the marbles quieter.
-const CLACK_QUIETER_DB: float = 11.0
+## How far below full volume the hardest clack plays (dB).
+const CLACK_QUIETER_DB: float = 20.0
 
 var color: Color = Color.WHITE
 

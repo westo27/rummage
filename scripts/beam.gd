@@ -24,8 +24,11 @@ const MASK_WORLD_AND_PROPS: int = 1 | 4 | 16  # world, props, clutter
 const MASK_WORLD: int = 1
 const MASK_CREATURES: int = 8
 
-## Where the beam visibly starts, relative to the camera (lower right, like a hand).
-const BEAM_ORIGIN_LOCAL := Vector3(0.22, -0.2, -0.35)
+## Where the beam starts, relative to the camera: just below the bottom edge
+## of the screen, a little right of centre, so the beam runs in from off the
+## bottom of the view (the camera sees about 0.19 m either side of centre
+## vertically at this distance, so -0.32 is out of sight).
+const BEAM_ORIGIN_LOCAL := Vector3(0.1, -0.32, -0.25)
 const ARC_SEGMENTS: int = 32
 ## Half the width of the glowing ribbon: the bright core is a thin line down
 ## its middle (drawn by shaders/beam.gdshader) and the rest is soft halo.
@@ -77,6 +80,8 @@ var _capture_sound := AudioStreamPlayer.new()
 ## they're not placed in 3D. See Tones.whirr() and Tones.strain_crackle().
 var _hum := AudioStreamPlayer.new()
 var _strain := AudioStreamPlayer.new()
+## The object currently wearing the beam's glowing aura, if any.
+var _aura_prop: Prop = null
 ## Each sound's current loudness (0 to 1), eased toward where it should be.
 var _hum_gain: float = 0.0
 var _strain_gain: float = 0.0
@@ -151,6 +156,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_beam_mesh()
 	_update_sound(delta)
+	_update_aura()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -611,3 +617,15 @@ func _set_loop_level(player: AudioStreamPlayer, gain: float) -> void:
 	if not player.playing:
 		player.play()
 	player.volume_db = linear_to_db(gain)
+
+
+## Keeps the glowing aura on whatever the beam has hold of: cyan on a held
+## object, red on one it's straining against, none otherwise.
+func _update_aura() -> void:
+	var target: Prop = held if held != null else _rejected
+	if _aura_prop != target:
+		if is_instance_valid(_aura_prop):
+			_aura_prop.clear_aura()
+		_aura_prop = target
+	if target != null:
+		target.set_aura(HOLD_COLOR if held != null else STRAIN_COLOR)

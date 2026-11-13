@@ -51,7 +51,15 @@ var _gather_ticks: int = 0
 var _gather_baseline: float = 0.0
 var _gather_total: float = 0.0
 
+const AURA_SHADER: Shader = preload("res://shaders/beam_aura.gdshader")
+## How much bigger the aura blob is than the object: a share of its size,
+## plus a fixed margin in metres, so small things still get a visible halo.
+const AURA_GROWTH: float = 1.35
+const AURA_PADDING: float = 0.25
+
 var _meshes: Array[MeshInstance3D] = []
+## The aura blob, made the first time the beam needs it.
+var _aura: MeshInstance3D = null
 var _mesh_rest_positions: Array[Vector3] = []
 var _shudder_left: float = 0.0
 ## The player body we are currently ignoring collisions with, if any.
@@ -78,6 +86,45 @@ func _ready() -> void:
 	# _physics_process runs every tick once enabled. Most props sit still, so it
 	# stays off until a shudder or a player-collision check needs it.
 	set_physics_process(false)
+
+
+## Wraps the object in the beam's glowing aura (shaders/beam_aura.gdshader),
+## in `color`. Called by the beam while it holds or strains against this.
+## The aura is a soft ellipsoid fitted round the object, made the first time
+## it's needed. As a child it moves with the object by itself.
+func set_aura(color: Color) -> void:
+	if _aura == null:
+		_aura = _make_aura()
+	(_aura.material_override as ShaderMaterial).set_shader_parameter("glow_color", color)
+	_aura.visible = true
+
+
+func clear_aura() -> void:
+	if _aura != null:
+		_aura.visible = false
+
+
+## An ellipsoid a bit bigger than the object in every direction, centred on
+## it: the box around all its parts, scaled up and padded.
+func _make_aura() -> MeshInstance3D:
+	var bounds := AABB()
+	for i in _meshes.size():
+		var part: AABB = _meshes[i].transform * _meshes[i].get_aabb()
+		bounds = part if i == 0 else bounds.merge(part)
+	var sphere := SphereMesh.new()  # a ball 1 m across, stretched to fit below
+	sphere.radius = 0.5
+	sphere.height = 1.0
+	var material := ShaderMaterial.new()
+	material.shader = AURA_SHADER
+	var aura := MeshInstance3D.new()
+	aura.name = "Aura"
+	aura.mesh = sphere
+	aura.material_override = material
+	aura.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	aura.position = bounds.get_center()
+	aura.scale = bounds.size * AURA_GROWTH + Vector3.ONE * AURA_PADDING
+	add_child(aura)
+	return aura
 
 
 ## Called by the beam when it picks this object up.

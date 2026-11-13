@@ -42,8 +42,9 @@ void fragment() {
 		* sin(TIME * 53.0 + along * 31.0) * sin(TIME * 37.0 + along * 7.0);
 
 	float strength = (core * (1.0 + pulse * 1.4) + halo * (0.7 + pulse * 0.5)) * flicker;
-	// Fade in from the hand end, so the ribbon doesn't start as a hard cut.
-	strength *= smoothstep(0.0, 0.06, along);
+	// The hand end is just off the bottom of the screen; a tiny fade there
+	// in case a wide screen shows its very tip.
+	strength *= smoothstep(0.0, 0.015, along);
 
 	// The core runs toward white, as the hottest part of a glow does.
 	vec3 colour = mix(beam_color.rgb, vec3(1.0), core * 0.55);

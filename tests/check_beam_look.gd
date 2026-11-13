@@ -22,6 +22,9 @@ func _run() -> void:
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
 	await _wait(1.0)
 
+	# Two frames: process_frame fires just before nodes update, so the first
+	# would read the beam before it has redrawn.
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_check("nothing shows before grabbing", not _any_part_visible(), "")
 
@@ -32,6 +35,9 @@ func _run() -> void:
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.3)
+	# Two frames: process_frame fires just before nodes update, so the first
+	# would read the beam before it has redrawn.
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_check("holding: the glow, filament, contact glow and both lights show",
 		_all_parts_visible(), _visibility())
@@ -44,12 +50,18 @@ func _run() -> void:
 		"%.2f m away" % _beam._contact_glow.global_position.distance_to(grab_point))
 	_check("holding: the end light is right by it",
 		_beam._end_light.global_position.distance_to(grab_point) < 0.3, "")
+	_check("holding: the crate wears a cyan aura", _aura_on(crate, Beam.HOLD_COLOR), "")
 	_check("holding: calm, not agitated",
 		is_zero_approx(_beam._beam_material.get_shader_parameter("agitation")), "")
 	_release("grab")
 	await _wait(0.1)
+	# Two frames: process_frame fires just before nodes update, so the first
+	# would read the beam before it has redrawn.
 	await get_tree().process_frame
-	_check("letting go: everything goes", not _any_part_visible(), _visibility())
+	await get_tree().process_frame
+	_check("letting go: everything goes", not _any_part_visible(),
+		"%s held=%s rejected=%s catching=%s" % [_visibility(), _beam.held, _beam._rejected, _beam._catching])
+	_check("letting go: the aura goes", crate._aura != null and not crate._aura.visible, "")
 
 	# --- Straining against the sofa ---
 	var sofa: Prop = _main.get_node("MainRoomProps/Sofa")
@@ -58,19 +70,35 @@ func _run() -> void:
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.3)
+	# Two frames: process_frame fires just before nodes update, so the first
+	# would read the beam before it has redrawn.
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_check("straining: latched onto the sofa", _beam._rejected == sofa, "%s" % _beam._rejected)
 	_check("straining: everything shows", _all_parts_visible(), _visibility())
 	_check("straining: it's red", _beam.beam_color().is_equal_approx(Beam.STRAIN_COLOR), "")
+	_check("straining: the sofa wears a red aura", _aura_on(sofa, Beam.STRAIN_COLOR), "")
 	_check("straining: agitated",
 		is_equal_approx(_beam._beam_material.get_shader_parameter("agitation"), 1.0), "")
 	_release("grab")
 	await _wait(0.1)
+	# Two frames: process_frame fires just before nodes update, so the first
+	# would read the beam before it has redrawn.
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_check("letting go of the strain: everything goes", not _any_part_visible(), _visibility())
+	_check("letting go of the strain: the aura goes", not sofa._aura.visible, "")
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
+
+
+## True if `prop` is showing the beam's aura, in `color`, around itself.
+func _aura_on(prop: Prop, color: Color) -> bool:
+	if prop._aura == null or not prop._aura.visible:
+		return false
+	var shown: Color = (prop._aura.material_override as ShaderMaterial).get_shader_parameter("glow_color")
+	return shown.is_equal_approx(color)
 
 
 func _parts() -> Array[Node3D]:

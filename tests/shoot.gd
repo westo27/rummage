@@ -38,6 +38,8 @@ func _run() -> void:
 	var main: Node = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(main)
 	get_tree().current_scene = main
+	# Ignore the real mouse while rendering, so it can't swing the camera.
+	main.get_node("Player").set_process_unhandled_input(false)
 	await _frames(60)
 	_shoot("game")
 

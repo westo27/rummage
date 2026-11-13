@@ -207,6 +207,15 @@ its light onto the room, and a cosy bloom over everything.
   a spark. Colours: cyan holding, red straining, the creature's colour when
   catching. Straining also makes it "agitated": faster pulses, more flicker
   and a wilder filament.
+- **The aura**: whatever the beam holds glows with a soft blob of light in
+  the beam's colour (cyan holding, red straining) behind and around it,
+  wobbling and pulsing (`shaders/beam_aura.gdshader`). It's an ellipsoid
+  fitted round the object (`Prop._make_aura`, sized by `AURA_GROWTH` and
+  `AURA_PADDING`) with only its far side drawn, so the object hides its
+  middle and a halo shows round the edge.
+- **The beam starts below the bottom of the screen** (`BEAM_ORIGIN_LOCAL`),
+  so it runs in from off the bottom edge; caught creatures are pulled down
+  there too.
 - **The beam's sound** (your choices: a warm whirr that reacts to swinging,
   and crackle and fizz when straining). `Tones.whirr()` is a rounded 140 Hz
   tone with soft harmonics and a gentle sway, a seamless one-second loop.

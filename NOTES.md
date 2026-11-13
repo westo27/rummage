@@ -75,7 +75,7 @@ a root node and a script.
 - `scripts/glossy_card.gd` is the same finish as a container, used for the
   win screen's card.
 - **The marble bag** (`scripts/marble_bag.gd`, `scripts/bag_marble.gd`) sits
-  in the HUD's bottom-right corner. Each catch drops a ball in that
+  in the HUD's top-left corner. Each catch drops a ball in that
   creature's colour, with eyes, into a drawstring bag where it rolls and
   piles up. It's a SubViewport with its own 2D physics world, so the balls
   can't touch the 3D game. One function, `_outline()`, gives the bag's shape

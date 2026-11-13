@@ -18,7 +18,7 @@ var _toast_left: float = 0.0
 @onready var _ping_label: Label = $PingLabel
 @onready var _toast_label: Label = $ToastLabel
 
-## The drawstring bag in the bottom-right corner that caught creatures drop
+## The drawstring bag in the top-left corner that caught creatures drop
 ## into. The paper tag on its bow is the catch counter. See marble_bag.gd.
 var _bag: MarbleBag
 ## The win screen, built in code by _build_win_screen: a dimmed backdrop with a
@@ -41,6 +41,10 @@ const AIM_FONT_SIZE: int = 34
 const TOAST_FONT_SIZE: int = 44
 const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
+## Where the marble bag sits from the top-left corner. Negative y tucks the
+## empty space above its neck (where balls appear before dropping) off the
+## top of the screen.
+const BAG_MARGIN := Vector2(20.0, -40.0)
 
 
 func _ready() -> void:
@@ -69,15 +73,16 @@ func _ready() -> void:
 func _build_bag() -> void:
 	_bag = MarbleBag.new()
 	_bag.name = "MarbleBag"
-	# Pinned to the bottom-right corner at its natural size.
-	_bag.anchor_left = 1.0
-	_bag.anchor_top = 1.0
-	_bag.anchor_right = 1.0
-	_bag.anchor_bottom = 1.0
-	_bag.offset_left = -MarbleBag.VIEW_SIZE.x - 40.0
-	_bag.offset_top = -MarbleBag.VIEW_SIZE.y - 16.0
-	_bag.offset_right = -40.0
-	_bag.offset_bottom = -16.0
+	# Top-left corner. Anchors default to the top left, so the offsets are
+	# just its position and size.
+	_bag.offset_left = BAG_MARGIN.x
+	_bag.offset_top = BAG_MARGIN.y
+	_bag.offset_right = BAG_MARGIN.x + MarbleBag.VIEW_SIZE.x
+	_bag.offset_bottom = BAG_MARGIN.y + MarbleBag.VIEW_SIZE.y
+	# The lift readout sits just to the right of the bag, level with the top
+	# of the screen.
+	_lift_label.offset_left = _bag.offset_right + 8.0
+	_lift_label.offset_right = _lift_label.offset_left + 600.0
 	add_child(_bag)
 
 

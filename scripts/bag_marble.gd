@@ -69,7 +69,7 @@ func _on_body_entered(_body: Node) -> void:
 		# One of three takes, a little higher or lower each time, so a pile of
 		# balls settling sounds like a handful of marbles, not one sound repeated.
 		_voice.stream = Tones.clack(randi() % 3)
-		_voice.pitch_scale = randf_range(0.9, 1.15)
+		_voice.pitch_scale = randf_range(0.88, 1.08)
 		# Harder knocks are louder; the hardest a little under the squeaks.
 		_voice.volume_db = linear_to_db(clampf(_last_speed / 400.0, 0.2, 1.0)) - 5.0
 		_voice.play()

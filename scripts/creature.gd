@@ -221,8 +221,10 @@ func _start_cowering() -> void:
 	_check_left = CHECK_INTERVAL
 
 
-## Called by the beam. Plays one of the catch animations (Game.catch_style),
-## then emits `captured` and is removed. `toward` is the beam's hand.
+## Called by the beam. The creature is sucked into the beam's hand
+## (`toward`): it turns to face it and stretches toward it as it's pulled in,
+## speeding up as it goes, like being sucked through a straw. Then it emits
+## `captured` and is removed.
 func capture(toward: Vector3) -> void:
 	if state == State.CAPTURED:
 		return
@@ -230,38 +232,21 @@ func capture(toward: Vector3) -> void:
 	_set_catchable(false)
 	collision_layer = 0
 	collision_mask = 0
-	# Sparkles where it was caught, in every style. Added to the room rather
-	# than to the creature, so they outlive it.
+	# Sparkles where it was caught. Added to the room rather than to the
+	# creature, so they outlive it.
 	CatchSparkles.burst(get_parent(), _visual.global_position + Vector3.UP * 0.05, body_color)
 
+	var to_hand: Vector3 = toward - _visual.global_position
+	if to_hand.length() > 0.01 and absf(to_hand.normalized().y) < 0.98:
+		_visual.look_at(toward, Vector3.UP)  # -Z, its face, toward the hand
 	# A tween animates properties over time without writing a per-frame loop.
 	# Tweeners run one after another unless joined with parallel().
 	# TWEEN_PROCESS_PHYSICS steps it in physics ticks, which is what physics
 	# interpolation expects for anything that moves.
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	match Game.catch_style:
-		Game.CatchStyle.FLY_TO_BAG:
-			# A quick blink-out where it stands; the HUD then flies a ball in
-			# its colour from this spot on screen into the bag.
-			tween.tween_property(_visual, "scale", Vector3.ONE * 1.25, 0.05)
-			tween.tween_property(_visual, "scale", Vector3.ONE * 0.01, 0.1)
-		Game.CatchStyle.POP:
-			# Squash flat, swell up round, burst.
-			tween.tween_property(_visual, "scale", Vector3(1.5, 0.55, 1.5), 0.06)
-			tween.tween_property(_visual, "scale", Vector3.ONE * 1.8, 0.06) \
-				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_callback(_visual.hide)
-			tween.tween_interval(0.05)
-		Game.CatchStyle.SUCK:
-			# Turn to face the hand, then stretch toward it as it's pulled in,
-			# speeding up as it goes, like being sucked through a straw.
-			var to_hand: Vector3 = toward - _visual.global_position
-			if to_hand.length() > 0.01 and absf(to_hand.normalized().y) < 0.98:
-				_visual.look_at(toward, Vector3.UP)  # -Z, its face, toward the hand
-			tween.tween_property(_visual, "global_position", toward, 0.25) \
-				.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			tween.parallel().tween_property(_visual, "scale", Vector3(0.5, 0.5, 2.2), 0.15)
-			tween.tween_property(_visual, "scale", Vector3.ONE * 0.05, 0.05)
+	tween.tween_property(_visual, "global_position", toward, 0.25) 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(_visual, "scale", Vector3(0.5, 0.5, 2.2), 0.15)
+	tween.tween_property(_visual, "scale", Vector3.ONE * 0.05, 0.05)
 	tween.tween_callback(_finish_capture)
 
 

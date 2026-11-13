@@ -43,6 +43,12 @@ var _aimed_point: Vector3 = Vector3.ZERO
 ## For a too-heavy object: where on it the red beam is latched, in its own
 ## coordinates.
 var _rejected_local: Vector3 = Vector3.ZERO
+## A creature being sucked in: the beam latches onto it, in its colour, and
+## reels it in. Cleared when the creature is gone.
+var _catching: Creature = null
+var _catch_started: float = 0.0
+## How long the beam takes to shoot out and reach the creature, in seconds.
+const CATCH_REACH_TIME: float = 0.06
 var _aimed_creature: Creature = null
 var _capture_sound := AudioStreamPlayer.new()
 ## The grab button only counts if its press reached this script as an event.
@@ -175,6 +181,8 @@ func _find_aimed_creature() -> Creature:
 
 func _capture(creature: Creature) -> void:
 	creature.capture(_camera.to_global(BEAM_ORIGIN_LOCAL))
+	_catching = creature
+	_catch_started = Time.get_ticks_msec() / 1000.0
 	_capture_sound.play()
 	# Need a fresh click before grabbing anything else, so a capture with the
 	# button held doesn't immediately grab the crate behind it.
@@ -320,6 +328,13 @@ func _update_aim_state() -> void:
 
 
 func _update_beam_mesh() -> void:
+	# A creature is removed the moment it reaches the hand, which ends the
+	# catch beam by itself.
+	if _catching != null and not is_instance_valid(_catching):
+		_catching = null
+	if _catching != null and held == null:
+		_draw_catch_beam()
+		return
 	var end_body: Prop = held
 	var end_local: Vector3 = _grab_local
 	var color := Color(0.35, 0.85, 1.0)
@@ -345,6 +360,22 @@ func _update_beam_mesh() -> void:
 	var control: Vector3 = start.lerp(aim_point, Game.tune.beam_arc_bend)
 	_draw_arc(start, control, end)
 	_beam_material.albedo_color = color
+	_beam_mesh.visible = true
+
+
+## The beam while a creature is being sucked in: from the hand to the
+## creature as it's drawn this frame, in the creature's colour. For the first
+## few hundredths of a second it shoots out from the hand and hasn't reached
+## the creature yet; after that it reels the creature in, so it shortens as
+## the creature comes. A slight bow keeps it looking like the same beam.
+func _draw_catch_beam() -> void:
+	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
+	var target: Vector3 = _catching._visual.get_global_transform_interpolated().origin
+	var reach: float = clampf((Time.get_ticks_msec() / 1000.0 - _catch_started) / CATCH_REACH_TIME, 0.0, 1.0)
+	var end: Vector3 = start.lerp(target, reach)
+	var control: Vector3 = start.lerp(end, 0.5) + Vector3.UP * start.distance_to(end) * 0.08
+	_draw_arc(start, control, end)
+	_beam_material.albedo_color = _catching.body_color
 	_beam_mesh.visible = true
 
 

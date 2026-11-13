@@ -18,7 +18,7 @@ var _toast_left: float = 0.0
 @onready var _ping_label: Label = $PingLabel
 @onready var _toast_label: Label = $ToastLabel
 
-## The drawstring bag in the top-left corner that caught creatures drop
+## The drawstring bag in the bottom-right corner that caught creatures drop
 ## into. The paper tag on its bow is the catch counter. See marble_bag.gd.
 var _bag: MarbleBag
 ## The win screen, built in code by _build_win_screen: a dimmed backdrop with a
@@ -41,11 +41,8 @@ const AIM_FONT_SIZE: int = 34
 const TOAST_FONT_SIZE: int = 44
 const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
-## Where the marble bag sits from the top-left corner. It starts just below
-## the Lift readout (which stays at the very top left); the empty space above
-## its neck, where balls appear before dropping, overlaps the readout's row
-## but nothing is drawn there until a ball falls past.
-const BAG_MARGIN := Vector2(20.0, 40.0)
+## Gap between the marble bag and the bottom-right corner of the screen.
+const BAG_MARGIN := Vector2(40.0, 16.0)
 
 
 func _ready() -> void:
@@ -74,41 +71,22 @@ func _ready() -> void:
 func _build_bag() -> void:
 	_bag = MarbleBag.new()
 	_bag.name = "MarbleBag"
-	# Top-left corner. Anchors default to the top left, so the offsets are
-	# just its position and size.
-	_bag.offset_left = BAG_MARGIN.x
-	_bag.offset_top = BAG_MARGIN.y
-	_bag.offset_right = BAG_MARGIN.x + MarbleBag.VIEW_SIZE.x
-	_bag.offset_bottom = BAG_MARGIN.y + MarbleBag.VIEW_SIZE.y
+	# Pinned to the bottom-right corner: all four anchors at (1, 1), so the
+	# offsets are measured back from that corner.
+	_bag.anchor_left = 1.0
+	_bag.anchor_top = 1.0
+	_bag.anchor_right = 1.0
+	_bag.anchor_bottom = 1.0
+	_bag.offset_left = -BAG_MARGIN.x - MarbleBag.VIEW_SIZE.x
+	_bag.offset_top = -BAG_MARGIN.y - MarbleBag.VIEW_SIZE.y
+	_bag.offset_right = -BAG_MARGIN.x
+	_bag.offset_bottom = -BAG_MARGIN.y
 	add_child(_bag)
 
 
 ## Drops a ball of this colour into the bag. Called by main.gd on each catch.
-## `caught_at` is where in the room it was caught. In the "flies into the
-## bag" style, a ball flies from that spot on screen into the bag's neck and
-## drops in when it arrives; otherwise it drops straight in.
-func add_to_bag(color: Color, caught_at: Vector3 = Vector3.INF) -> void:
-	if Game.catch_style != Game.CatchStyle.FLY_TO_BAG or caught_at == Vector3.INF:
-		_bag.drop(color)
-		return
-	_bag.open_neck()
-	var ball := FlyingBall.new()
-	ball.name = "FlyingBall"
-	ball.setup(_screen_point(caught_at), _bag.mouth_point, color)
-	ball.arrived.connect(_bag.drop.bind(color))
-	# Added last, so it's drawn over everything, including the win card if
-	# this was the last catch.
-	add_child(ball)
-
-
-## Where a point in the room is on screen, in the HUD's coordinates. If it's
-## behind the camera, the bottom middle of the screen instead.
-func _screen_point(world: Vector3) -> Vector2:
-	var camera: Camera3D = get_viewport().get_camera_3d()
-	var screen: Vector2 = get_viewport().get_visible_rect().size
-	if camera == null or camera.is_position_behind(world):
-		return Vector2(screen.x * 0.5, screen.y + 40.0)
-	return camera.unproject_position(world)
+func add_to_bag(color: Color) -> void:
+	_bag.drop(color)
 
 
 func _build_win_screen() -> void:

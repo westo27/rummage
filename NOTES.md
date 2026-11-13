@@ -75,7 +75,7 @@ a root node and a script.
 - `scripts/glossy_card.gd` is the same finish as a container, used for the
   win screen's card.
 - **The marble bag** (`scripts/marble_bag.gd`, `scripts/bag_marble.gd`) sits
-  in the HUD's top-left corner. Each catch drops a ball in that
+  in the HUD's bottom-right corner. Each catch drops a ball in that
   creature's colour, with eyes, into a drawstring bag where it rolls and
   piles up. It's a SubViewport with its own 2D physics world, so the balls
   can't touch the 3D game. One function, `_outline()`, gives the bag's shape
@@ -172,26 +172,24 @@ than the creature squeaks.
 
 ## The catch
 
-Your choices: sparkles, a suction slurp, and the tag bouncing, with three
-catch styles to try out in play.
+Your choices: the creature is sucked into the beam, with sparkles, a suction
+slurp and the bag's tag bouncing. (Three styles were built and compared in
+play; the other two, flying into the bag and popping on the spot, were
+removed.)
 
-- **Catch styles, keys 1 / 2 / 3** (temporary, for comparing):
-  1. *Flies into the bag* (the default): the creature blinks out where it
-     was caught and a ball in its colour arcs across the screen into the
-     bag's neck (`scripts/flying_ball.gd`). The neck opens ahead of it.
-  2. *Pops on the spot*: it squashes, swells and bursts where it stands.
-     The ball drops into the bag as before.
-  3. *Sucked into the beam*: it turns to face your hand and stretches
-     toward it as it's pulled in.
-  The choice lives in `Game.catch_style`, so it survives pressing R. A toast
-  names the style when you switch. Once you've picked one, the other two
-  (the `match` in `Creature.capture`) and the keys can be removed.
+- **Sucked into the beam** (`Creature.capture`): it turns to face your hand
+  and stretches toward it as it's pulled in, speeding up as it goes. Then a
+  ball in its colour drops into the bag.
+- **The catch beam** (`Beam._draw_catch_beam`): at the click the beam shoots
+  out (over 0.06 s) and latches onto the creature in the creature's own
+  colour, then reels it in, shortening as it comes. It's gone the moment the
+  creature reaches the hand.
 - **Sparkles** (`scripts/catch_sparkles.gd`): about 26 star glints that pop
   out white, tint to the creature's colour, spin and twinkle away. The star
   shape is drawn in code. They remove themselves when done.
 - **Slurp** (`Tones.slurp()`): noise through a resonance sweeping upward,
-  with a bubbly wobble, ending in a little plop. It replaces the old rising
-  sweep. `tests/render_knocks.tscn` also saves it as `catch_slurp.wav`.
+  with a bubbly wobble, ending in a little plop. `tests/render_knocks.tscn`
+  also saves it as `catch_slurp.wav`.
 - **Tag bounce**: the bag's tag hops and grows for a moment, and swings,
   whenever the count goes up.
 
@@ -271,7 +269,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels, settings steppers and saving, pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
-| check_catch | keys 1-3 switch style with a toast; each style's animation (flies, swells, pulled into the hand and stretched); sparkles, slurp and tag hop every time; one ball in the bag each; sparkles clean up |
+| check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.

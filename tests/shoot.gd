@@ -56,9 +56,8 @@ func _run() -> void:
 	hud.set_caught(25, 25)
 	await get_tree().create_timer(4.0).timeout
 	hud._bag._viewport.get_texture().get_image().save_png("%s/bag_full.png" % OUT)
-	# A catch in the "flies into the bag" style: a creature put in front of
-	# the camera, caught; sparkles first, then the ball partway to the bag.
-	Game.catch_style = Game.CatchStyle.FLY_TO_BAG
+	# A catch: a creature put in front of the camera and caught; sparkles
+	# first, then the creature partway into the beam's hand.
 	var player := main.get_node("Player") as Node3D
 	var creature := main.get_node("MainRoomCreatures").get_child(0) as Creature
 	var ahead: Vector3 = player.global_position - player.global_basis.z * 2.2
@@ -68,8 +67,8 @@ func _run() -> void:
 	(main.get_node("Player/Head/Camera3D/Beam") as Beam)._capture(creature)
 	await get_tree().create_timer(0.12).timeout
 	_shoot("catch_sparkles")
-	await get_tree().create_timer(0.3).timeout
-	_shoot("catch_flying")
+	await get_tree().create_timer(0.05).timeout
+	_shoot("catch_suck")
 	await get_tree().create_timer(1.0).timeout
 
 	var pause := main.get_node("PauseMenu") as PauseMenu

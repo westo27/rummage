@@ -108,18 +108,6 @@ func drop(color: Color) -> void:
 	_queue.append(color)
 
 
-## Loosens the neck ahead of a ball that's on its way (the flying catch), so
-## it's open when the ball arrives instead of opening after.
-func open_neck() -> void:
-	_open_hold_left = maxf(_open_hold_left, FlyingBall.FLIGHT_SECONDS + OPEN_HOLD)
-
-
-## Where a ball enters the bag, in the coordinates of the HUD it sits in.
-## get_global_transform includes the bag's position and its squash.
-func mouth_point() -> Vector2:
-	return get_global_transform() * Vector2(CENTRE_X, NECK_Y - FRILL_HEIGHT - 50.0)
-
-
 ## Sets the number written on the tag.
 func set_count(caught: int, total: int) -> void:
 	if caught > _caught:

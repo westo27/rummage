@@ -21,6 +21,8 @@ func _ready() -> void:
 	settings = Settings.new()
 	settings.load_from_disk()
 	settings.apply_audio()
+	# Swap the mouse arrow for the menus' pointing hand. See pointer_cursor.gd.
+	add_child(PointerCursor.new())
 
 
 ## Controls are defined here in code rather than in Project Settings > Input Map

@@ -25,7 +25,7 @@ func _run() -> void:
 	# --- Totals and HUD ---
 	_check("25 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 25, "")
 	_check("4 of them in the side room", _main.get_node("SideRoomCreatures").get_child_count() == 4, "")
-	_check("HUD shows 0 / 25", _label("CaughtLabel") == "Caught: 0 / 25", "'%s'" % _label("CaughtLabel"))
+	_check("bag tag shows 0 / 25", _hud.caught_text() == "0 / 25", "'%s'" % _hud.caught_text())
 	_check("HUD shows lift", _label("LiftLabel") == "Lift: 10 kg", "'%s'" % _label("LiftLabel"))
 	_check("timer is counting up", _label("TimerLabel") != "0:00.0", "'%s'" % _label("TimerLabel"))
 	_check("HUD shows ping ready", _label("PingLabel").begins_with("Ping ready"), "'%s'" % _label("PingLabel"))
@@ -126,7 +126,7 @@ func _run() -> void:
 		"%s" % [win_pills])
 	_check("the player stops grabbing the cursor after winning",
 		not _player.is_processing_input() and not _beam.is_processing_unhandled_input(), "")
-	_check("HUD shows 25 / 25", _label("CaughtLabel") == "Caught: 25 / 25", "'%s'" % _label("CaughtLabel"))
+	_check("bag tag shows 25 / 25", _hud.caught_text() == "25 / 25", "'%s'" % _hud.caught_text())
 	var t1: String = _label("TimerLabel")
 	await _wait(0.5)
 	_check("timer stops after winning", _label("TimerLabel") == t1, "%s -> %s" % [t1, _label("TimerLabel")])
@@ -138,14 +138,17 @@ func _run() -> void:
 	_check("one ball in the bag per catch", _hud._bag.marble_count() == 25,
 		"%d balls" % _hud._bag.marble_count())
 	_check("every ball stays inside the bag", _hud._bag.all_inside(), "")
+	_check("the bag has moved onto the win card",
+		_hud._bag.get_parent() == _hud._win_bag_slot and _hud._bag.is_visible_in_tree(),
+		"parent=%s" % _hud._bag.get_parent())
 
 	# --- R restarts everything ---
 	_press("restart")
 	await _wait(0.5)
 	_main = get_tree().current_scene
 	_bind()
-	_check("R reloads a fresh game", _label("CaughtLabel") == "Caught: 0 / 25" and not (_main.get_node("HUD/WinPanel") as Control).visible,
-		"'%s'" % _label("CaughtLabel"))
+	_check("R reloads a fresh game", _hud.caught_text() == "0 / 25" and not (_main.get_node("HUD/WinPanel") as Control).visible,
+		"'%s'" % _hud.caught_text())
 	_check("lift is reset after restart", is_equal_approx(_beam.lift_limit, 10.0), "%.0f" % _beam.lift_limit)
 	_check("the bag is empty after restart", _hud._bag.marble_count() == 0,
 		"%d balls" % _hud._bag.marble_count())

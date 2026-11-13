@@ -143,9 +143,9 @@ func _run() -> void:
 	_panels_under(pause)[2].pressed.emit()  # Restart
 	await _wait(0.8)
 	main = get_tree().current_scene
-	var caught: String = (main.get_node("HUD/CaughtLabel") as Label).text
+	var caught: String = (main.get_node("HUD") as Hud).caught_text()
 	_check("Restart reloads the game unpaused",
-		not get_tree().paused and caught == "Caught: 0 / 25", "'%s'" % caught)
+		not get_tree().paused and caught == "0 / 25", "'%s'" % caught)
 
 	# --- Quit to title ---
 	_press("release_mouse")

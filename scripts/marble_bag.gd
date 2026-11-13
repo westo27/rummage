@@ -35,6 +35,14 @@ const FRILL_FLARE: float = 30.0
 const DROP_INTERVAL: float = 0.16
 ## How long the neck stays loose after the last drop.
 const OPEN_HOLD: float = 0.55
+## The tag hangs angled a little to the right of straight down (radians), on
+## a string this long, and is this big.
+const TAG_REST_ANGLE: float = -0.32
+const TAG_STRING: float = 42.0
+const TAG_SIZE := Vector2(136.0, 72.0)
+const TAG_FONT_SIZE: int = 36
+const PAPER := Color(0.98, 0.94, 0.84)
+const PAPER_SHADE := Color(0.88, 0.81, 0.66)
 
 const FABRIC := Color(0.82, 0.66, 0.44)
 const FABRIC_DARK := Color(0.52, 0.37, 0.22)
@@ -52,6 +60,15 @@ var _open_hold_left: float = 0.0
 var _queue: Array[Color] = []
 var _next_drop_in: float = 0.0
 var _squash: Tween
+
+## The paper tag hanging from the bow, showing "caught / total". This is the
+## game's catch counter; there's no separate one in the corner.
+var _caught: int = 0
+var _total: int = 0
+## How far the tag has swung from where it hangs at rest, and how fast it's
+## swinging. A ball landing in the bag knocks it; a spring brings it back.
+var _tag_swing: float = 0.0
+var _tag_swing_speed: float = 0.0
 
 
 func _ready() -> void:
@@ -89,6 +106,18 @@ func drop(color: Color) -> void:
 	_queue.append(color)
 
 
+## Sets the number written on the tag.
+func set_count(caught: int, total: int) -> void:
+	_caught = caught
+	_total = total
+	_front.queue_redraw()
+
+
+## What the tag says, e.g. "12 / 25".
+func tag_text() -> String:
+	return "%d / %d" % [_caught, _total]
+
+
 func marble_count() -> int:
 	return _marbles.get_child_count()
 
@@ -118,6 +147,13 @@ func _process(delta: float) -> void:
 		_back.queue_redraw()
 		_front.queue_redraw()
 
+	# The tag swings on a damped spring: pulled back toward rest in
+	# proportion to how far out it is, slowed by a little friction.
+	if absf(_tag_swing) > 0.001 or absf(_tag_swing_speed) > 0.001:
+		_tag_swing_speed += (-38.0 * _tag_swing - 3.5 * _tag_swing_speed) * delta
+		_tag_swing += _tag_swing_speed * delta
+		_front.queue_redraw()
+
 
 func _spawn_marble(color: Color) -> void:
 	var marble := BagMarble.new()
@@ -134,6 +170,8 @@ func _spawn_marble(color: Color) -> void:
 ## springing back. Harder landings squash it more.
 func _on_marble_landed(speed: float) -> void:
 	var amount: float = clampf(speed / 500.0, 0.25, 1.0)
+	# Knock the tag so it swings.
+	_tag_swing_speed += randf_range(1.5, 3.0) * amount * (1.0 if randf() < 0.5 else -1.0)
 	if _squash != null and _squash.is_valid():
 		_squash.kill()
 	_squash = create_tween()
@@ -291,7 +329,54 @@ func _draw_front() -> void:
 		_front.draw_line(Vector2(x, band.position.y + 4.0), Vector2(x, band.end.y - 4.0),
 			Color(STITCH, 0.5), 2.0, true)
 
-	_draw_bow(Vector2(CENTRE_X + neck * 0.35, NECK_Y))
+	var knot := Vector2(CENTRE_X + neck * 0.35, NECK_Y)
+	# Tag before bow, so the knot covers the end of the tag's string.
+	_draw_tag(knot)
+	_draw_bow(knot)
+
+
+## A luggage-style paper tag on a string from the knot, with the catch count
+## written on it. Drawn in its own rotated frame, with the knot at the origin
+## and the tag hanging straight down, then turned by its swing angle.
+func _draw_tag(knot: Vector2) -> void:
+	_front.draw_set_transform(knot, TAG_REST_ANGLE + _tag_swing)
+	var top: float = TAG_STRING
+	var half: float = TAG_SIZE.x * 0.5
+	var clip: float = 16.0  # the cut-off top corners
+	var hole := Vector2(0.0, top + 14.0)
+
+	# A soft shadow on the bag behind it.
+	var shadow := PackedVector2Array([
+		Vector2(-half + clip, top), Vector2(half - clip, top), Vector2(half, top + clip),
+		Vector2(half, top + TAG_SIZE.y), Vector2(-half, top + TAG_SIZE.y), Vector2(-half, top + clip)])
+	var shadow_offset := Vector2(4.0, 6.0)
+	for i in shadow.size():
+		shadow[i] += shadow_offset
+	_front.draw_colored_polygon(shadow, Color(0.0, 0.0, 0.0, 0.22))
+
+	_front.draw_line(Vector2.ZERO, hole, STITCH, 3.0, true)
+
+	var card := PackedVector2Array([
+		Vector2(-half + clip, top), Vector2(half - clip, top), Vector2(half, top + clip),
+		Vector2(half, top + TAG_SIZE.y), Vector2(-half, top + TAG_SIZE.y), Vector2(-half, top + clip)])
+	_front.draw_polygon(card, UiStyle.vertical_ramp(card,
+		Rect2(-half, top, TAG_SIZE.x, TAG_SIZE.y), PAPER, PAPER_SHADE))
+	var edge: PackedVector2Array = card.duplicate()
+	edge.append(card[0])
+	_front.draw_polyline(edge, Color(STITCH, 0.8), 2.5, true)
+
+	# Reinforced hole, with the string looped through it.
+	_front.draw_circle(hole, 9.0, PAPER_SHADE.darkened(0.15))
+	_front.draw_circle(hole, 4.5, INSIDE)
+	_front.draw_arc(hole + Vector2(0.0, -2.0), 6.0, PI * 0.1, PI * 0.9, 10, STITCH, 2.5, true)
+
+	var text: String = tag_text()
+	var font: Font = UiStyle.font(700)
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_FONT_SIZE).x
+	_front.draw_string(font, Vector2(-width * 0.5, top + TAG_SIZE.y - 13.0), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_FONT_SIZE, UiStyle.INK)
+
+	_front.draw_set_transform(Vector2.ZERO, 0.0)
 
 
 ## The drawstring: a cord across the neck tied in a bow, which droops a little

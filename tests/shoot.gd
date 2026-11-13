@@ -13,6 +13,13 @@ func _ready() -> void:
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
 
+	# The mouse cursor, blown up 4x so its detail can be seen.
+	await _frames(4)
+	if PointerCursor.image != null:
+		var big: Image = PointerCursor.image.duplicate()
+		big.resize(PointerCursor.CURSOR_SIZE * 4, PointerCursor.CURSOR_SIZE * 4, Image.INTERPOLATE_NEAREST)
+		big.save_png("%s/cursor.png" % OUT)
+
 	var title: Control = (load("res://scenes/title.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(title)
 	get_tree().current_scene = title
@@ -38,6 +45,7 @@ func _run() -> void:
 	var hud := main.get_node("HUD") as Hud
 	for i in 14:
 		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()])
+	hud.set_caught(14, 25)
 	await get_tree().create_timer(4.5).timeout
 	_shoot("bag")
 	# The bag's own render, at full size, for checking the detail.
@@ -45,6 +53,7 @@ func _run() -> void:
 	# And completely full, as at the end of a game.
 	for i in 11:
 		hud.add_to_bag(Creature.BODY_COLORS[(i + 3) % Creature.BODY_COLORS.size()])
+	hud.set_caught(25, 25)
 	await get_tree().create_timer(4.0).timeout
 	hud._bag._viewport.get_texture().get_image().save_png("%s/bag_full.png" % OUT)
 	var pause := main.get_node("PauseMenu") as PauseMenu

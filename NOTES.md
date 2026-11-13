@@ -84,6 +84,17 @@ a root node and a script.
   loosens while balls go in, and the bag squashes a little when each lands.
   To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`
   (21): all 25 currently fill a little over half of it.
+- **The catch counter is the paper tag** hanging from the bag's bow ("12 /
+  25"). There's no separate counter on screen. The tag swings on a spring
+  when a ball lands. Tests read it through `Hud.caught_text()`.
+- **On winning, the bag moves onto the win card** beside your time.
+  `reparent()` carries its whole subtree, physics world included, so any
+  balls still queued keep dropping in there.
+- **The mouse pointer** is a pointing hand drawn in the menus' style
+  (`scripts/pointer_cursor.gd`). It's drawn once at startup into an image and
+  set as the hardware cursor, so it moves as smoothly as the normal arrow.
+  During play the cursor is captured and hidden, so it only shows in menus.
+  It's our own hand (cream, amber cuff, no player number), not the Wii's.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu. Each setting is a −/+ stepper rather than a slider, so
   every control is the same panel and nothing needs dragging.

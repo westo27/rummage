@@ -265,6 +265,16 @@ child up past your bedtime". So it's night.
   so the beam can't grab it. Damping (on the Lamp body) settles a big swing
   in about five seconds; lower it for longer swinging. Each lamp's
   brightness and reach are exports on the instance.
+- **Lamp shadows.** The shade is open at the top as well as the bottom, like
+  a real one, so a soft circle of light sits on the ceiling above it, and a
+  tilted shade throws a wedge of light up one side. The light has a size
+  (`light_size` 0.08, about a bulb), so its shadows soften with distance.
+  Three project settings (Rendering) keep those edges clean: positional
+  shadow atlas 8192, soft shadow filter quality Ultra, and TAA (temporal
+  anti-aliasing), which smooths out the grain soft shadows otherwise show.
+  These cost some GPU time; if frame rate suffers on a weaker machine, drop
+  the filter quality first. `tests/shoot_lamp.tscn` renders the ceiling
+  around the lamp, still and mid-swing, for checking.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.
 - **Readability**: a darker room makes props and creatures harder to spot,

@@ -93,10 +93,6 @@ func open() -> void:
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_set_hud_visible(false)
-	# Focus the first panel so the keyboard works straight away.
-	var first := _first_panel()
-	if first != null:
-		first.grab_focus.call_deferred()
 
 
 func close() -> void:
@@ -121,9 +117,6 @@ func _on_settings() -> void:
 func _on_settings_closed() -> void:
 	_settings = null
 	_panels.visible = true
-	var first := _first_panel()
-	if first != null:
-		first.grab_focus.call_deferred()
 
 
 func _on_restart() -> void:
@@ -135,17 +128,6 @@ func _on_quit_to_title() -> void:
 	_open = false
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/title.tscn")
-
-
-## The topmost panel, whatever the panels are arranged in.
-func _first_panel(from: Node = null) -> MenuPanel:
-	for child in (from if from != null else _panels).get_children():
-		if child is MenuPanel:
-			return child as MenuPanel
-		var deeper: MenuPanel = _first_panel(child)
-		if deeper != null:
-			return deeper
-	return null
 
 
 ## Hides the crosshair and counters while paused, so the panels sit on a clean

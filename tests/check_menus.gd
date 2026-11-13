@@ -27,7 +27,18 @@ func _run() -> void:
 		labels.append(p.label_text)
 	_check("title screen shows Play, Settings and Quit", labels == ["Play", "Settings", "Quit"],
 		"%s" % [labels])
-	_check("the first panel has keyboard focus", panels[0].has_focus(), "")
+	var focusable: int = 0
+	for p in panels:
+		if p.focus_mode != Control.FOCUS_NONE:
+			focusable += 1
+	_check("no panel can take keyboard focus (mouse only)", focusable == 0,
+		"%d focusable" % focusable)
+	_check("nothing is pre-selected", title.get_viewport().gui_get_focus_owner() == null,
+		"%s" % title.get_viewport().gui_get_focus_owner())
+	_press("ui_down")
+	await _wait(0.1)
+	_check("arrow keys don't select a panel", title.get_viewport().gui_get_focus_owner() == null,
+		"%s" % title.get_viewport().gui_get_focus_owner())
 
 	# --- Settings page, opened from the title ---
 	panels[1].pressed.emit()

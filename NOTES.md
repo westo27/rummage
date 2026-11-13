@@ -67,9 +67,10 @@ a root node and a script.
 - `scripts/menu_panel.gd` is the only kind of button. Its shape follows its
   size: wider than 2:1 makes a pill with the icon at the left (the main
   menus), square makes a circle (the steppers), anything else a rounded
-  gumdrop. It rises and glows when pointed at or focused, sinks when pressed,
-  and chimes. It works with the mouse or the keyboard (Tab/arrows to move,
-  Enter to press).
+  gumdrop. It rises and glows when pointed at, sinks when pressed, and
+  chimes. Menus are mouse only: panels can't take keyboard focus
+  (`focus_mode = FOCUS_NONE`), so nothing is pre-selected and the arrow keys
+  do nothing. Esc still backs out of menus.
 - `scripts/glossy_card.gd` is the same finish as a container, used for the
   win screen's card.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen

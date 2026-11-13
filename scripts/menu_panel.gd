@@ -7,9 +7,12 @@ extends BaseButton
 ## thing is drawn here in _draw, via UiStyle.draw_glossy_panel, which does the
 ## shadow, the lit body, the rim, the bevel and the gloss.
 ##
-## Pointing at it (or giving it keyboard focus) raises it; clicking pushes it
-## in. Both are animated by easing `_lift` and `_sink` toward their targets
-## every frame rather than with tweens, so interrupting one mid-animation
+## Mouse only: pointing at it raises it, clicking pushes it in. Panels never
+## take keyboard focus, so nothing is pre-selected when a menu opens and the
+## arrow keys don't move a selection around.
+##
+## Both are animated by easing `_lift` and `_sink` toward their targets every
+## frame rather than with tweens, so interrupting one mid-animation
 ## can't leave it half-finished. Those same values drive how strong the gloss
 ## and the shadow are, so the panel looks like it's tilting into the light
 ## rather than just sliding up and down.
@@ -38,12 +41,13 @@ func _init() -> void:
 	_voice = AudioStreamPlayer.new()
 	add_child(_voice)
 	mouse_entered.connect(_play_hover)
-	focus_entered.connect(_play_hover)
 	pressed.connect(_play_select)
 
 
 func _ready() -> void:
-	focus_mode = Control.FOCUS_ALL
+	# FOCUS_NONE: the panel can't hold keyboard focus, so Godot's built-in
+	# arrow-key and Tab navigation between buttons never applies to it.
+	focus_mode = Control.FOCUS_NONE
 	if custom_minimum_size == Vector2.ZERO:  # not already set by the caller
 		custom_minimum_size = UiStyle.PANEL_SIZE_SMALL if compact else UiStyle.PANEL_SIZE
 
@@ -66,8 +70,7 @@ func _play(stream: AudioStream) -> void:
 
 func _process(delta: float) -> void:
 	# Ease each value a fixed fraction of the way to its target per second.
-	var raised: bool = is_hovered() or has_focus()
-	_lift = lerpf(_lift, 1.0 if raised else 0.0, clampf(delta * 14.0, 0.0, 1.0))
+	_lift = lerpf(_lift, 1.0 if is_hovered() else 0.0, clampf(delta * 14.0, 0.0, 1.0))
 	_sink = lerpf(_sink, 1.0 if button_pressed else 0.0, clampf(delta * 22.0, 0.0, 1.0))
 	queue_redraw()
 

@@ -4,15 +4,14 @@ extends Control
 ##
 ## Built in code rather than as a .tscn, because it's a list of near-identical
 ## rows: a name, a minus panel, the current value, a plus panel. Steppers
-## instead of sliders so every control is the same big aim-and-click panel, and
-## so it works the same with a mouse, the keyboard or a pad.
+## instead of sliders so every control is the same big point-and-click panel
+## and nothing needs dragging.
 ##
 ## Changes apply immediately and are written to disk when the page closes.
 
 signal closed
 
 var _value_labels: Dictionary = {}
-var _first_panel: MenuPanel = null
 
 
 func _ready() -> void:
@@ -52,10 +51,6 @@ func _ready() -> void:
 	column.add_child(back_row)
 
 	_refresh()
-	# Give the first stepper keyboard focus, so arrow keys and Enter work
-	# without touching the mouse.
-	if _first_panel != null:
-		_first_panel.grab_focus.call_deferred()
 
 
 ## One setting: name on the left, then [-] value [+].
@@ -87,9 +82,6 @@ func _build_row(key: String, name: String) -> Control:
 	var up := MenuPanel.make_stepper("+")
 	up.pressed.connect(_adjust.bind(key, 1))
 	row.add_child(up)
-
-	if _first_panel == null:
-		_first_panel = down
 	return row
 
 

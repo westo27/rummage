@@ -170,7 +170,6 @@ func show_win(seconds: float, total: int) -> void:
 	# Hand the cursor back so the pills can be clicked. main.gd stops the
 	# player grabbing it again on the next click.
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	_play_again.grab_focus.call_deferred()
 
 
 ## 125.34 -> "2:05.3"

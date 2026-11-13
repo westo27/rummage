@@ -94,7 +94,6 @@ func _build() -> void:
 	_hint.offset_bottom = -40.0
 	add_child(_hint)
 
-	play.grab_focus.call_deferred()
 
 
 func _process(delta: float) -> void:

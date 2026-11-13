@@ -42,4 +42,5 @@ Run only the suites the change touches; the full set once before committing.
   then 3–5 players.
 - More life in the creatures (squash/stretch, lean, startled jump).
 - First-minute lesson; squeak and ping sound pass; itch page; web build test.
+- Trapdoor under the rug opens to a hidden space with something to find (Grace's idea; only the closed trapdoor exists).
 - Design question: tip-but-not-lift heavy things (the wardrobe gate would need an exception).

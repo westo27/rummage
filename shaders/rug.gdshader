@@ -1,7 +1,9 @@
 // The rug in the main room: a rounded rectangle with a raspberry border, an
 // orange stripe inside it and a cream middle, with a faint woven texture.
-// It's drawn on a flat plane; anything outside the rounded shape is cut away.
+// It's drawn on a flat plane (a prop now: scenes/props/rug.tscn); anything outside the rounded shape is cut away.
 shader_type spatial;
+// Drawn on both sides, so it still shows when lifted and tipped over.
+render_mode cull_disabled;
 
 uniform vec3 field : source_color = vec3(0.98, 0.88, 0.70);
 uniform vec3 border : source_color = vec3(0.84, 0.22, 0.40);

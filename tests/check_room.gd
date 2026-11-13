@@ -2,7 +2,8 @@ extends Node
 ## Headless check for the room's new parts: the window holds things in, the
 ## props are glossy, the bedside lamp stands on its table, and the table's
 ## drawer slides out and back by physics, the wardrobe doors swing open, and
-## pictures come off the wall to show what's behind. (How the room looks can only be judged in
+## pictures come off the wall to show what's behind, and the rug drags away
+## to show a trapdoor. (How the room looks can only be judged in
 ## tests/shoot.tscn's pictures.) Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_room.tscn
 
@@ -131,6 +132,37 @@ func _run() -> void:
 		"x=%.2f" % picture.global_position.x)
 	_check("which reveals the creature behind it", behind.state != Creature.State.HIDDEN, "state=%s" % behind.state)
 	beam._release()
+
+	# --- The rug lifts away to show a trapdoor; what's on it stays put ---
+	var rug: Prop = _main.get_node("MainRoomProps/Rug")
+	var table_on_rug := _main.get_node("MainRoomProps/Table") as Node3D
+	var table_at: Vector3 = table_on_rug.global_position
+	var trapdoor := _main.get_node("House/Trapdoor") as Node3D
+	_check("the rug lies flat on the floor", absf(rug.global_position.y - 0.006) < 0.01, "y=%.3f" % rug.global_position.y)
+	_check("the trapdoor is under the rug", absf(trapdoor.global_position.x - rug.global_position.x) < 1.5
+		and absf(trapdoor.global_position.z - rug.global_position.z) < 1.0, "")
+	player.global_position = Vector3(-3.6, 0.05, 1.3)
+	player.reset_physics_interpolation()
+	var rug_edge: Vector3 = Vector3(-2.0, 0.006, 1.3)
+	look = (rug_edge - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	beam._grab_armed = true
+	beam._grab(rug, rug_edge)
+	for i in 60:  # back off, dragging the rug after you
+		player.global_position.x -= 0.03
+		await get_tree().physics_frame
+	beam._release()
+	await _wait(1.0)
+	var rug_flat: Vector2 = Vector2(rug.global_position.x, rug.global_position.z)
+	var trap_flat: Vector2 = Vector2(trapdoor.global_position.x, trapdoor.global_position.z)
+	_check("dragging the rug uncovers the trapdoor", rug_flat.distance_to(trap_flat) > 2.2,
+		"rug %.2f m from the trapdoor" % rug_flat.distance_to(trap_flat))
+	_check("the table that stood on the rug stays put", table_on_rug.global_position.distance_to(table_at) < 0.05,
+		"moved %.3f m" % table_on_rug.global_position.distance_to(table_at))
+	_check("the rug lands back on the floor", rug.global_position.y > -0.02 and rug.global_position.y < 0.5,
+		"y=%.3f" % rug.global_position.y)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

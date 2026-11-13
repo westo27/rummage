@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/rug.gd" id="1_rug"]
+[ext_resource type="Shader" path="res://shaders/rug.gdshader" id="2_rug"]
+
+[sub_resource type="ShaderMaterial" id="Mat_rug"]
+shader = ExtResource("2_rug")
+
+[sub_resource type="PlaneMesh" id="Mesh_rug"]
+size = Vector2(4.6, 3.2)
+
+[sub_resource type="BoxShape3D" id="Shape_rug"]
+size = Vector3(4.4, 0.01, 3)
+
+[node name="Rug" type="RigidBody3D"]
+mass = 2.0
+script = ExtResource("1_rug")
+hold_radius = 1.6
+impact_material = 2
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+material_override = SubResource("Mat_rug")
+mesh = SubResource("Mesh_rug")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_rug")

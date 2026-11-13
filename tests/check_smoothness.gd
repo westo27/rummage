@@ -35,6 +35,7 @@ func _run() -> void:
 	_player = _main.get_node("Player")
 	_camera = _main.get_node("Player/Head/Camera3D")
 	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
+	beam.lift_limit = 10.0  # the crate is heavier than the 4 kg start
 	await _wait_physics(0.5)
 
 	# Grab a crate so we can watch a held object too.

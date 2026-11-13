@@ -31,6 +31,7 @@ const LAYER_WORLD: int = 1
 const LAYER_PLAYER: int = 2
 const LAYER_PROPS: int = 4
 const LAYER_CLUTTER: int = 16
+const LAYER_RUG: int = 32
 
 const SHUDDER_SECONDS: float = 0.35
 const SHUDDER_AMOUNT: float = 0.035

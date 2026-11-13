@@ -364,6 +364,7 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 | 3 props | 4 | props over 3 kg: crates, table, bedside table, bookcase, bed, wardrobe | block the player |
 | 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | the beam's first ray hits only this layer |
 | 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and kicks them |
+| 6 rug | 32 | the rug | meets only the floor; the beam can aim at it |
 
 `prop.gd` picks props or clutter by mass when it loads, overriding the layer
 saved in the `.tscn`. Two bodies collide if *either* one's mask includes the
@@ -463,6 +464,15 @@ Two cover cubby holes cut in the wall (CubbyWest / CubbySouth, CSG
 subtractions in main.tscn): one hides a creature (BehindPicture, moved from
 under a bin, so the count is unchanged), the other two toy blocks. A hidden
 creature has no gravity, so it waits in the hole until revealed.
+
+## The rug and the trapdoor
+
+The rug is a 2 kg prop (`rug.tscn`, `scripts/rug.gd`) you can drag aside
+from the start. Under it is a closed trapdoor (House/Trapdoor in main.tscn,
+meshes only). It doesn't open yet. The rug sits on its own physics layer
+(6, `rug`) that only meets the floor, so the table and balls on it stay put
+when it moves. The trade-off is that a lifted rug passes through furniture.
+The beam's aim ray includes that layer.
 
 ## How creatures move
 

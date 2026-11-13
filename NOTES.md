@@ -14,7 +14,7 @@ restarts at any time.
 ```
 Title  scenes/title.tscn (scripts/title_screen.gd: Play, Settings, Quit)
 
-Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart)
+Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 ├─ WorldEnvironment, LightMain, LightSide
 ├─ House
 │  ├─ Walls        CSGCombiner3D: both rooms' walls/ceiling and the doorway hole
@@ -349,7 +349,7 @@ creatures in the main room:
 The beam reaches **4 m** (was 7), for grabbing and catching, so you have to
 walk up to things.
 
-The HUD announces each kind once as it unlocks (one toast listing them all). If you move creatures between rooms or
+Nothing announces an unlock: you find out by trying. If you move creatures between rooms or
 change `lift_per_capture`, redo this sum (`tests/check_stage3.gd` checks it).
 
 ## Collision layers
@@ -428,7 +428,7 @@ tell whether any of it is fun or readable. Not verified:
 - **Sound:** headless runs use a dummy audio driver. I only know a squeak
   *started*, not whether it's audible, pleasant, or easy to locate in 3D.
 - **Visuals:** the glow, the cover rattle, the hop, the tremble, the crosshair
-  shapes, the toast and the lighting are all unseen. (The title, settings,
+  shapes and the lighting are all unseen. (The title, settings,
   pause, win screen and in-game HUD *have* been looked at, as still images
   from `tests/shoot.tscn`. The hover lift, glow and press animations have
   not, because a still image can't show movement.)

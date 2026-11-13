@@ -7,16 +7,12 @@ extends CanvasLayer
 ## swallow mouse clicks meant for the beam. The win screen is the exception:
 ## it's only shown once play is over, and its buttons need the clicks.
 
-const TOAST_SECONDS: float = 3.5
-
-var _toast_left: float = 0.0
 
 @onready var _crosshair: Crosshair = $Crosshair
 @onready var _aim_label: Label = $AimLabel
 @onready var _lift_label: Label = $LiftLabel
 @onready var _timer_label: Label = $TimerLabel
 @onready var _ping_label: Label = $PingLabel
-@onready var _toast_label: Label = $ToastLabel
 
 ## The drawstring bag in the bottom-right corner that caught creatures drop
 ## into. The paper tag on its bow is the catch counter. See marble_bag.gd.
@@ -38,7 +34,6 @@ var _play_again: MenuPanel
 ## same place the menus get theirs.
 const READOUT_FONT_SIZE: int = 36
 const AIM_FONT_SIZE: int = 34
-const TOAST_FONT_SIZE: int = 44
 const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
 ## Gap between the marble bag and the bottom-right corner of the screen.
@@ -59,10 +54,6 @@ func _ready() -> void:
 	_aim_label.add_theme_constant_override("outline_size", 10)
 	_aim_label.add_theme_font_override("font", UiStyle.font(600))
 	_aim_label.add_theme_font_size_override("font_size", AIM_FONT_SIZE)
-	_toast_label.add_theme_font_override("font", UiStyle.font(700))
-	_toast_label.add_theme_font_size_override("font_size", TOAST_FONT_SIZE)
-	_toast_label.add_theme_color_override("font_color", UiStyle.AMBER)
-	_toast_label.add_theme_constant_override("outline_size", 12)
 	_build_bag()
 	# Built after the bag, so the win screen's dimming covers it.
 	_build_win_screen()
@@ -163,13 +154,6 @@ func _build_win_screen() -> void:
 	column.add_child(hint)
 
 
-func _process(delta: float) -> void:
-	if _toast_left > 0.0:
-		_toast_left -= delta
-		# Fade out over the last second.
-		_toast_label.modulate.a = clampf(_toast_left, 0.0, 1.0)
-
-
 func set_aim(state: Beam.AimState, detail: String) -> void:
 	_crosshair.set_state(state)
 	_aim_label.text = detail
@@ -204,12 +188,6 @@ func set_ping_cooldown(seconds_left: float) -> void:
 
 
 ## A short message near the top of the screen that fades out by itself.
-func show_toast(text: String) -> void:
-	_toast_label.text = text
-	_toast_label.modulate.a = 1.0
-	_toast_left = TOAST_SECONDS
-
-
 func show_win(seconds: float, total: int) -> void:
 	_win_heading.text = "All %d caught!" % total
 	_win_label.text = "Time  %s" % format_time(seconds)

@@ -61,7 +61,6 @@ func _run() -> void:
 	_check("after 13 catches the bed is still too heavy", bed.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
 	await _catch(order.slice(13, 14))
 	_check("after 14 catches the bed is liftable", bed.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-	_check("HUD announces the bed", _label("ToastLabel").contains("bed"), "'%s'" % _label("ToastLabel"))
 
 	# Actually lift the bed with the beam.
 	_player.global_position = Vector3(0.0, 0.05, -1.8)
@@ -85,7 +84,6 @@ func _run() -> void:
 	_check("after 18 catches the wardrobe is still too heavy", wardrobe.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
 	await _catch(order.slice(18, 19))
 	_check("after 19 catches the wardrobe is liftable", wardrobe.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-	_check("HUD announces the wardrobe", _label("ToastLabel").contains("wardrobe"), "'%s'" % _label("ToastLabel"))
 
 	# --- Drag the wardrobe off the doorway, then walk into the side room ---
 	_player.global_position = Vector3(3.6, 0.05, 0.0)

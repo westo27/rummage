@@ -1,6 +1,6 @@
 extends Node3D
 ## Root of the main scene and the game's flow: physics setup, wiring systems to
-## the HUD, counting catches, the timer, gate announcements, winning, restart.
+## the HUD, counting catches, the timer, winning, restart.
 
 @onready var _beam: Beam = $Player/Head/Camera3D/Beam
 @onready var _hud: Hud = $HUD
@@ -10,9 +10,6 @@ var _caught: int = 0
 var _total_creatures: int = 0
 var _elapsed: float = 0.0
 var _won: bool = false
-## Props too heavy to lift at the start (crates, tables, bed, wardrobe...). When the lift
-## limit first reaches one, the HUD announces it, then it's removed from here.
-var _locked_props: Array[Prop] = []
 
 
 # Godot calls _ready on children before their parent, so by the time this runs
@@ -36,10 +33,6 @@ func _ready() -> void:
 		creature.captured.connect(_on_creature_captured)
 		_total_creatures += 1
 	_hud.set_caught(_caught, _total_creatures)
-
-	for prop: Prop in get_tree().get_nodes_in_group("props"):
-		if prop.mass > _beam.lift_limit:
-			_locked_props.append(prop)
 
 	_apply_prop_finish()
 	# Graphics > Lighting, for this level's lamps and environment.
@@ -85,7 +78,6 @@ func _on_creature_captured(creature: Creature) -> void:
 	_hud.add_to_bag(creature.body_color)
 	_beam.add_lift(Game.tune.lift_per_capture)
 	_hud.set_caught(_caught, _total_creatures)
-	_announce_unlocked_props()
 	if _caught >= _total_creatures:
 		_won = true
 		_end_play()
@@ -101,22 +93,3 @@ func _end_play() -> void:
 	_beam.set_process_unhandled_input(false)
 	$PauseMenu.set_process_unhandled_input(false)
 
-
-func _announce_unlocked_props() -> void:
-	# One toast naming every kind of thing that just became liftable, so six
-	# crates unlocking at once read as "crate", not six messages. The kind is
-	# the prop's scene file name: crate.tscn -> "crate".
-	var kinds: Array[String] = []
-	# Loop over a copy, because we remove items from the real list as we go.
-	for prop in _locked_props.duplicate():
-		if prop.mass <= _beam.lift_limit:
-			_locked_props.erase(prop)
-			var kind: String = prop.scene_file_path.get_file().get_basename().replace("_", " ")
-			if kind.is_empty():
-				kind = prop.name.to_lower()
-			if kind not in kinds:
-				kinds.append(kind)
-	if kinds.is_empty():
-		return
-	var listed: String = kinds[0] if kinds.size() == 1 		else ", ".join(kinds.slice(0, -1)) + " and " + kinds[-1]
-	_hud.show_toast("Your beam can lift the %s now  (%.0f kg)" % [listed, _beam.lift_limit])

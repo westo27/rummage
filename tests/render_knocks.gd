@@ -18,23 +18,34 @@ const PROPS: Array = [
 ]
 
 
+## Two versions to compare: how sharply the resonances ring (Tones.resonance).
+const SETS: Array = [["A_dry", 0.5], ["B_woody", 1.0]]
+
+
 func _ready() -> void:
-	DirAccess.make_dir_recursive_absolute("user://knocks")
-	for entry: Array in PROPS:
-		var pitch: float = clampf(pow(ImpactAudio.REFERENCE_MASS[entry[1]] / entry[2], 0.2), 0.5, 1.6)
-		var data := PackedByteArray()
-		for variant in Tones.KNOCK_VARIANTS:
-			data.append_array(Tones.knock(entry[1], variant).data)
-			# 0.35 s of silence between takes.
-			var gap := PackedByteArray()
-			gap.resize(int(0.35 * Tones.MIX_RATE) * 2)
-			data.append_array(gap)
-		var wav := AudioStreamWAV.new()
-		wav.format = AudioStreamWAV.FORMAT_16_BITS
-		wav.stereo = false
-		# Playing the same samples at a different rate is the pitch change.
-		wav.mix_rate = int(Tones.MIX_RATE * pitch)
-		wav.data = data
-		wav.save_to_wav("user://knocks/%s.wav" % entry[0])
+	for set: Array in SETS:
+		Tones.resonance = set[1]
+		var folder: String = "user://knocks/%s" % set[0]
+		DirAccess.make_dir_recursive_absolute(folder)
+		for entry: Array in PROPS:
+			_render(entry, folder)
 	print("Saved to %s" % ProjectSettings.globalize_path("user://knocks"))
 	get_tree().quit()
+
+
+func _render(entry: Array, folder: String) -> void:
+	var pitch: float = clampf(pow(ImpactAudio.REFERENCE_MASS[entry[1]] / entry[2], 0.2), 0.5, 1.6)
+	var data := PackedByteArray()
+	for variant in Tones.KNOCK_VARIANTS:
+		data.append_array(Tones.knock(entry[1], variant).data)
+		# 0.35 s of silence between takes.
+		var gap := PackedByteArray()
+		gap.resize(int(0.35 * Tones.MIX_RATE) * 2)
+		data.append_array(gap)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.stereo = false
+	# Playing the same samples at a different rate is the pitch change.
+	wav.mix_rate = int(Tones.MIX_RATE * pitch)
+	wav.data = data
+	wav.save_to_wav("%s/%s.wav" % [folder, entry[0]])

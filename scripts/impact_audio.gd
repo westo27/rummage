@@ -59,7 +59,7 @@ func play(material: Tones.ImpactMaterial, at: Vector3, speed: float, mass: float
 	voice.global_position = at
 	voice.volume_db = linear_to_db(loudness) + tune.impact_max_db
 	var pitch: float = pow(REFERENCE_MASS[material] / maxf(mass, 0.01), 0.2)
-	voice.pitch_scale = clampf(pitch, 0.5, 1.6) * randf_range(0.94, 1.06)
+	voice.pitch_scale = clampf(pitch, 0.5, 1.6) * randf_range(0.97, 1.03)
 	voice.play()
 	log.append({"material": material, "at": at, "speed": speed, "mass": mass,
 		"db": voice.volume_db, "pitch": voice.pitch_scale})

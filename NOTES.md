@@ -143,12 +143,17 @@ than the creature squeaks.
 - **Materials.** Each prop scene sets `impact_material` (Prop's export):
   paper (books, small boxes), wood (crates, bookcase, table, wardrobe; the
   default), soft (cushions, sofa), rubber (balls), plastic (bins).
-- **The sounds** are recipes in `Tones.KNOCK_RECIPES`: a burst of filtered
-  noise (the slap or click) plus a few ringing tones (the body), each fading
-  at its own rate. There are three slightly different takes of each, so
+- **The sounds** are recipes in `Tones.KNOCK_RECIPES`, with no steady
+  musical tones (an earlier version had them, and a pile of things falling
+  played a tune). Each knock is a contact click, a scuff of filtered noise,
+  noise through a few wide resonances (the wooden "toc" or plastic "clack"),
+  and for weighty things a very short thud that drops in pitch like a kick
+  drum. `Tones.resonance` sets how much the resonances ring: you picked 1.0
+  ("woody") over 0.5 ("dry"). Above about 1.5 they start to turn into notes. There are three slightly different takes of each, so
   repeated hits don't sound copy-pasted. To change how a material sounds,
   edit its recipe. `tests/render_knocks.tscn` saves every prop's knock to
-  WAV files in `user://knocks` so you can listen without playing.
+  WAV files in `user://knocks` (dry and woody sets) so you can listen
+  without playing.
 - **Heavier is lower.** Each material is tuned for one mass
   (`ImpactAudio.REFERENCE_MASS`). Heavier props play it slower and lower, so
   the cushion's thump becomes the sofa's thud.

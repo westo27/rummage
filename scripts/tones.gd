@@ -28,64 +28,104 @@ enum ImpactMaterial { PAPER, WOOD, SOFT, RUBBER, PLASTIC }
 ## object hitting the floor twice doesn't sound copy-pasted.
 const KNOCK_VARIANTS: int = 3
 
-## The recipe for each material's knock. A knock is a burst of noise (the
-## slap or click of contact) plus a few ringing tones (the body of the object
-## sounding), each fading away at its own rate.
-##   length   seconds of audio
-##   attack   seconds to reach full volume (soft things push in slowly)
-##   noise    [loudness, fade time in s, brightness 0..1]
-##   modes    ringing tones: [frequency Hz, loudness, fade time in s]
-##   drop     how much higher the tones start than they end (rubber's "bonk")
+## How sharply the knocks' resonances ring, as a multiplier on each one's
+## sharpness. Lower = drier and noisier, with no sense of pitch; higher =
+## more of the object's body ringing through. Kept below the point where
+## the resonances turn into notes, which makes a pile of falling things
+## sound like a tune.
+static var resonance: float = 1.0
+
+## The recipe for each material's knock. A knock is built from four parts,
+## none of which is a steady musical note:
+##   click   [loudness, fade s]  the tick at the moment of contact
+##   noise   [loudness, fade s, brightness 0..1]  the slap or scuff
+##   modes   [[centre Hz, loudness, fade s, sharpness]]  noise filtered through
+##           wide resonances, which give it a wooden or plastic colour
+##           without a pitch you could hum. Sharpness is how narrow the
+##           resonance is; under about 5 it's a colour, not a note.
+##   thump   [Hz, loudness, fade s]  a low thud that starts higher and drops
+##           fast, like a kick drum: reads as weight rather than as pitch.
+##   length, attack  in seconds; soft things push in slowly.
 const KNOCK_RECIPES: Dictionary = {
-	ImpactMaterial.PAPER: {"length": 0.12, "attack": 0.0005, "noise": [0.9, 0.018, 0.55],
-		"modes": [[260.0, 0.35, 0.03], [640.0, 0.15, 0.02]], "drop": 0.0},
-	ImpactMaterial.WOOD: {"length": 0.32, "attack": 0.0005, "noise": [0.45, 0.012, 0.35],
-		"modes": [[180.0, 0.55, 0.11], [420.0, 0.4, 0.07], [810.0, 0.2, 0.04]], "drop": 0.0},
-	ImpactMaterial.SOFT: {"length": 0.26, "attack": 0.006, "noise": [0.5, 0.05, 0.06],
-		"modes": [[95.0, 0.6, 0.07]], "drop": 0.0},
-	ImpactMaterial.RUBBER: {"length": 0.22, "attack": 0.002, "noise": [0.12, 0.01, 0.3],
-		"modes": [[230.0, 0.75, 0.09], [560.0, 0.15, 0.04]], "drop": 0.3},
-	ImpactMaterial.PLASTIC: {"length": 0.16, "attack": 0.0005, "noise": [0.5, 0.015, 0.5],
-		"modes": [[520.0, 0.4, 0.05], [1150.0, 0.3, 0.035], [1900.0, 0.15, 0.02]], "drop": 0.0},
+	ImpactMaterial.PAPER: {"length": 0.10, "attack": 0.0005,
+		"click": [0.6, 0.003], "noise": [0.9, 0.02, 0.6],
+		"modes": [[900.0, 0.4, 0.015, 1.5], [2500.0, 0.3, 0.01, 1.5]],
+		"thump": [140.0, 0.2, 0.015]},
+	ImpactMaterial.WOOD: {"length": 0.22, "attack": 0.0005,
+		"click": [0.7, 0.003], "noise": [0.55, 0.02, 0.15],
+		"modes": [[350.0, 0.7, 0.05, 4.0], [900.0, 0.45, 0.03, 4.0], [1700.0, 0.25, 0.02, 3.0]],
+		"thump": [110.0, 0.5, 0.025]},
+	ImpactMaterial.SOFT: {"length": 0.22, "attack": 0.004,
+		"click": [0.0, 0.003], "noise": [0.9, 0.06, 0.04],
+		"modes": [[200.0, 0.3, 0.04, 1.2]],
+		"thump": [70.0, 0.6, 0.03]},
+	ImpactMaterial.RUBBER: {"length": 0.18, "attack": 0.002,
+		"click": [0.3, 0.002], "noise": [0.45, 0.02, 0.2],
+		"modes": [[600.0, 0.3, 0.03, 3.0]],
+		"thump": [180.0, 0.5, 0.02]},
+	ImpactMaterial.PLASTIC: {"length": 0.12, "attack": 0.0005,
+		"click": [0.8, 0.002], "noise": [0.5, 0.012, 0.5],
+		"modes": [[1200.0, 0.5, 0.025, 3.0], [2600.0, 0.4, 0.015, 3.0]],
+		"thump": [160.0, 0.2, 0.015]},
 }
 
 
 ## One take of a material's knock. Built once and cached, like the others.
-## Each variant nudges the tones' pitches a little and uses different noise.
+## Each take uses different noise and nudges the resonances a little.
 static func knock(material: ImpactMaterial, variant: int) -> AudioStreamWAV:
-	var key: String = "knock-%d-%d" % [material, variant]
+	var key: String = "knock-%d-%d-%.2f" % [material, variant, resonance]
 	if _cache.has(key):
 		return _cache[key]
 
 	var recipe: Dictionary = KNOCK_RECIPES[material]
-	# A seeded random generator: the same material and variant always gives
-	# the same sound, so it doesn't change between runs.
+	# A seeded random generator: the same material and take always gives the
+	# same sound, so it doesn't change between runs.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = material * 100 + variant
-	var modes: Array = []
-	for mode: Array in recipe["modes"]:
-		modes.append([mode[0] * rng.randf_range(0.94, 1.06), mode[1], mode[2]])
 
-	var length: int = int(recipe["length"] * MIX_RATE)
+	# Each resonance is a two-pole filter: it rings at its centre frequency
+	# when fed noise, for as long as its sharpness lets it. r is how much of
+	# its ring survives each sample; b scales the input so it peaks near 1.
+	var filters: Array = []
+	for mode: Array in recipe["modes"]:
+		var hz: float = mode[0] * rng.randf_range(0.93, 1.07)
+		var w: float = TAU * hz / MIX_RATE
+		var bandwidth: float = hz / maxf(mode[3] * resonance, 0.3)
+		var r: float = exp(-PI * bandwidth / MIX_RATE)
+		filters.append({"a1": 2.0 * r * cos(w), "a2": -r * r, "b": (1.0 - r) * 2.0 * sin(w) + 0.001,
+			"amp": mode[1], "fade": mode[2], "y1": 0.0, "y2": 0.0})
+
+	var click: Array = recipe["click"]
 	var noise: Array = recipe["noise"]
+	var thump: Array = recipe["thump"]
+	var length: int = int(recipe["length"] * MIX_RATE)
 	var samples := PackedFloat32Array()
 	samples.resize(length)
-	var phases := PackedFloat32Array()
-	phases.resize(modes.size())
 	var filtered: float = 0.0
+	var previous: float = 0.0
+	var thump_phase: float = 0.0
 	var peak: float = 0.0
 	for i in length:
 		var t: float = float(i) / MIX_RATE
+		var white: float = rng.randf_range(-1.0, 1.0)
+		# Click: the change from one noise sample to the next is very bright,
+		# like the first instant of contact.
+		var value: float = (white - previous) * 0.5 * click[0] * exp(-t / click[1])
+		previous = white
+		# Scuff: noise through a one-pole low-pass. Brightness near 1 is a
+		# hiss, near 0 a rumble.
+		filtered += (white - filtered) * noise[2]
+		value += filtered * noise[0] * exp(-t / noise[1])
+		for f: Dictionary in filters:
+			var y: float = f.b * white + f.a1 * f.y1 + f.a2 * f.y2
+			f.y2 = f.y1
+			f.y1 = y
+			value += y * f.amp * exp(-t / f.fade)
+		# Thud: a sine whose pitch falls from 2.5x to 1x in the first ~15 ms.
+		thump_phase += TAU * thump[0] * (1.0 + 1.5 * exp(-t / 0.012)) / MIX_RATE
+		value += sin(thump_phase) * thump[1] * exp(-t / thump[2])
+
 		var attack: float = minf(t / recipe["attack"], 1.0)
-		# Noise through a one-pole low-pass filter: brightness 1 lets it all
-		# through (a hiss), near 0 leaves only the low rumble (a thud).
-		filtered += (rng.randf_range(-1.0, 1.0) - filtered) * noise[2]
-		var value: float = filtered * noise[0] * exp(-t / noise[1])
-		var bend: float = 1.0 + recipe["drop"] * exp(-t / 0.03)
-		for m in modes.size():
-			var mode: Array = modes[m]
-			phases[m] += TAU * mode[0] * bend / MIX_RATE
-			value += sin(phases[m]) * mode[1] * exp(-t / mode[2])
 		# Fade the last 10 ms to silence so the end never clicks.
 		var tail: float = clampf((length - i) / (0.01 * MIX_RATE), 0.0, 1.0)
 		value *= attack * tail

@@ -359,6 +359,7 @@ func _release() -> void:
 func _throw() -> void:
 	var speed: float = Game.tune.throw_speed_base / (1.0 + held.mass / Game.tune.throw_speed_mass_scale)
 	held.linear_velocity = _forward() * speed
+	held.thrown()
 	_release()
 	# Without this, still holding the left button would instantly re-grab the
 	# object you just threw.

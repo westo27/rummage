@@ -139,6 +139,12 @@ func start_hold(holder: PhysicsBody3D) -> void:
 	holder.add_collision_exception_with(self)
 
 
+## Called by the beam just before it lets go with a throw. Does nothing here;
+## a prop's own script can override it (bedside_table.gd opens its drawer).
+func thrown() -> void:
+	pass
+
+
 ## Called by the beam when it lets go (dropped, thrown, or snapped off).
 func end_hold() -> void:
 	is_held = false

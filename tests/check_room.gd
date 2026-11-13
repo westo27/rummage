@@ -1,6 +1,7 @@
 extends Node
-## Headless check for the room's new parts: the window holds things in, and
-## the props are glossy. (How the room looks can only be judged in
+## Headless check for the room's new parts: the window holds things in, the
+## props are glossy, the bedside lamp stands on its table, and the table's
+## drawer opens when thrown. (How the room looks can only be judged in
 ## tests/shoot.tscn's pictures.) Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_room.tscn
 
@@ -34,6 +35,39 @@ func _run() -> void:
 	_check("props have the glossy finish",
 		is_equal_approx(crate_material.roughness, 0.12) and crate_material.clearcoat_enabled,
 		"roughness %.2f, clearcoat %s" % [crate_material.roughness, crate_material.clearcoat_enabled])
+
+	# --- The bedside lamp is its own object, standing on the table ---
+	var lamp: Prop = _main.get_node("MainRoomProps/BedsideLamp")
+	_check("the lamp stands on the bedside table",
+		absf(lamp.global_position.y - 0.652) < 0.03 and lamp.global_basis.y.y > 0.99,
+		"y = %.3f, upright %.2f" % [lamp.global_position.y, lamp.global_basis.y.y])
+
+	# --- The bedside table's drawer: shut on a drop, open on a throw ---
+	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
+	var table: Prop = _main.get_node("MainRoomProps/BedsideTable")
+	var drawer := table.get_node("DrawerFront") as Node3D
+	var shut_z: float = drawer.position.z
+	beam._grab_armed = true
+	beam._grab(table, table.global_position)
+	await _wait(0.3)
+	beam._release()
+	await _wait(0.5)
+	_check("dropping the table leaves the drawer shut", is_equal_approx(drawer.position.z, shut_z),
+		"moved %.3f m" % (drawer.position.z - shut_z))
+	beam._grab(table, table.global_position)
+	await _wait(0.3)
+	beam._throw()
+	await _wait(0.5)
+	_check("throwing the table slides the drawer open", drawer.position.z - shut_z > 0.25,
+		"moved %.3f m" % (drawer.position.z - shut_z))
+	_check("the drawer's collision moves with it",
+		is_equal_approx((table.get_node("DrawerFrontShape") as Node3D).position.z, drawer.position.z), "")
+	beam._grab_armed = true
+	beam._grab(table, table.global_position)
+	await _wait(0.5)
+	_check("picking it up again slides the drawer shut", is_equal_approx(drawer.position.z, shut_z),
+		"moved %.3f m" % (drawer.position.z - shut_z))
+	beam._release()
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

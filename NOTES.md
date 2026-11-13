@@ -37,7 +37,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart
 ```
 
 - Each prop type is its own scene in `scenes/props/` (book, crate, bin, small_box,
-  pillow, ball, bookcase, table, bed, bedside_table, wardrobe): a `RigidBody3D` with
+  pillow, ball, bookcase, table, bed, bedside_table, bedside_lamp, wardrobe): a `RigidBody3D` with
   `scripts/prop.gd` and box/sphere meshes plus matching collision shapes.
 - Each creature is an instance of `scenes/creature.tscn` (`scripts/creature.gd`).
 - The `*_props.tscn` / `*_creatures.tscn` layout files are ordinary scenes: open
@@ -254,8 +254,10 @@ child up past your bedtime". So it's night.
 
 - **The main room is a child's bedroom.** The bed under the window took the
   sofa's place and its job (60 kg gate, four creatures underneath), with
-  two pillows and a bedside table whose little lamp (`LampLight`, no
-  shadows) glows and can be thrown about with it.
+  two pillows and a bedside table. The table's lamp is its own 1.2 kg
+  prop (`bedside_lamp.tscn`, a shadowless glow). The table is hollow and
+  its drawer slides open when the beam throws it, shut again when it's
+  next picked up (`scripts/bedside_table.gd`, via `Prop.thrown()`).
 
 - **Light** (main.tscn): the pendant lamps are turned down to a warm orange
   glow (their shades block light upward, which is the darker band at the
@@ -351,7 +353,7 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 | 2 player | 2 | the player capsule | |
 | 3 props | 4 | props over 3 kg: crates, table, bedside table, bookcase, bed, wardrobe | block the player |
 | 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | the beam's first ray hits only this layer |
-| 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes | the player walks through them and kicks them |
+| 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp | the player walks through them and kicks them |
 
 `prop.gd` picks props or clutter by mass when it loads, overriding the layer
 saved in the `.tscn`. Two bodies collide if *either* one's mask includes the
@@ -398,7 +400,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
-| check_room | a ball thrown hard at the window stays in the room; props are glossy |
+| check_room | a ball thrown hard at the window stays in the room; props are glossy; the bedside lamp stands on its table; the drawer opens on a throw, not a drop, and shuts on the next grab |
 | check_lamp | the lamp hangs still; a thrown book swings it and its light; it stays on its cord; it settles; the beam can't grab it |
 | check_beam_sound | silent when idle; the whirr fades in on grabbing, rises and swells when swung, settles, fades out on letting go; crackle only while straining; both loop; quieter than squeaks |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the bed and balls get their materials; the bed thuds lower than a pillow; knocks stay below squeak volume |

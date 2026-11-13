@@ -69,6 +69,8 @@ var _total: int = 0
 ## swinging. A ball landing in the bag knocks it; a spring brings it back.
 var _tag_swing: float = 0.0
 var _tag_swing_speed: float = 0.0
+## The tag's hop when the count goes up: 1 at the start, easing to 0.
+var _tag_hop: float = 0.0
 
 
 func _ready() -> void:
@@ -106,8 +108,24 @@ func drop(color: Color) -> void:
 	_queue.append(color)
 
 
+## Loosens the neck ahead of a ball that's on its way (the flying catch), so
+## it's open when the ball arrives instead of opening after.
+func open_neck() -> void:
+	_open_hold_left = maxf(_open_hold_left, FlyingBall.FLIGHT_SECONDS + OPEN_HOLD)
+
+
+## Where a ball enters the bag, in the coordinates of the HUD it sits in.
+## get_global_transform includes the bag's position and its squash.
+func mouth_point() -> Vector2:
+	return get_global_transform() * Vector2(CENTRE_X, NECK_Y - FRILL_HEIGHT - 50.0)
+
+
 ## Sets the number written on the tag.
 func set_count(caught: int, total: int) -> void:
+	if caught > _caught:
+		# A new catch: the tag hops and swings.
+		_tag_hop = 1.0
+		_tag_swing_speed += 2.5 * (1.0 if randf() < 0.5 else -1.0)
 	_caught = caught
 	_total = total
 	_front.queue_redraw()
@@ -149,6 +167,9 @@ func _process(delta: float) -> void:
 
 	# The tag swings on a damped spring: pulled back toward rest in
 	# proportion to how far out it is, slowed by a little friction.
+	if _tag_hop > 0.0:
+		_tag_hop = maxf(_tag_hop - delta * 3.0, 0.0)
+		_front.queue_redraw()
 	if absf(_tag_swing) > 0.001 or absf(_tag_swing_speed) > 0.001:
 		_tag_swing_speed += (-38.0 * _tag_swing - 3.5 * _tag_swing_speed) * delta
 		_tag_swing += _tag_swing_speed * delta
@@ -339,7 +360,10 @@ func _draw_front() -> void:
 ## written on it. Drawn in its own rotated frame, with the knot at the origin
 ## and the tag hanging straight down, then turned by its swing angle.
 func _draw_tag(knot: Vector2) -> void:
-	_front.draw_set_transform(knot, TAG_REST_ANGLE + _tag_swing)
+	# The hop: up and bigger, then back, over about a third of a second.
+	var hop: float = sin(_tag_hop * PI)
+	_front.draw_set_transform(knot + Vector2(0.0, -10.0 * hop), TAG_REST_ANGLE + _tag_swing,
+		Vector2.ONE * (1.0 + 0.3 * hop))
 	var top: float = TAG_STRING
 	var half: float = TAG_SIZE.x * 0.5
 	var clip: float = 16.0  # the cut-off top corners

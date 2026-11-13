@@ -15,9 +15,58 @@ static func squeak() -> AudioStreamWAV:
 	return chirp(1500.0, 2600.0, 0.09)
 
 
-## A longer rising sweep: played when you catch a creature.
-static func capture() -> AudioStreamWAV:
-	return chirp(500.0, 1900.0, 0.2)
+## The catch: a wet, cartoony slurp as the beam sucks the creature up,
+## ending in a little "plop".
+##
+## The slurp is noise through a single resonance whose frequency sweeps
+## upward, like the "ooo-ee" of air rushing through a narrowing straw. Its
+## loudness wobbles about 28 times a second, which is the bubbly, gurgling
+## part. The plop is a quick upward blip at the end.
+static func slurp() -> AudioStreamWAV:
+	if _cache.has("slurp"):
+		return _cache["slurp"]
+	const LENGTH: float = 0.38
+	const SWEEP_END: float = 0.30
+	const PLOP_AT: float = 0.30
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	var count: int = int(LENGTH * MIX_RATE)
+	var samples := PackedFloat32Array()
+	samples.resize(count)
+	var y1: float = 0.0
+	var y2: float = 0.0
+	var plop_phase: float = 0.0
+	var peak: float = 0.0
+	for i in count:
+		var t: float = float(i) / MIX_RATE
+		# Resonance rises from 250 Hz to about 1750 Hz over the sweep.
+		var hz: float = 250.0 * pow(7.0, minf(t / SWEEP_END, 1.0))
+		var w: float = TAU * hz / MIX_RATE
+		var r: float = exp(-PI * (hz / 6.0) / MIX_RATE)
+		var y: float = (1.0 - r) * 2.0 * sin(w) * rng.randf_range(-1.0, 1.0) \
+			+ 2.0 * r * cos(w) * y1 - r * r * y2
+		y2 = y1
+		y1 = y
+		var gurgle: float = 0.55 + 0.45 * sin(TAU * 28.0 * t)
+		var envelope: float = minf(t / 0.03, 1.0) * clampf((SWEEP_END + 0.02 - t) / 0.04, 0.0, 1.0)
+		var value: float = y * gurgle * envelope * 3.0
+		if t >= PLOP_AT:
+			var p: float = t - PLOP_AT
+			plop_phase += TAU * lerpf(350.0, 900.0, minf(p / 0.025, 1.0)) / MIX_RATE
+			value += sin(plop_phase) * 0.7 * exp(-p / 0.03)
+		samples[i] = value * clampf((count - i) / (0.01 * MIX_RATE), 0.0, 1.0)
+		peak = maxf(peak, absf(samples[i]))
+	var data := PackedByteArray()
+	data.resize(count * 2)
+	for i in count:
+		data.encode_s16(i * 2, int(samples[i] / peak * 0.85 * 32767.0))
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = MIX_RATE
+	wav.stereo = false
+	wav.data = data
+	_cache["slurp"] = wav
+	return wav
 
 
 ## What a prop is made of, which decides how it sounds when it hits something.

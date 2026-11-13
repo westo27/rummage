@@ -71,23 +71,29 @@ func _on_body_entered(_body: Node) -> void:
 
 
 func _draw() -> void:
-	# Everything is laid out in units of the radius, so the ball can be resized
-	# by changing RADIUS alone.
-	var r: float = RADIUS
+	paint(self, color, RADIUS, rotation)
+
+
+## Draws a ball with eyes on any canvas item, at its origin. `spin` is how
+## far the item is turned: the eyes turn with it, while the shading and shine
+## are turned back so the light stays at the top left of the screen. Shared
+## with the ball that flies into the bag (flying_ball.gd).
+static func paint(ci: CanvasItem, tint: Color, r: float, spin: float) -> void:
 	# Body and shading, fixed to the screen so the light doesn't spin.
-	draw_set_transform(Vector2.ZERO, -rotation)
-	draw_circle(Vector2.ZERO, r, color.darkened(0.35))
-	draw_circle(Vector2(-0.06, -0.09) * r, r * 0.88, color)
-	draw_circle(Vector2(-0.15, -0.24) * r, r * 0.58, color.lightened(0.18))
+	ci.draw_set_transform(Vector2.ZERO, -spin)
+	ci.draw_circle(Vector2.ZERO, r, tint.darkened(0.35))
+	ci.draw_circle(Vector2(-0.06, -0.09) * r, r * 0.88, tint)
+	ci.draw_circle(Vector2(-0.15, -0.24) * r, r * 0.58, tint.lightened(0.18))
 
 	# Eyes, which turn with the ball.
-	draw_set_transform(Vector2.ZERO, 0.0)
+	ci.draw_set_transform(Vector2.ZERO, 0.0)
 	for side: float in [-1.0, 1.0]:
 		var eye := Vector2(0.36 * side, -0.18) * r
-		draw_circle(eye, r * 0.27, Color.WHITE)
-		draw_circle(eye + Vector2(0.0, 0.07) * r, r * 0.13, Color(0.05, 0.05, 0.06))
+		ci.draw_circle(eye, r * 0.27, Color.WHITE)
+		ci.draw_circle(eye + Vector2(0.0, 0.07) * r, r * 0.13, Color(0.05, 0.05, 0.06))
 
 	# Shine on top of everything, back in screen space.
-	draw_set_transform(Vector2.ZERO, -rotation)
-	draw_circle(Vector2(-0.36, -0.48) * r, r * 0.22, Color(1.0, 1.0, 1.0, 0.7))
-	draw_circle(Vector2(-0.2, -0.63) * r, r * 0.1, Color(1.0, 1.0, 1.0, 0.85))
+	ci.draw_set_transform(Vector2.ZERO, -spin)
+	ci.draw_circle(Vector2(-0.36, -0.48) * r, r * 0.22, Color(1.0, 1.0, 1.0, 0.7))
+	ci.draw_circle(Vector2(-0.2, -0.63) * r, r * 0.1, Color(1.0, 1.0, 1.0, 0.85))
+	ci.draw_set_transform(Vector2.ZERO, 0.0)

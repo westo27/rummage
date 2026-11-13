@@ -29,6 +29,7 @@ func _ready() -> void:
 		DirAccess.make_dir_recursive_absolute(folder)
 		for entry: Array in PROPS:
 			_render(entry, folder)
+	Tones.slurp().save_to_wav("user://knocks/catch_slurp.wav")
 	print("Saved to %s" % ProjectSettings.globalize_path("user://knocks"))
 	get_tree().quit()
 

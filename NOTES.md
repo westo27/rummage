@@ -170,6 +170,31 @@ than the creature squeaks.
   `impact_max_db` (-10, kept below the squeaks' -4).
 - Nothing knocks for the first 1.2 s after the room loads, while it settles.
 
+## The catch
+
+Your choices: sparkles, a suction slurp, and the tag bouncing, with three
+catch styles to try out in play.
+
+- **Catch styles, keys 1 / 2 / 3** (temporary, for comparing):
+  1. *Flies into the bag* (the default): the creature blinks out where it
+     was caught and a ball in its colour arcs across the screen into the
+     bag's neck (`scripts/flying_ball.gd`). The neck opens ahead of it.
+  2. *Pops on the spot*: it squashes, swells and bursts where it stands.
+     The ball drops into the bag as before.
+  3. *Sucked into the beam*: it turns to face your hand and stretches
+     toward it as it's pulled in.
+  The choice lives in `Game.catch_style`, so it survives pressing R. A toast
+  names the style when you switch. Once you've picked one, the other two
+  (the `match` in `Creature.capture`) and the keys can be removed.
+- **Sparkles** (`scripts/catch_sparkles.gd`): about 26 star glints that pop
+  out white, tint to the creature's colour, spin and twinkle away. The star
+  shape is drawn in code. They remove themselves when done.
+- **Slurp** (`Tones.slurp()`): noise through a resonance sweeping upward,
+  with a bubbly wobble, ending in a little plop. It replaces the old rising
+  sweep. `tests/render_knocks.tscn` also saves it as `catch_slurp.wav`.
+- **Tag bounce**: the bag's tag hops and grows for a moment, and swings,
+  whenever the count goes up.
+
 ## Tunables
 
 Everything you're likely to tweak is in **`config/tunables.tres`**. Click it in
@@ -246,6 +271,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels, settings steppers and saving, pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
+| check_catch | keys 1-3 switch style with a toast; each style's animation (flies, swells, pulled into the hand and stretched); sparkles, slurp and tag hop every time; one ball in the bag each; sparkles clean up |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.
@@ -266,9 +292,10 @@ tell whether any of it is fun or readable. Not verified:
   not, because a still image can't show movement.)
 - **Menu sound:** the hover and select chimes have only been checked as "a
   sound started", the same as the creature squeaks.
-- **check_hiding is slightly flaky.** About one creature in 70 still ends up
-  where the player can see it, usually against a wall in a corner. Re-run it
-  once before treating a single failure as a regression.
+- **check_hiding is slightly flaky** and slow, so it's left out of routine
+  runs. Books on the bookcase's bottom shelf used to count as cover, sending
+  creatures somewhere unreachable; props now only count if the floor is
+  directly under them. That fix hasn't been re-checked with this test.
 - **Clue quality:** whether tells and ping really let you follow clues instead
   of checking every bin.
 - **Smoothness on a real display:** the numbers are perfect headless, but

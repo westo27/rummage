@@ -74,7 +74,7 @@ func _ready() -> void:
 	_beam_mesh.visible = false
 	# Non-positional player for the capture sound. A node created in code must be
 	# added to the tree with add_child before it does anything.
-	_capture_sound.stream = Tones.capture()
+	_capture_sound.stream = Tones.slurp()
 	_capture_sound.volume_db = -6.0
 	add_child(_capture_sound)
 

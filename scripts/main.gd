@@ -54,11 +54,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Throws away the whole scene tree under Main and loads it fresh from the
 		# .tscn file. The Game autoload is not part of the scene, so it survives.
 		get_tree().reload_current_scene()
+		return
+	# Temporary: 1, 2 and 3 switch between the catch styles to compare them.
+	for i in Game.CATCH_STYLE_NAMES.size():
+		if event.is_action_pressed("catch_style_%d" % (i + 1)):
+			Game.catch_style = i as Game.CatchStyle
+			_hud.show_toast("Catch style %d: %s" % [i + 1, Game.CATCH_STYLE_NAMES[i]])
 
 
 func _on_creature_captured(creature: Creature) -> void:
 	_caught += 1
-	_hud.add_to_bag(creature.body_color)
+	# Where it was caught, so the "flies into the bag" style can start the
+	# ball's flight from that spot on screen.
+	_hud.add_to_bag(creature.body_color, creature.global_position)
 	_beam.add_lift(Game.tune.lift_per_capture)
 	_hud.set_caught(_caught, _total_creatures)
 	_announce_unlocked_props()

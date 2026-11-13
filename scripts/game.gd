@@ -15,6 +15,14 @@ var settings: Settings
 ## Plays the knocks when props hit things. See scripts/impact_audio.gd.
 var impacts: ImpactAudio
 
+## How a caught creature leaves the room. Three versions to compare in play,
+## switched with the 1, 2 and 3 keys (main.gd). Kept here rather than in the
+## scene so the choice survives pressing R. Temporary: once one is chosen,
+## the other two and the keys can go.
+enum CatchStyle { FLY_TO_BAG, POP, SUCK }
+const CATCH_STYLE_NAMES: Array[String] = ["flies into the bag", "pops on the spot", "sucked into the beam"]
+var catch_style: CatchStyle = CatchStyle.FLY_TO_BAG
+
 
 func _ready() -> void:
 	_setup_input_map()
@@ -50,6 +58,10 @@ func _setup_input_map() -> void:
 	_add_mouse("grab", MOUSE_BUTTON_LEFT)
 	_add_mouse("beam_nearer", MOUSE_BUTTON_WHEEL_DOWN)
 	_add_mouse("beam_further", MOUSE_BUTTON_WHEEL_UP)
+	# Temporary: compare the three catch styles (see CatchStyle above).
+	_add_key("catch_style_1", KEY_1)
+	_add_key("catch_style_2", KEY_2)
+	_add_key("catch_style_3", KEY_3)
 
 
 func _add_key(action: String, key: Key) -> void:

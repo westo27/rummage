@@ -221,7 +221,8 @@ func _start_cowering() -> void:
 	_check_left = CHECK_INTERVAL
 
 
-## Called by the beam. Flies into the beam's origin (`toward`), then is removed.
+## Called by the beam. Plays one of the catch animations (Game.catch_style),
+## then emits `captured` and is removed. `toward` is the beam's hand.
 func capture(toward: Vector3) -> void:
 	if state == State.CAPTURED:
 		return
@@ -229,14 +230,39 @@ func capture(toward: Vector3) -> void:
 	_set_catchable(false)
 	collision_layer = 0
 	collision_mask = 0
+	# Sparkles where it was caught, in every style. Added to the room rather
+	# than to the creature, so they outlive it.
+	CatchSparkles.burst(get_parent(), _visual.global_position + Vector3.UP * 0.05, body_color)
+
 	# A tween animates properties over time without writing a per-frame loop.
-	# set_parallel runs both animations at once; chain() then waits for them.
+	# Tweeners run one after another unless joined with parallel().
 	# TWEEN_PROCESS_PHYSICS steps it in physics ticks, which is what physics
 	# interpolation expects for anything that moves.
-	var tween := create_tween().set_parallel(true).set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	tween.tween_property(_visual, "global_position", toward, 0.25)
-	tween.tween_property(_visual, "scale", Vector3.ONE * 0.15, 0.25)
-	tween.chain().tween_callback(_finish_capture)
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	match Game.catch_style:
+		Game.CatchStyle.FLY_TO_BAG:
+			# A quick blink-out where it stands; the HUD then flies a ball in
+			# its colour from this spot on screen into the bag.
+			tween.tween_property(_visual, "scale", Vector3.ONE * 1.25, 0.05)
+			tween.tween_property(_visual, "scale", Vector3.ONE * 0.01, 0.1)
+		Game.CatchStyle.POP:
+			# Squash flat, swell up round, burst.
+			tween.tween_property(_visual, "scale", Vector3(1.5, 0.55, 1.5), 0.06)
+			tween.tween_property(_visual, "scale", Vector3.ONE * 1.8, 0.06) \
+				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tween.tween_callback(_visual.hide)
+			tween.tween_interval(0.05)
+		Game.CatchStyle.SUCK:
+			# Turn to face the hand, then stretch toward it as it's pulled in,
+			# speeding up as it goes, like being sucked through a straw.
+			var to_hand: Vector3 = toward - _visual.global_position
+			if to_hand.length() > 0.01 and absf(to_hand.normalized().y) < 0.98:
+				_visual.look_at(toward, Vector3.UP)  # -Z, its face, toward the hand
+			tween.tween_property(_visual, "global_position", toward, 0.25) \
+				.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			tween.parallel().tween_property(_visual, "scale", Vector3(0.5, 0.5, 2.2), 0.15)
+			tween.tween_property(_visual, "scale", Vector3.ONE * 0.05, 0.05)
+	tween.tween_callback(_finish_capture)
 
 
 func _finish_capture() -> void:
@@ -366,13 +392,15 @@ func _best_hiding_prop() -> Prop:
 		var prop := node as Prop
 		if prop.is_held:
 			continue
-		# Only things standing on the floor. A prop's centre sits about its
-		# own size above the ground; anything higher is up on a shelf or a
-		# table, and the "spot behind it" would be somewhere unreachable,
-		# like between a bookcase and the wall.
+		# Only things standing on the floor. Anything on a shelf or a table
+		# has its "spot behind" somewhere unreachable, like between a
+		# bookcase and the wall. Height alone can't tell: the bottom shelf is
+		# lower than a crate's middle. The cheap test first, then the sure one.
 		if prop.global_position.y > prop.hold_radius + 0.25:
 			continue
 		if global_position.distance_to(prop.global_position) > HIDE_SEARCH_RADIUS:
+			continue
+		if not _stands_on_floor(prop):
 			continue
 		var spot: Vector3 = _hide_point(prop, eye)
 		if spot == Vector3.INF:
@@ -423,6 +451,16 @@ func _hidden_at(spot: Vector3, eye: Vector3) -> bool:
 		if space.intersect_ray(query).is_empty():
 			return false
 	return true
+
+
+## True if the first thing straight below the prop is the floor (or a wall),
+## not another prop it's resting on.
+func _stands_on_floor(prop: Prop) -> bool:
+	var from: Vector3 = prop.global_position
+	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 2.0,
+		1 | MASK_PROPS, [prop.get_rid()])
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	return not hit.is_empty() and not (hit.collider is Prop)
 
 
 ## Where the player sees from (their head), or a point high in the room.

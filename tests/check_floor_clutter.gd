@@ -29,7 +29,7 @@ func _run() -> void:
 		["book on its edge", book, on_edge, true],
 		["book standing up", book, Basis.IDENTITY, true],
 		["ball", load("res://scenes/props/ball.tscn"), Basis.IDENTITY, true],
-		["cushion", load("res://scenes/props/cushion.tscn"), Basis.IDENTITY, true],
+		["pillow", load("res://scenes/props/pillow.tscn"), Basis.IDENTITY, true],
 		["bin on its side", load("res://scenes/props/bin.tscn"), Basis(Vector3.FORWARD, PI / 2.0), true],
 		["pile of 5 books", null, flat, true],
 		["crate", load("res://scenes/props/crate.tscn"), Basis.IDENTITY, false],

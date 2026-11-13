@@ -19,7 +19,7 @@ signal captured(creature: Creature)
 enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 
 ## When false, only moving the covering object reveals this creature; flying
-## objects bouncing nearby don't. Used under the sofa so its gate can't be
+## objects bouncing nearby don't. Used under the bed so its gate can't be
 ## skipped by throwing things at it.
 @export var reveal_on_knock: bool = true
 
@@ -32,7 +32,7 @@ const COVER_RADIUS_COWERING: float = 0.6
 ## Hidden creatures check their covers 10 times a second, not every tick.
 const CHECK_INTERVAL: float = 0.1
 ## Covers no bigger than this (their hold_radius) get bumped aside when the
-## creature escapes from under them: books, bins, crates, not sofa/bookcase.
+## creature escapes from under them: books, bins, crates, not bed/bookcase.
 const BUMPABLE_RADIUS: float = 0.5
 ## Give props time to settle after the scene loads before recording covers.
 const SETTLE_TIME: float = 0.5
@@ -192,7 +192,7 @@ func _reveal() -> void:
 ## If the creature bolts while still under something (a crate it was startled in
 ## by a knock, say), it would be trapped inside. So it bumps small covers that
 ## sit over it: an upward shove applied at the edge it's running toward, which
-## tips that edge up and lets it out. Big things (sofa, bookcase) are left alone.
+## tips that edge up and lets it out. Big things (bed, bookcase) are left alone.
 func _bump_covers_out_of_the_way() -> void:
 	for prop: Prop in _covers:
 		if not is_instance_valid(prop) or prop.is_held or prop.hold_radius > BUMPABLE_RADIUS:
@@ -402,7 +402,7 @@ func _best_hiding_prop() -> Prop:
 
 
 ## The spot just behind `prop` as seen from `eye`, at floor level, found by
-## feeling for the prop's far surface with a ray (so long sofas and thin boxes
+## feeling for the prop's far surface with a ray (so long beds and thin boxes
 ## both work). Returns Vector3.INF if that spot is inside or past a wall.
 func _hide_point(prop: Prop, eye: Vector3) -> Vector3:
 	var space := get_world_3d().direct_space_state

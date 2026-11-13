@@ -71,14 +71,14 @@ func _run() -> void:
 	await _wait(1.0)
 	_check("letting go fades the whirr away", not _beam._hum.playing, "gain %.4f" % _beam._hum_gain)
 
-	# --- Strain against the sofa: crackle, and only then ---
-	var sofa: Prop = _main.get_node("MainRoomProps/Sofa")
+	# --- Strain against the bed: crackle, and only then ---
+	var bed: Prop = _main.get_node("MainRoomProps/Bed")
 	_player.global_position = Vector3(0.3, 0.05, -2.2)
-	_aim_at(sofa.global_position + Vector3(0.0, 0.35, 0.3))
+	_aim_at(bed.global_position + Vector3(0.0, 0.35, 0.3))
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.5)
-	_check("straining against the sofa crackles", _beam._rejected == sofa and _beam._strain.playing, "")
+	_check("straining against the bed crackles", _beam._rejected == bed and _beam._strain.playing, "")
 	_check("no whirr while straining", not _beam._hum.playing, "")
 	_release("grab")
 	await _wait(1.0)

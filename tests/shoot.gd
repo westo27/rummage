@@ -83,7 +83,7 @@ func _run() -> void:
 	_shoot("catch_suck")
 	await get_tree().create_timer(1.0).timeout
 
-	# The beam: holding a crate up, then straining red against the sofa.
+	# The beam: holding a crate up, then straining red against the bed.
 	var beam := main.get_node("Player/Head/Camera3D/Beam") as Beam
 	var head := player.get_node("Head") as Node3D
 	var crate := main.get_node("MainRoomProps/CrateA") as Prop
@@ -99,16 +99,16 @@ func _run() -> void:
 	if beam.held != null:
 		beam._release()
 	# Let go of the button first, or the beam grabs whatever it passes over
-	# (a cushion) on the way to the sofa.
+	# (a pillow) on the way to the bed.
 	beam._grab_armed = false
-	var sofa := main.get_node("MainRoomProps/Sofa") as Prop
+	var bed := main.get_node("MainRoomProps/Bed") as Prop
 	player.global_position = Vector3(0.3, 0.05, -2.0)
 	player.reset_physics_interpolation()
-	_look(player, head, sofa.global_position + Vector3(0.3, 0.2, 0.0))
+	_look(player, head, bed.global_position + Vector3(0.3, 0.2, 0.0))
 	await _frames(3)
 	beam._grab_armed = true
-	beam._rejected = sofa
-	beam._rejected_local = sofa.to_local(sofa.global_position + Vector3(0.3, 0.2, 0.3))
+	beam._rejected = bed
+	beam._rejected_local = bed.to_local(bed.global_position + Vector3(0.3, 0.2, 0.3))
 	await get_tree().create_timer(0.3).timeout
 	_shoot("beam_strain")
 	beam._rejected = null

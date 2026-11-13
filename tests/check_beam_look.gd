@@ -63,10 +63,10 @@ func _run() -> void:
 		"%s held=%s rejected=%s catching=%s" % [_visibility(), _beam.held, _beam._rejected, _beam._catching])
 	_check("letting go: the aura goes", crate._aura != null and not crate._aura.visible, "")
 
-	# --- Straining against the sofa ---
-	var sofa: Prop = _main.get_node("MainRoomProps/Sofa")
+	# --- Straining against the bed ---
+	var bed: Prop = _main.get_node("MainRoomProps/Bed")
 	_player.global_position = Vector3(0.3, 0.05, -2.2)
-	_aim_at(sofa.global_position + Vector3(0.0, 0.35, 0.3))
+	_aim_at(bed.global_position + Vector3(0.0, 0.35, 0.3))
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.3)
@@ -74,10 +74,10 @@ func _run() -> void:
 	# would read the beam before it has redrawn.
 	await get_tree().process_frame
 	await get_tree().process_frame
-	_check("straining: latched onto the sofa", _beam._rejected == sofa, "%s" % _beam._rejected)
+	_check("straining: latched onto the bed", _beam._rejected == bed, "%s" % _beam._rejected)
 	_check("straining: everything shows", _all_parts_visible(), _visibility())
 	_check("straining: it's red", _beam.beam_color().is_equal_approx(Beam.STRAIN_COLOR), "")
-	_check("straining: the sofa wears a red aura", _aura_on(sofa, Beam.STRAIN_COLOR), "")
+	_check("straining: the bed wears a red aura", _aura_on(bed, Beam.STRAIN_COLOR), "")
 	_check("straining: agitated",
 		is_equal_approx(_beam._beam_material.get_shader_parameter("agitation"), 1.0), "")
 	_release("grab")
@@ -87,7 +87,7 @@ func _run() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check("letting go of the strain: everything goes", not _any_part_visible(), _visibility())
-	_check("letting go of the strain: the aura goes", not sofa._aura.visible, "")
+	_check("letting go of the strain: the aura goes", not bed._aura.visible, "")
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

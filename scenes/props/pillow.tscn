@@ -3,15 +3,15 @@
 [ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
 
 [sub_resource type="StandardMaterial3D" id="Mat"]
-albedo_color = Color(0.66, 0.86, 0.22, 1)
+albedo_color = Color(0.99, 0.97, 0.92, 1)
 
 [sub_resource type="BoxMesh" id="Mesh_0"]
-size = Vector3(0.5, 0.15, 0.45)
+size = Vector3(0.38, 0.12, 0.42)
 
 [sub_resource type="BoxShape3D" id="Shape_0"]
-size = Vector3(0.5, 0.15, 0.45)
+size = Vector3(0.38, 0.12, 0.42)
 
-[node name="Cushion" type="RigidBody3D"]
+[node name="Pillow" type="RigidBody3D"]
 collision_layer = 4
 collision_mask = 7
 mass = 0.4
@@ -19,13 +19,10 @@ continuous_cd = true
 script = ExtResource("1_prop")
 hold_radius = 0.3
 impact_material = 2
-tint_variation = 0.2
 
 [node name="Mesh0" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-mesh = SubResource("Mesh_0")
 material_override = SubResource("Mat")
+mesh = SubResource("Mesh_0")
 
 [node name="Shape0" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 shape = SubResource("Shape_0")

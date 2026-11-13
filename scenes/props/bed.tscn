@@ -1,0 +1,140 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
+albedo_color = Color(0.82, 0.58, 0.34, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_sheet"]
+albedo_color = Color(0.97, 0.94, 0.86, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_duvet"]
+albedo_color = Color(0.84, 0.24, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_leg"]
+size = Vector3(0.08, 0.2, 0.08)
+
+[sub_resource type="BoxShape3D" id="Shape_leg"]
+size = Vector3(0.08, 0.2, 0.08)
+
+[sub_resource type="BoxMesh" id="Mesh_frame"]
+size = Vector3(2.08, 0.12, 0.96)
+
+[sub_resource type="BoxMesh" id="Mesh_mattress"]
+size = Vector3(1.98, 0.18, 0.9)
+
+[sub_resource type="BoxShape3D" id="Shape_base"]
+size = Vector3(2.08, 0.3, 0.96)
+
+[sub_resource type="BoxMesh" id="Mesh_duvet"]
+size = Vector3(1.4, 0.07, 0.94)
+
+[sub_resource type="BoxMesh" id="Mesh_drape"]
+size = Vector3(1.4, 0.2, 0.02)
+
+[sub_resource type="BoxMesh" id="Mesh_head"]
+size = Vector3(0.06, 0.78, 0.96)
+
+[sub_resource type="BoxShape3D" id="Shape_head"]
+size = Vector3(0.06, 0.78, 0.96)
+
+[sub_resource type="BoxMesh" id="Mesh_head_top"]
+size = Vector3(0.06, 0.12, 0.6)
+
+[sub_resource type="BoxMesh" id="Mesh_foot"]
+size = Vector3(0.06, 0.5, 0.96)
+
+[sub_resource type="BoxShape3D" id="Shape_foot"]
+size = Vector3(0.06, 0.5, 0.96)
+
+[node name="Bed" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 60.0
+script = ExtResource("1_prop")
+hold_radius = 1.2
+impact_material = 2
+keep_upright_until_grabbed = true
+
+[node name="Frame" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_frame")
+
+[node name="Mattress" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0)
+material_override = SubResource("Mat_sheet")
+mesh = SubResource("Mesh_mattress")
+
+[node name="Duvet" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 0.235, 0)
+material_override = SubResource("Mat_duvet")
+mesh = SubResource("Mesh_duvet")
+
+[node name="DuvetDrape" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 0.17, 0.48)
+material_override = SubResource("Mat_duvet")
+mesh = SubResource("Mesh_drape")
+
+[node name="BaseShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+shape = SubResource("Shape_base")
+
+[node name="Headboard" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.07, 0.21, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_head")
+
+[node name="HeadboardTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.07, 0.66, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_head_top")
+
+[node name="HeadShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.07, 0.21, 0)
+shape = SubResource("Shape_head")
+
+[node name="Footboard" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.07, 0.07, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_foot")
+
+[node name="FootShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.07, 0.07, 0)
+shape = SubResource("Shape_foot")
+
+[node name="Leg1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.98, -0.2, -0.4)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_leg")
+
+[node name="LegShape1" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.98, -0.2, -0.4)
+shape = SubResource("Shape_leg")
+
+[node name="Leg2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.98, -0.2, 0.4)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_leg")
+
+[node name="LegShape2" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.98, -0.2, 0.4)
+shape = SubResource("Shape_leg")
+
+[node name="Leg3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98, -0.2, -0.4)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_leg")
+
+[node name="LegShape3" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98, -0.2, -0.4)
+shape = SubResource("Shape_leg")
+
+[node name="Leg4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98, -0.2, 0.4)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_leg")
+
+[node name="LegShape4" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98, -0.2, 0.4)
+shape = SubResource("Shape_leg")

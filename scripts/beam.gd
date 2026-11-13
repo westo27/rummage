@@ -184,7 +184,7 @@ func _physics_process(delta: float) -> void:
 
 	if held == null:
 		# Creatures are checked first, and only if nothing is found do we look
-		# for a prop, so a creature beside the sofa is never blocked by the sofa.
+		# for a prop, so a creature beside the bed is never blocked by the bed.
 		_aimed_creature = _find_aimed_creature() if _rejected == null else null
 		_aimed = _find_aimed_prop() if _aimed_creature == null else null
 		if _rejected != null:

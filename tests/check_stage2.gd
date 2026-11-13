@@ -132,42 +132,42 @@ func _run() -> void:
 		"%.2f m/s" % book.linear_velocity.length())
 	await _wait(1.0)
 
-	# --- Too heavy: the sofa (60 kg) against a 10 kg limit ---
-	var sofa: Prop = props.get_node("Sofa")
-	var sofa_start: Vector3 = sofa.global_position
+	# --- Too heavy: the bed (60 kg) against a 10 kg limit ---
+	var bed: Prop = props.get_node("Bed")
+	var bed_start: Vector3 = bed.global_position
 	_player.global_position = Vector3(0, 0.05, -2.0)
-	_aim_at(sofa.global_position)
+	_aim_at(bed.global_position)
 	await _wait(0.1)
-	_check("aiming at sofa shows TOO_HEAVY", _beam._state == Beam.AimState.TOO_HEAVY, "detail='%s'" % _beam._detail)
+	_check("aiming at bed shows TOO_HEAVY", _beam._state == Beam.AimState.TOO_HEAVY, "detail='%s'" % _beam._detail)
 	_press("grab")
 	await _wait(0.05)
-	_check("sofa is not grabbed", _beam.held == null, "held=%s" % _beam.held)
-	_check("sofa shudders", sofa._shudder_left > 0.0, "")
+	_check("bed is not grabbed", _beam.held == null, "held=%s" % _beam.held)
+	_check("bed shudders", bed._shudder_left > 0.0, "")
 	_check("red reject beam is shown", _beam._beam_mesh.visible, "")
 	await _wait(0.8)
-	_check("red beam stays latched while button held", _beam._beam_mesh.visible and _beam._rejected == sofa, "")
-	_check("sofa keeps shuddering while button held", sofa._shudder_left > 0.0, "")
+	_check("red beam stays latched while button held", _beam._beam_mesh.visible and _beam._rejected == bed, "")
+	_check("bed keeps shuddering while button held", bed._shudder_left > 0.0, "")
 	# Look away to a crate while still holding: must stay latched, not grab the crate.
 	_aim_at(props.get_node("CrateD").global_position)
 	await _wait(0.2)
-	_check("looking away keeps the latch (no sweep-grab)", _beam.held == null and _beam._rejected == sofa,
+	_check("looking away keeps the latch (no sweep-grab)", _beam.held == null and _beam._rejected == bed,
 		"held=%s" % _beam.held)
 	_check("crosshair stays TOO_HEAVY while latched", _beam._state == Beam.AimState.TOO_HEAVY, "state=%s" % _beam._state)
 	_release("grab")
 	await _wait(0.05)
 	await get_tree().process_frame
 	_check("releasing the button drops the red beam", not _beam._beam_mesh.visible and _beam._rejected == null, "")
-	_aim_at(sofa.global_position)
+	_aim_at(bed.global_position)
 	await _wait(0.05)
-	_check("shudder does not move the sofa body", sofa.global_position.distance_to(sofa_start) < 0.01,
-		"moved %.3f" % sofa.global_position.distance_to(sofa_start))
+	_check("shudder does not move the bed body", bed.global_position.distance_to(bed_start) < 0.01,
+		"moved %.3f" % bed.global_position.distance_to(bed_start))
 
-	# --- Raising the lift limit lets the sofa be grabbed ---
+	# --- Raising the lift limit lets the bed be grabbed ---
 	_beam.add_lift(55.0)
 	await _wait(0.05)
 	_press("grab")
 	await _wait(0.1)
-	_check("with 65 kg lift the sofa can be grabbed", _beam.held == sofa, "held=%s" % _beam.held)
+	_check("with 65 kg lift the bed can be grabbed", _beam.held == bed, "held=%s" % _beam.held)
 	_release("grab")
 	await _wait(0.5)
 

@@ -37,7 +37,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart
 ```
 
 - Each prop type is its own scene in `scenes/props/` (book, crate, bin, small_box,
-  cushion, ball, bookcase, table, sofa, wardrobe): a `RigidBody3D` with
+  pillow, ball, bookcase, table, bed, bedside_table, wardrobe): a `RigidBody3D` with
   `scripts/prop.gd` and box/sphere meshes plus matching collision shapes.
 - Each creature is an instance of `scenes/creature.tscn` (`scripts/creature.gd`).
 - The `*_props.tscn` / `*_creatures.tscn` layout files are ordinary scenes: open
@@ -146,7 +146,7 @@ than the creature squeaks.
 
 - **Materials.** Each prop scene sets `impact_material` (Prop's export):
   paper (books, small boxes), wood (crates, bookcase, table, wardrobe; the
-  default), soft (cushions, sofa), rubber (balls), plastic (bins).
+  default), soft (pillows, bed), rubber (balls), plastic (bins).
 - **The sounds** are recipes in `Tones.KNOCK_RECIPES`, with no steady
   musical tones (an earlier version had them, and a pile of things falling
   played a tune). Each knock is a contact click, a scuff of filtered noise,
@@ -160,7 +160,7 @@ than the creature squeaks.
   without playing.
 - **Heavier is lower.** Each material is tuned for one mass
   (`ImpactAudio.REFERENCE_MASS`). Heavier props play it slower and lower, so
-  the cushion's thump becomes the sofa's thud.
+  the pillow's thump becomes the bed's thud.
 - **Detecting a hit** (`Prop._integrate_forces`): Jolt reports how hard each
   contact pushed this tick. A hit is a sudden jump in that push, so resting,
   rolling and being dragged along the floor make no sound. The push over the
@@ -252,6 +252,11 @@ Your direction: the bright colours and bloom of mid-2000s console games,
 warm cream and citrus, lamp light, and above all cosy, "as if you're a
 child up past your bedtime". So it's night.
 
+- **The main room is a child's bedroom.** The bed under the window took the
+  sofa's place and its job (60 kg gate, four creatures underneath), with
+  two pillows and a bedside table whose little lamp (`LampLight`, no
+  shadows) glows and can be thrown about with it.
+
 - **Light** (main.tscn): the pendant lamps are turned down to a warm orange
   glow (their shades block light upward, which is the darker band at the
   top of the walls). Moonlight is a cool
@@ -264,14 +269,14 @@ child up past your bedtime". So it's night.
   shades, the moon, the creatures (whose glow was raised to 0.8 so they're
   little lights in the dark), the beam and the sparkles.
 - **Surfaces** are drawn by shaders, in metres in the world:
-  `shaders/wallpaper.gdshader` (cream polka dots, white skirting, plain
+  `shaders/wallpaper.gdshader` (cream paper with gold stars, white skirting, plain
   ceiling), `shaders/plank_floor.gdshader` (oak planks, each a slightly
   different shade), `shaders/rug.gdshader` (the rounded rug), and
   `shaders/sky.gdshader` (the night sky panel outside the window: stars that
   twinkle, a moon, clouds drifting past lit silver near the moon). The side
   room has a teal carpet.
-- **Props** are warm cream and citrus: raspberry sofa and books, lime
-  cushions and bins, teal crates, orange boxes and balls, honey-wood
+- **Props** are warm cream and citrus: a honey-wood bed with a raspberry duvet, raspberry books, lime
+  bins, toy-box crates in mixed colours, orange boxes and balls, honey-wood
   furniture. Each is one `albedo_color` line in its scene.
 - **Shine**: every prop has a glossy toy-plastic finish, a low roughness
   plus a glassy clearcoat (`Main._apply_prop_finish`). You picked it over
@@ -329,7 +334,7 @@ width (beam.gd), the creature pick radius (`PickZone` in creature.tscn, 0.25 m).
 
 **Lift per catch is 7 kg.** There are 21 creatures in the main room and the
 starting limit is 10 kg, so:
-- the 60 kg **sofa** unlocks at **8** catches (66 kg; 7 catches give 59 kg)
+- the 60 kg **bed** unlocks at **8** catches (66 kg; 7 catches give 59 kg)
 - the 115 kg **wardrobe** unlocks at **15** catches (exactly 115 kg)
 
 The HUD announces each one as it unlocks. If you move creatures between rooms or
@@ -344,9 +349,9 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 |---|---|---|---|
 | 1 world | 1 | walls, floors (CSG) | |
 | 2 player | 2 | the player capsule | |
-| 3 props | 4 | props over 3 kg: crates, table, bookcase, sofa, wardrobe | block the player |
+| 3 props | 4 | props over 3 kg: crates, table, bedside table, bookcase, bed, wardrobe | block the player |
 | 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | the beam's first ray hits only this layer |
-| 5 clutter | 16 | props of 3 kg or less: books, balls, cushions, bins, small boxes | the player walks through them and kicks them |
+| 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes | the player walks through them and kicks them |
 
 `prop.gd` picks props or clutter by mass when it loads, overriding the layer
 saved in the `.tscn`. Two bodies collide if *either* one's mask includes the
@@ -396,7 +401,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_room | a ball thrown hard at the window stays in the room; props are glossy |
 | check_lamp | the lamp hangs still; a thrown book swings it and its light; it stays on its cord; it settles; the beam can't grab it |
 | check_beam_sound | silent when idle; the whirr fades in on grabbing, rises and swells when swung, settles, fades out on letting go; crackle only while straining; both loop; quieter than squeaks |
-| check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
+| check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the bed and balls get their materials; the bed thuds lower than a pillow; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 
@@ -452,8 +457,8 @@ the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
   creature half behind a crate can still be caught. I chose generous over exact.
 - The player pushes clutter like a snowplough: anything dead ahead gets shoved
   until it reaches a wall.
-- Creatures under the sofa ignore jolts and things flying past (so the gate
-  can't be skipped by pelting the sofa), but a book slid *under* the sofa can
+- Creatures under the bed ignore jolts and things flying past (so the gate
+  can't be skipped by pelting the bed), but a book slid *under* the bed can
   still startle them.
-- The sofa and wardrobe can't tip over until they've been lifted once.
+- The bed and wardrobe can't tip over until they've been lifted once.
 - If a creature falls out of the world it reappears in the middle of the main room.

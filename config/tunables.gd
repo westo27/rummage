@@ -57,7 +57,7 @@ extends Resource
 ## Heaviest mass (kg) the beam can lift at the start.
 @export var start_lift_limit: float = 10.0
 ## Added to the lift limit per creature caught. With 21 creatures in the main
-## room and a 10 kg start: the 60 kg sofa unlocks at 8 caught (66 kg) and the
+## room and a 10 kg start: the 60 kg bed unlocks at 8 caught (66 kg) and the
 ## 115 kg wardrobe at 15 caught (115 kg).
 @export var lift_per_capture: float = 7.0
 
@@ -83,7 +83,7 @@ extends Resource
 @export var knock_speed: float = 1.5
 ## A covering object jolted to this speed (m/s), e.g. by something thrown at
 ## it, startles the creature under it even if it barely moves. (Not used for
-## the sofa's creatures, so its gate can't be skipped by pelting it.)
+## the bed's creatures, so its gate can't be skipped by pelting it.)
 @export var jolt_speed: float = 0.35
 ## Loudness of creature squeaks, in decibels (0 = full, -10 = quieter).
 @export var squeak_volume_db: float = -4.0

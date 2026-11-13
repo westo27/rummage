@@ -10,7 +10,7 @@ var _caught: int = 0
 var _total_creatures: int = 0
 var _elapsed: float = 0.0
 var _won: bool = false
-## Props too heavy to lift at the start (the sofa and wardrobe). When the lift
+## Props too heavy to lift at the start (the bed and wardrobe). When the lift
 ## limit first reaches one, the HUD announces it, then it's removed from here.
 var _locked_props: Array[Prop] = []
 

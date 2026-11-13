@@ -10,13 +10,13 @@ extends RigidBody3D
 ## plain MeshInstance3D + CollisionShape3D children built from boxes/spheres.
 
 ## Roughly how far the object sticks out from its centre. The beam holds it at
-## least this much further away, so a sofa doesn't fill your view.
+## least this much further away, so a bed doesn't fill your view.
 @export var hold_radius: float = 0.3
 ## 0 = every copy looks identical. Higher = random colour variety per copy,
 ## which makes a row of books readable as separate objects.
 @export var tint_variation: float = 0.0
 ## Stops the object tipping over (it can still slide and turn) until the beam
-## first lifts it. Used for the sofa and wardrobe, so a lucky throw can't topple
+## first lifts it. Used for the bed and wardrobe, so a lucky throw can't topple
 ## a gated object and skip the gate.
 @export var keep_upright_until_grabbed: bool = false
 ## What it's made of, which picks its knock when it hits something.
@@ -149,7 +149,7 @@ func end_hold() -> void:
 
 
 ## The "too heavy" wobble. Only the meshes move, not the body, so trying to lift
-## the sofa can't nudge it and disturb what's hiding under it.
+## the bed can't nudge it and disturb what's hiding under it.
 func shudder() -> void:
 	_shudder_left = SHUDDER_SECONDS
 	set_physics_process(true)
@@ -177,7 +177,7 @@ func _physics_process(delta: float) -> void:
 ##
 ## A hit starts when the push jumps sharply above what it was the tick
 ## before. From then, the extra push over the next GATHER_TICKS ticks is
-## added up and played as one knock, so a sofa landing leg by leg sounds as
+## added up and played as one knock, so a bed landing leg by leg sounds as
 ## hard as it really was.
 const GATHER_TICKS: int = 3
 

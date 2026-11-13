@@ -124,33 +124,33 @@ func _run() -> void:
 	_check("shelf creature drops to the floor", shelf_creature.global_position.y < 0.3,
 		"y=%.2f" % shelf_creature.global_position.y)
 
-	# --- Sofa creatures ignore knocks; only moving the sofa reveals them ---
-	var sofa: Prop = _props.get_node("Sofa")
-	var sofa_creature: Creature = _creatures.get_node("UnderSofa2")
+	# --- Bed creatures ignore knocks; only moving the bed reveals them ---
+	var bed: Prop = _props.get_node("Bed")
+	var bed_creature: Creature = _creatures.get_node("UnderBed2")
 	var crate_f: Prop = _props.get_node("CrateF")
 	crate_f.global_position = Vector3(-0.23, 0.35, -3.2)
 	crate_f.linear_velocity = Vector3(0, 0, -7.0)
 	await _wait(0.8)
-	_check("a crate thrown at the sofa doesn't reveal sofa creatures", _count_under_sofa_hidden() == 4,
-		"%d of 4 still hidden; sofa moved %.3f m" % [_count_under_sofa_hidden(), sofa.global_position.distance_to(Vector3(0, 0.427, -4.5))])
+	_check("a crate thrown at the bed doesn't reveal bed creatures", _count_under_bed_hidden() == 4,
+		"%d of 4 still hidden; bed moved %.3f m" % [_count_under_bed_hidden(), bed.global_position.distance_to(Vector3(0, 0.302, -4.5))])
 
-	# --- Aim priority: creature at the sofa's edge, crosshair on the sofa ---
+	# --- Aim priority: creature at the bed's edge, crosshair on the bed ---
 	var edge: Creature = _creatures.get_node("UnderBin01")
 	edge._reveal()
 	await get_tree().physics_frame
 	edge.state = Creature.State.COWERING  # hold it still for the test
 	edge.velocity = Vector3.ZERO
-	edge.global_position = Vector3(1.5, 0.09, -3.95)  # just in front of the sofa's front face (z=-4.05)
+	edge.global_position = Vector3(1.5, 0.09, -3.95)  # just in front of the bed's front face (z=-4.02)
 	_player.global_position = Vector3(1.5, 0.05, -1.5)
-	_aim_at(Vector3(1.5, 0.3, -4.06))  # a spot on the sofa itself
+	_aim_at(Vector3(1.5, 0.3, -4.06))  # a spot on the bed itself
 	await _wait(0.05)
-	_check("creature beside the sofa wins the aim over the sofa", _beam._state == Beam.AimState.CREATURE,
+	_check("creature beside the bed wins the aim over the bed", _beam._state == Beam.AimState.CREATURE,
 		"state=%s" % _beam._state)
 
 	# --- Gate arithmetic from the tunables ---
 	var start: float = Game.tune.start_lift_limit
 	var per: float = Game.tune.lift_per_capture
-	_check("sofa (60 kg) needs 8 of 21 caught", start + per * 7 < 60.0 and start + per * 8 >= 60.0,
+	_check("bed (60 kg) needs 8 of 21 caught", start + per * 7 < 60.0 and start + per * 8 >= 60.0,
 		"7 -> %.0f kg, 8 -> %.0f kg" % [start + per * 7, start + per * 8])
 	_check("wardrobe (115 kg) needs 15 of 21 caught", start + per * 14 < 115.0 and start + per * 15 >= 115.0,
 		"14 -> %.0f kg, 15 -> %.0f kg" % [start + per * 14, start + per * 15])
@@ -167,10 +167,10 @@ func _count_state(s: Creature.State) -> int:
 	return n
 
 
-func _count_under_sofa_hidden() -> int:
+func _count_under_bed_hidden() -> int:
 	var n: int = 0
 	for i in 4:
-		if (_creatures.get_node("UnderSofa%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:
+		if (_creatures.get_node("UnderBed%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:
 			n += 1
 	return n
 

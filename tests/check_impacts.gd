@@ -54,20 +54,26 @@ func _run() -> void:
 	var book_knock: Dictionary = await _drop(book, 1.5)
 	_check("a book sounds like paper", not book_knock.is_empty()
 		and book_knock.material == Tones.ImpactMaterial.PAPER, "%s" % book_knock)
-	var sofa_knock: Dictionary = await _drop(_main.get_node("MainRoomProps/Sofa"), 0.6)
-	_check("the sofa sounds soft", not sofa_knock.is_empty()
-		and sofa_knock.material == Tones.ImpactMaterial.SOFT, "%s" % sofa_knock)
-	_check("the sofa lands with a proper thud, not a whisper",
-		not sofa_knock.is_empty() and sofa_knock.db > Game.tune.impact_max_db - 12.0,
-		"%.1f dB" % sofa_knock.get("db", -99.0))
+	# The pillows stay put when the bed is raised, so clear them away or the
+	# bed lands on them.
+	for i in 2:
+		var pillow_out: Prop = _main.get_node("MainRoomProps/Pillow" + ["L", "R"][i])
+		pillow_out.global_position = Vector3(2.5 + i * 0.6, 0.1, 2.5)
+	await _wait(0.5)
+	var bed_knock: Dictionary = await _drop(_main.get_node("MainRoomProps/Bed"), 0.6)
+	_check("the bed sounds soft", not bed_knock.is_empty()
+		and bed_knock.material == Tones.ImpactMaterial.SOFT, "%s" % bed_knock)
+	_check("the bed lands with a proper thud, not a whisper",
+		not bed_knock.is_empty() and bed_knock.db > Game.tune.impact_max_db - 12.0,
+		"%.1f dB" % bed_knock.get("db", -99.0))
 	# Pitch scales within a material: the same soft thump, lower for the
 	# heavier thing. (Across materials each has its own natural pitch.)
-	var cushion: Prop = _main.get_node("MainRoomProps/CushionL")
-	cushion.global_position = Vector3(1.5, 0.1, 2.5)
-	var cushion_knock: Dictionary = await _drop(cushion, 1.5)
-	_check("the sofa thuds lower than a cushion", not cushion_knock.is_empty()
-		and not sofa_knock.is_empty() and sofa_knock.pitch < cushion_knock.pitch * 0.7,
-		"cushion %.2f, sofa %.2f" % [cushion_knock.get("pitch", 0.0), sofa_knock.get("pitch", 0.0)])
+	var pillow: Prop = _main.get_node("MainRoomProps/PillowL")
+	pillow.global_position = Vector3(1.5, 0.1, 2.5)
+	var pillow_knock: Dictionary = await _drop(pillow, 1.5)
+	_check("the bed thuds lower than a pillow", not pillow_knock.is_empty()
+		and not bed_knock.is_empty() and bed_knock.pitch < pillow_knock.pitch * 0.7,
+		"pillow %.2f, bed %.2f" % [pillow_knock.get("pitch", 0.0), bed_knock.get("pitch", 0.0)])
 	var ball: Prop = _main.get_node("MainRoomProps/BallFloor")
 	ball.global_position = Vector3(-0.5, 0.15, 2.5)
 	var ball_knock: Dictionary = await _drop(ball, 1.5)
@@ -80,7 +86,7 @@ func _run() -> void:
 
 ## Lifts a prop straight up by `height`, lets it fall, and returns its
 ## loudest knock (or an empty Dictionary if it made none). The loudest, not
-## the first: lifting the sofa out from under its own cushions means it
+## the first: lifting the bed out from under its own pillows means it
 ## brushes them on the way down before it lands.
 func _drop(prop: Prop, height: float) -> Dictionary:
 	prop.global_position += Vector3.UP * height

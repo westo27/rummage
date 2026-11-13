@@ -15,7 +15,7 @@ extends Node
 const VOICES: int = 14
 ## Each material's knock is tuned to sound right at roughly this mass (kg).
 ## Lighter things play it higher and heavier things lower, which is what
-## turns the soft cushion thump into the sofa's deep thud.
+## turns the soft pillow thump into the bed's deep thud.
 const REFERENCE_MASS: Dictionary = {
 	Tones.ImpactMaterial.PAPER: 0.75,
 	Tones.ImpactMaterial.WOOD: 7.0,

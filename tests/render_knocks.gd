@@ -13,7 +13,7 @@ const PROPS: Array = [
 	["06_crate", Tones.ImpactMaterial.WOOD, 7.0],
 	["07_table", Tones.ImpactMaterial.WOOD, 6.0],
 	["08_bookcase", Tones.ImpactMaterial.WOOD, 9.0],
-	["09_sofa", Tones.ImpactMaterial.SOFT, 60.0],
+	["09_bed", Tones.ImpactMaterial.SOFT, 60.0],
 	["10_wardrobe", Tones.ImpactMaterial.WOOD, 115.0],
 ]
 

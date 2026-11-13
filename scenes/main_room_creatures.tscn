@@ -4,19 +4,19 @@
 
 [node name="MainRoomCreatures" type="Node3D"]
 
-[node name="UnderSofa1" parent="." instance=ExtResource("creature")]
+[node name="UnderBed1" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 0.092, -4.55)
 reveal_on_knock = false
 
-[node name="UnderSofa2" parent="." instance=ExtResource("creature")]
+[node name="UnderBed2" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.23, 0.092, -4.55)
 reveal_on_knock = false
 
-[node name="UnderSofa3" parent="." instance=ExtResource("creature")]
+[node name="UnderBed3" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.23, 0.092, -4.55)
 reveal_on_knock = false
 
-[node name="UnderSofa4" parent="." instance=ExtResource("creature")]
+[node name="UnderBed4" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0.092, -4.55)
 reveal_on_knock = false
 

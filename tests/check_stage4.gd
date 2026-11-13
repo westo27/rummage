@@ -46,40 +46,40 @@ func _run() -> void:
 	await _wait(0.2)
 	_check("ping can't be used again during cooldown", not near._glow.visible, "")
 
-	# --- Gates: catch main-room creatures one by one (sofa ones last) ---
+	# --- Gates: catch main-room creatures one by one (bed ones last) ---
 	var order: Array[Creature] = []
 	for c: Creature in _main.get_node("MainRoomCreatures").get_children():
-		if not c.name.begins_with("UnderSofa"):
+		if not c.name.begins_with("UnderBed"):
 			order.append(c)
 	for c: Creature in _main.get_node("MainRoomCreatures").get_children():
-		if c.name.begins_with("UnderSofa"):
+		if c.name.begins_with("UnderBed"):
 			order.append(c)
 
-	var sofa: Prop = _main.get_node("MainRoomProps/Sofa")
+	var bed: Prop = _main.get_node("MainRoomProps/Bed")
 	var wardrobe: Prop = _main.get_node("MainRoomProps/Wardrobe")
 	await _catch(order.slice(0, 7))
-	_check("after 7 catches the sofa is still too heavy", sofa.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
+	_check("after 7 catches the bed is still too heavy", bed.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
 	await _catch(order.slice(7, 8))
-	_check("after 8 catches the sofa is liftable", sofa.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-	_check("HUD announces the sofa", _label("ToastLabel").contains("sofa"), "'%s'" % _label("ToastLabel"))
+	_check("after 8 catches the bed is liftable", bed.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
+	_check("HUD announces the bed", _label("ToastLabel").contains("bed"), "'%s'" % _label("ToastLabel"))
 
-	# Actually lift the sofa with the beam.
+	# Actually lift the bed with the beam.
 	_player.global_position = Vector3(0.0, 0.05, -1.8)
-	_aim_at(sofa.global_position)
+	_aim_at(bed.global_position)
 	await _wait(0.1)
-	_check("crosshair shows CAN_GRAB on the sofa", _beam._state == Beam.AimState.CAN_GRAB, "state=%s" % _beam._state)
+	_check("crosshair shows CAN_GRAB on the bed", _beam._state == Beam.AimState.CAN_GRAB, "state=%s" % _beam._state)
 	_press("grab")
 	await _wait(0.2)
-	_check("beam picks up the sofa", _beam.held == sofa, "held=%s" % _beam.held)
-	_aim_at(sofa.global_position + Vector3(0, 1.2, 0))
+	_check("beam picks up the bed", _beam.held == bed, "held=%s" % _beam.held)
+	_aim_at(bed.global_position + Vector3(0, 1.2, 0))
 	await _wait(1.0)
 	_release("grab")
 	await _wait(0.3)
-	var sofa_hidden: int = 0
+	var bed_hidden: int = 0
 	for i in 4:
-		if (_main.get_node("MainRoomCreatures/UnderSofa%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:
-			sofa_hidden += 1
-	_check("lifting the sofa reveals the creatures under it", sofa_hidden == 0, "%d still hidden" % sofa_hidden)
+		if (_main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:
+			bed_hidden += 1
+	_check("lifting the bed reveals the creatures under it", bed_hidden == 0, "%d still hidden" % bed_hidden)
 
 	await _catch(order.slice(8, 14))
 	_check("after 14 catches the wardrobe is still too heavy", wardrobe.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)

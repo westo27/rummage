@@ -117,7 +117,15 @@ func _run() -> void:
 	await _catch(rest)
 	var win_panel := _main.get_node("HUD/WinPanel") as Control
 	_check("win panel appears when all are caught", win_panel.visible, "")
-	_check("win panel shows the time", (_main.get_node("HUD/WinPanel/WinLabel") as Label).text.contains("Time"), "")
+	_check("win panel shows the time",
+		(win_panel.find_child("WinLabel", true, false) as Label).text.contains("Time"), "")
+	var win_pills: Array[String] = []
+	for node in win_panel.find_children("*", "MenuPanel", true, false):
+		win_pills.append((node as MenuPanel).label_text)
+	_check("win screen offers Play again and Title", win_pills == ["Play again", "Title"],
+		"%s" % [win_pills])
+	_check("the player stops grabbing the cursor after winning",
+		not _player.is_processing_input() and not _beam.is_processing_unhandled_input(), "")
 	_check("HUD shows 25 / 25", _label("CaughtLabel") == "Caught: 25 / 25", "'%s'" % _label("CaughtLabel"))
 	var t1: String = _label("TimerLabel")
 	await _wait(0.5)

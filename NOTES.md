@@ -57,9 +57,21 @@ a root node and a script.
   the panel shapes and the icons. Change a colour here and every menu and the
   crosshair follow. Icons are drawn from circles, rectangles and triangles in
   code, so like the rooms the menus use no imported assets.
-- `scripts/menu_panel.gd` is the only kind of button: a big panel with an icon,
-  a label and an accent bar, which rises when pointed at or focused and chimes.
-  It works with the mouse or the keyboard (Tab/arrows to move, Enter to press).
+- **The glossy finish** (mid-2000s style) is `UiStyle.draw_glossy_panel`. It
+  draws five passes: a drop shadow, a body shaded from light at the top to
+  blue-grey at the bottom, a thin band of reflected light along the bottom, a
+  white gloss over the top half, and a coloured rim with a bevel line. The
+  gloss is a stack of overlapping see-through pills, which fakes a blur
+  without a shader. To change how glassy everything looks, start with the
+  `PANEL_TOP`/`PANEL_BOTTOM` colours and the gloss height (0.58).
+- `scripts/menu_panel.gd` is the only kind of button. Its shape follows its
+  size: wider than 2:1 makes a pill with the icon at the left (the main
+  menus), square makes a circle (the steppers), anything else a rounded
+  gumdrop. It rises and glows when pointed at or focused, sinks when pressed,
+  and chimes. It works with the mouse or the keyboard (Tab/arrows to move,
+  Enter to press).
+- `scripts/glossy_card.gd` is the same finish as a container, used for the
+  win screen's card.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu. Each setting is a −/+ stepper rather than a slider, so
   every control is the same panel and nothing needs dragging.
@@ -169,13 +181,15 @@ tell whether any of it is fun or readable. Not verified:
 - **Sound:** headless runs use a dummy audio driver. I only know a squeak
   *started*, not whether it's audible, pleasant, or easy to locate in 3D.
 - **Visuals:** the glow, the cover rattle, the hop, the tremble, the crosshair
-  shapes, the toast and win panel layout, and the lighting are all unseen.
-  (The title, settings, pause and in-game HUD *have* been looked at, via
-  `tests/shoot.tscn`.)
+  shapes, the toast and the lighting are all unseen. (The title, settings,
+  pause, win screen and in-game HUD *have* been looked at, as still images
+  from `tests/shoot.tscn`. The hover lift, glow and press animations have
+  not, because a still image can't show movement.)
 - **Menu sound:** the hover and select chimes have only been checked as "a
   sound started", the same as the creature squeaks.
-- **The win screen** is still the prototype's plain box with "Press R to play
-  again". It hasn't been rebuilt out of menu panels like the rest.
+- **check_hiding is slightly flaky.** About one creature in 70 still ends up
+  where the player can see it, usually against a wall in a corner. Re-run it
+  once before treating a single failure as a regression.
 - **Clue quality:** whether tells and ping really let you follow clues instead
   of checking every bin.
 - **Smoothness on a real display:** the numbers are perfect headless, but

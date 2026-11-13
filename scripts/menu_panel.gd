@@ -94,18 +94,24 @@ func _draw() -> void:
 			glyph, glyph_size)
 		return
 
+	# Where the icon ends, so a pill's label can keep clear of it.
+	var icon_right: float = 0.0
 	if icon_name != "":
 		var box: float = size.y * (0.56 if pill else 0.34)
 		var icon_at := Vector2(size.y * 0.34, (size.y - box) * 0.5) if pill \
 			else Vector2((size.x - box) * 0.5, size.y * 0.22)
 		UiStyle.draw_icon(self, icon_name, Rect2(rect.position + icon_at, Vector2(box, box)), accent)
+		icon_right = icon_at.x + box
 
 	if label_text != "":
 		var label_size: int = UiStyle.PILL_FONT_SIZE if pill else UiStyle.LABEL_FONT_SIZE
 		var width: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x
 		var baseline: float = size.y * (0.64 if pill else 0.82)
-		_draw_engraved(font, rect.position + Vector2((size.x - width) * 0.5, baseline),
-			label_text, label_size)
+		# Centred, unless that would run into the icon on a short pill.
+		var x: float = (size.x - width) * 0.5
+		if pill and icon_right > 0.0:
+			x = maxf(x, icon_right + size.y * 0.22)
+		_draw_engraved(font, rect.position + Vector2(x, baseline), label_text, label_size)
 
 
 ## Text with a pale copy a little below it. Light comes from above, so a

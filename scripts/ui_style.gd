@@ -214,9 +214,12 @@ static func draw_glossy_panel(ci: CanvasItem, rect: Rect2, radius: float, accent
 	# 3. Reflected light: a faint band along the bottom inside, as if the
 	# surface picks up light bouncing off whatever it's sitting on. Kept weak
 	# and low, so the shaded part of the face stays shaded.
+	# Capped in height, so on a big card it stays a thin band along the bottom
+	# instead of becoming a second box inside the first.
+	var bounce_height: float = minf(rect.size.y * 0.24, 40.0)
 	var bounce_rect := Rect2(
-		rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.76),
-		Vector2(rect.size.x * 0.84, rect.size.y * 0.24 - 7.0))
+		rect.position + Vector2(rect.size.x * 0.08, rect.size.y - bounce_height - 7.0),
+		Vector2(rect.size.x * 0.84, bounce_height))
 	var bounce: PackedVector2Array = rounded_points(bounce_rect, minf(bounce_rect.size.y * 0.6, radius))
 	ci.draw_polygon(bounce, vertical_ramp(bounce, bounce_rect,
 		Color(1.0, 1.0, 1.0, 0.0), Color(1.0, 1.0, 1.0, 0.22)))
@@ -230,12 +233,16 @@ static func draw_glossy_panel(ci: CanvasItem, rect: Rect2, radius: float, accent
 	# Every pass starts at the same top edge, so their alphas stack there and
 	# the highlight is near-white where the light hits; they differ only in
 	# width and in how far down they reach, which softens the fade-out.
-	const GLOSS_PASSES: int = 6
+	# Wider shapes get more passes, so the steps between them stay too small
+	# to see as stripes. Each pass's opacity is chosen so that all of them
+	# stacked add up to the same brightness whatever the count.
+	var passes: int = clampi(int(rect.size.x / 50.0), 6, 18)
+	var pass_alpha: float = 1.0 - pow(0.15, 1.0 / passes)
 	var gloss_top: float = rect.position.y + 9.0
 	var gloss_height: float = rect.size.y * (0.58 - 0.18 * press)
-	for i in GLOSS_PASSES:
+	for i in passes:
 		# 1.0 for the widest and shortest, down to 0.62 for the narrowest.
-		var spread: float = lerpf(1.0, 0.62, float(i) / (GLOSS_PASSES - 1))
+		var spread: float = lerpf(1.0, 0.62, float(i) / (passes - 1))
 		var inset: float = rect.size.x * (0.5 - 0.45 * spread)
 		var gloss_rect := Rect2(
 			Vector2(rect.position.x + inset, gloss_top),
@@ -243,7 +250,7 @@ static func draw_glossy_panel(ci: CanvasItem, rect: Rect2, radius: float, accent
 		var gloss: PackedVector2Array = rounded_points(gloss_rect,
 			minf(gloss_rect.size.y * 0.5, radius))
 		ci.draw_polygon(gloss, vertical_ramp(gloss, gloss_rect,
-			Color(1.0, 1.0, 1.0, 0.30 * (1.0 - 0.35 * press)), Color(1.0, 1.0, 1.0, 0.0)))
+			Color(1.0, 1.0, 1.0, pass_alpha * (1.0 - 0.35 * press)), Color(1.0, 1.0, 1.0, 0.0)))
 
 	# 5. Rim, last so nothing paints over it, and a bevel line just inside it
 	# so the edge looks rounded over rather than cut off.

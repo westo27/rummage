@@ -63,7 +63,18 @@ func _on_creature_captured(_creature: Creature) -> void:
 	_announce_unlocked_props()
 	if _caught >= _total_creatures:
 		_won = true
+		_end_play()
 		_hud.show_win(_elapsed, _total_creatures)
+
+
+## Once everything is caught the win screen has buttons to click, so stop the
+## things that would otherwise react to the mouse or Esc: the player (who
+## recaptures the cursor on any click), the beam (which grabs on click) and the
+## pause menu. R still restarts, because that's handled here.
+func _end_play() -> void:
+	$Player.set_process_input(false)
+	_beam.set_process_unhandled_input(false)
+	$PauseMenu.set_process_unhandled_input(false)
 
 
 func _announce_unlocked_props() -> void:

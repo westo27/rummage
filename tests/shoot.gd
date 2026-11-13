@@ -43,6 +43,11 @@ func _run() -> void:
 	await _frames(12)
 	_shoot("pause_settings")
 
+	pause.close()
+	(main.get_node("HUD") as Hud).show_win(187.4, 25)
+	await _frames(12)
+	_shoot("win")
+
 	print("Wrote PNGs to %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 

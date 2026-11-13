@@ -16,6 +16,9 @@ signal landed(speed: float)
 const RADIUS: float = 21.0
 ## Slower bumps than this (px/s) are settling, not impacts, and make no sound.
 const CLACK_SPEED: float = 70.0
+## How far below full volume the hardest clack plays (dB). Was 5; Tom wanted
+## the marbles quieter.
+const CLACK_QUIETER_DB: float = 11.0
 
 var color: Color = Color.WHITE
 
@@ -70,8 +73,8 @@ func _on_body_entered(_body: Node) -> void:
 		# balls settling sounds like a handful of marbles, not one sound repeated.
 		_voice.stream = Tones.clack(randi() % 3)
 		_voice.pitch_scale = randf_range(0.88, 1.08)
-		# Harder knocks are louder; the hardest a little under the squeaks.
-		_voice.volume_db = linear_to_db(clampf(_last_speed / 400.0, 0.2, 1.0)) - 5.0
+		# Harder knocks are louder; the hardest well under the squeaks.
+		_voice.volume_db = linear_to_db(clampf(_last_speed / 400.0, 0.2, 1.0)) - CLACK_QUIETER_DB
 		_voice.play()
 	if not _has_landed:
 		_has_landed = true

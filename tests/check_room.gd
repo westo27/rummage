@@ -1,7 +1,8 @@
 extends Node
 ## Headless check for the room's new parts: the window holds things in, the
 ## props are glossy, the bedside lamp stands on its table, and the table's
-## drawer slides out and back by physics, and the wardrobe doors swing open. (How the room looks can only be judged in
+## drawer slides out and back by physics, the wardrobe doors swing open, and
+## pictures come off the wall to show what's behind. (How the room looks can only be judged in
 ## tests/shoot.tscn's pictures.) Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_room.tscn
 
@@ -104,6 +105,32 @@ func _run() -> void:
 		"moved %.3f m" % wardrobe.global_position.distance_to(wardrobe_at))
 	_check("opening the door reveals the creature inside", hidden_inside.state != Creature.State.HIDDEN,
 		"state=%s" % hidden_inside.state)
+
+	# --- Pictures hang on the wall; one hides a creature in a hole behind it ---
+	var picture: Prop = _main.get_node("MainRoomProps/PictureWest")
+	var behind := _main.get_node("MainRoomCreatures/BehindPicture") as Creature
+	var block_in_cubby := _main.get_node("MainRoomProps/CubbyBlock1") as Node3D
+	_check("pictures stay up on the wall", absf(picture.global_position.y - 1.45) < 0.005
+		and absf(_main.get_node("MainRoomProps/PictureNorth").global_position.y - 1.55) < 0.005, "")
+	_check("the creature waits in the hole behind it", behind.state == Creature.State.HIDDEN
+		and absf(behind.global_position.y - 1.422) < 0.01, "y=%.3f" % behind.global_position.y)
+	_check("toy blocks sit in the other hole", block_in_cubby.global_position.y > 1.3, "y=%.3f" % block_in_cubby.global_position.y)
+	player.global_position = Vector3(-4.6, 0.05, 2.0)
+	player.reset_physics_interpolation()
+	look = (picture.global_position - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	beam._grab_armed = true
+	beam._grab(picture, picture.global_position)
+	for i in 30:  # step back, pulling it off the wall
+		player.global_position.x += 0.03
+		await get_tree().physics_frame
+	await _wait(0.3)
+	_check("the beam takes the picture down", beam.held == picture and picture.global_position.x > -5.8,
+		"x=%.2f" % picture.global_position.x)
+	_check("which reveals the creature behind it", behind.state != Creature.State.HIDDEN, "state=%s" % behind.state)
+	beam._release()
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

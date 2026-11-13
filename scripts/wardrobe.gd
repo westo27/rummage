@@ -7,9 +7,8 @@ extends Prop
 ## than flapping. (A hinge motor, as the drawer uses for friction, locks a
 ## Jolt hinge solid, so it isn't used here.)
 ##
-## The wardrobe gates the side-room doorway, so it's frozen in place (a
-## static body) until the beam first lifts it. Otherwise yanking a door
-## could drag the whole wardrobe off the doorway early.
+## It's frozen in place until the beam first lifts it (frozen_until_grabbed,
+## set in the scene), so yanking a door can't drag it off the doorway early.
 
 ## How far each door can swing open.
 const DOOR_SWING: float = deg_to_rad(110.0)
@@ -21,8 +20,6 @@ const OPEN_SIGN := {"DoorA": -1.0, "DoorB": 1.0}
 
 func _ready() -> void:
 	super()
-	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
-	freeze = true
 	for door_name: String in OPEN_SIGN:
 		var door := get_node(door_name) as RigidBody3D
 		_detach_part(door)
@@ -32,11 +29,6 @@ func _ready() -> void:
 		hinge.set_flag(HingeJoint3D.FLAG_USE_LIMIT, true)
 		hinge.set_param(HingeJoint3D.PARAM_LIMIT_LOWER, minf(0.0, sign * DOOR_SWING))
 		hinge.set_param(HingeJoint3D.PARAM_LIMIT_UPPER, maxf(0.0, sign * DOOR_SWING))
-
-
-func start_hold(holder: PhysicsBody3D) -> void:
-	freeze = false
-	super(holder)
 
 
 ## How far a door is open, in radians (0 = shut).

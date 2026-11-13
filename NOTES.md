@@ -452,8 +452,17 @@ Prop on a `HingeJoint3D` that swings outward up to 110°. Grab a door and
 pull. Two creatures (InWardrobe1/2) hide inside; opening a door reveals
 them. Door damping (`HINGE_DAMP`) stands in for stiff hinges, because a
 hinge motor locks a Jolt hinge solid. The wardrobe is frozen (static) until
-the beam first lifts it, so pulling a door can't drag it off the doorway
-before its gate.
+the beam first lifts it (`Prop.frozen_until_grabbed`), so pulling a door
+can't drag it off the doorway before its gate.
+
+## Pictures
+
+Three framed pictures (`picture.tscn`, `shaders/picture.gdshader`, `art`
+0-2) hang frozen on the main room's walls until the beam takes them down.
+Two cover cubby holes cut in the wall (CubbyWest / CubbySouth, CSG
+subtractions in main.tscn): one hides a creature (BehindPicture, moved from
+under a bin, so the count is unchanged), the other two toy blocks. A hidden
+creature has no gravity, so it waits in the hole until revealed.
 
 ## How creatures move
 

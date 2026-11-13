@@ -133,6 +133,18 @@ operation = 2
 size = Vector3(0.8, 2.2, 1.4)
 material = SubResource("Mat_wall")
 
+[node name="CubbyWest" type="CSGBox3D" parent="House/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.11, 1.45, 2)
+operation = 2
+size = Vector3(0.26, 0.24, 0.3)
+material = SubResource("Mat_wall")
+
+[node name="CubbySouth" type="CSGBox3D" parent="House/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.45, 5.11)
+operation = 2
+size = Vector3(0.3, 0.24, 0.26)
+material = SubResource("Mat_wall")
+
 [node name="WindowHole" type="CSGBox3D" parent="House/Walls"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -5.2)
 operation = 2

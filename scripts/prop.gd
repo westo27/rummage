@@ -19,6 +19,10 @@ extends RigidBody3D
 ## first lifts it. Used for the bed and wardrobe, so a lucky throw can't topple
 ## a gated object and skip the gate.
 @export var keep_upright_until_grabbed: bool = false
+## Holds it fixed in place (a static body) until the beam first lifts it:
+## pictures on the wall, and the wardrobe, so pulling its doors can't drag it
+## off the doorway before its gate opens.
+@export var frozen_until_grabbed: bool = false
 ## What it's made of, which picks its knock when it hits something.
 @export var impact_material: Tones.ImpactMaterial = Tones.ImpactMaterial.WOOD
 
@@ -76,6 +80,9 @@ func _ready() -> void:
 			_mesh_rest_positions.append(child.position)
 	if tint_variation > 0.0:
 		_apply_random_tint()
+	if frozen_until_grabbed:
+		freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+		freeze = true
 	if keep_upright_until_grabbed:
 		axis_lock_angular_x = true
 		axis_lock_angular_z = true
@@ -130,6 +137,7 @@ func _make_aura() -> MeshInstance3D:
 ## Called by the beam when it picks this object up.
 func start_hold(holder: PhysicsBody3D) -> void:
 	is_held = true
+	freeze = false
 	axis_lock_angular_x = false
 	axis_lock_angular_z = false
 	# A collision exception means "these two bodies pass through each other".

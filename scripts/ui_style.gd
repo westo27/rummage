@@ -16,9 +16,16 @@ class_name UiStyle
 
 const BG_TOP := Color(0.10, 0.20, 0.22)
 const BG_BOTTOM := Color(0.04, 0.07, 0.10)
-## Panel face, and the brighter version used when hovered.
+## A panel's face is a vertical gradient, not one colour: bright along the top
+## where the imaginary light is, falling to a shaded bottom. That gradient plus
+## the gloss and the rim below is what makes the button look like an object
+## rather than a rectangle.
+const PANEL_TOP := Color(0.98, 0.98, 0.97)
+const PANEL_BOTTOM := Color(0.63, 0.70, 0.74)
+const PANEL_TOP_HOVER := Color(1.0, 1.0, 1.0)
+const PANEL_BOTTOM_HOVER := Color(0.78, 0.85, 0.88)
+## Kept for anything that just wants one flat cream, like the old win box.
 const PANEL := Color(0.96, 0.93, 0.85)
-const PANEL_HOVER := Color(1.0, 0.99, 0.94)
 ## Text on a cream panel.
 const INK := Color(0.12, 0.14, 0.15)
 const INK_SOFT := Color(0.42, 0.44, 0.44)
@@ -38,6 +45,13 @@ const ACCENTS: Array[Color] = [AMBER, MINT, SKY, CORAL]
 
 const PANEL_SIZE := Vector2(420.0, 400.0)
 const PANEL_SIZE_SMALL := Vector2(300.0, 290.0)
+## A wide pill: anything more than twice as wide as it is tall is drawn as one.
+const PILL_SIZE := Vector2(880.0, 150.0)
+const PILL_FONT_SIZE: int = 62
+## Corner radius as a fraction of a panel's shorter side. Big: these are
+## gumdrops, not cards.
+const PANEL_ROUNDNESS: float = 0.30
+## For the few places that still want a fixed radius in pixels.
 const PANEL_RADIUS: int = 30
 ## How far a panel rises when you point at it.
 const LIFT: float = 14.0
@@ -49,6 +63,7 @@ const HINT_FONT_SIZE: int = 30
 
 static var _fonts: Dictionary = {}
 static var _gradient: GradientTexture2D = null
+static var _vignette: GradientTexture2D = null
 
 
 ## A system font at the given weight (700 = bold). SystemFont asks the OS for a
@@ -86,6 +101,28 @@ static func gradient() -> GradientTexture2D:
 	return tex
 
 
+## A dark ring around the edge of the screen, clear in the middle. Drawn over
+## the background so the menu sits in a pool of light instead of on a flat
+## field, and so the panels have something to stand out against at the edges.
+static func vignette() -> GradientTexture2D:
+	if _vignette != null:
+		return _vignette
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(0.0, 0.0, 0.0, 0.0))
+	ramp.set_color(1, Color(0.0, 0.01, 0.02, 0.55))
+	# Most of the darkening happens in the outer third.
+	ramp.add_point(0.55, Color(0.0, 0.0, 0.0, 0.0))
+	var tex := GradientTexture2D.new()
+	tex.gradient = ramp
+	tex.width = 256
+	tex.height = 256
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	_vignette = tex
+	return tex
+
+
 ## A rounded panel face. `shadow` adds the soft drop shadow that makes a
 ## hovered panel look lifted off the background.
 static func panel_box(bg: Color, radius: int = PANEL_RADIUS, shadow: float = 0.0) -> StyleBoxFlat:
@@ -98,6 +135,124 @@ static func panel_box(bg: Color, radius: int = PANEL_RADIUS, shadow: float = 0.0
 		box.shadow_size = int(shadow)
 		box.shadow_offset = Vector2(0.0, shadow * 0.45)
 	return box
+
+
+# --- Glossy panels -----------------------------------------------------------
+# A button is drawn in five passes, outermost first, the way a mid-2000s
+# interface would have built it up in Photoshop:
+#
+#   1. a soft drop shadow, so it sits above the background
+#   2. the body, a vertical gradient: lit along the top, shaded at the bottom
+#   3. the rim, a bright stroke in the panel's accent colour
+#   4. an inner light line just inside the rim, which reads as a bevel
+#   5. the gloss, a white highlight over the top half, fading out downward
+#
+# Godot's StyleBoxFlat can't do gradients, so the body and the gloss are drawn
+# as polygons with a colour per vertex (draw_polygon), which is cheap and
+# gives a smooth ramp.
+
+## The outline of a rounded rectangle, as points going clockwise from the top
+## right. `per_corner` segments per corner: 8 is smooth at any size we use.
+static func rounded_points(rect: Rect2, radius: float, per_corner: int = 8) -> PackedVector2Array:
+	radius = minf(radius, minf(rect.size.x, rect.size.y) * 0.5)
+	var right: float = rect.position.x + rect.size.x
+	var bottom: float = rect.position.y + rect.size.y
+	# Each corner: its centre of curvature, and the angles to sweep between.
+	var corners: Array = [
+		[Vector2(right - radius, rect.position.y + radius), -PI * 0.5, 0.0],
+		[Vector2(right - radius, bottom - radius), 0.0, PI * 0.5],
+		[Vector2(rect.position.x + radius, bottom - radius), PI * 0.5, PI],
+		[Vector2(rect.position.x + radius, rect.position.y + radius), PI, PI * 1.5],
+	]
+	var points := PackedVector2Array()
+	for corner: Array in corners:
+		for i in per_corner + 1:
+			var angle: float = lerpf(corner[1], corner[2], float(i) / per_corner)
+			points.append(corner[0] + Vector2(cos(angle), sin(angle)) * radius)
+	return points
+
+
+## One colour per point, interpolated by how far down `span` each point sits.
+## This is what turns a flat polygon into a lit surface.
+static func vertical_ramp(points: PackedVector2Array, span: Rect2, top: Color, bottom: Color) -> PackedColorArray:
+	var colors := PackedColorArray()
+	for p in points:
+		colors.append(top.lerp(bottom, clampf((p.y - span.position.y) / maxf(span.size.y, 1.0), 0.0, 1.0)))
+	return colors
+
+
+## Draws the whole button: shadow, body, rim, bevel and gloss.
+## `hover` and `press` are 0..1, so a panel can be drawn part-way through
+## rising or being pushed in.
+static func draw_glossy_panel(ci: CanvasItem, rect: Rect2, radius: float, accent: Color,
+		hover: float, press: float) -> void:
+	var points: PackedVector2Array = rounded_points(rect, radius)
+	var closed: PackedVector2Array = points.duplicate()
+	closed.append(points[0])
+
+	# 1. Shadow. A StyleBoxFlat is used only for its soft shadow; its own fill
+	# is the panel's darkest tone and is covered by the body in the next step.
+	var shade := StyleBoxFlat.new()
+	shade.bg_color = PANEL_BOTTOM.darkened(0.1)
+	shade.set_corner_radius_all(int(radius))
+	shade.corner_detail = 12
+	shade.shadow_color = Color(0.0, 0.0, 0.0, 0.4)
+	shade.shadow_size = int(14.0 + hover * 16.0 - press * 8.0)
+	shade.shadow_offset = Vector2(0.0, 8.0 + hover * 8.0 - press * 6.0)
+	shade.draw(ci.get_canvas_item(), rect)
+
+	# A glow in the accent colour while raised, drawn outside the rim.
+	if hover > 0.01:
+		ci.draw_polyline(closed, Color(accent, 0.28 * hover), 18.0, true)
+
+	# 2. Body. Pressing it darkens the whole face a little, as if the light
+	# no longer reaches it square-on.
+	var top: Color = PANEL_TOP.lerp(PANEL_TOP_HOVER, hover).darkened(0.10 * press)
+	var bottom: Color = PANEL_BOTTOM.lerp(PANEL_BOTTOM_HOVER, hover).darkened(0.10 * press)
+	ci.draw_polygon(points, vertical_ramp(points, rect, top, bottom))
+
+	# 3. Reflected light: a faint band along the bottom inside, as if the
+	# surface picks up light bouncing off whatever it's sitting on. Kept weak
+	# and low, so the shaded part of the face stays shaded.
+	var bounce_rect := Rect2(
+		rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.76),
+		Vector2(rect.size.x * 0.84, rect.size.y * 0.24 - 7.0))
+	var bounce: PackedVector2Array = rounded_points(bounce_rect, minf(bounce_rect.size.y * 0.6, radius))
+	ci.draw_polygon(bounce, vertical_ramp(bounce, bounce_rect,
+		Color(1.0, 1.0, 1.0, 0.0), Color(1.0, 1.0, 1.0, 0.22)))
+
+	# 4. Gloss: a bright pill over the top of the face, white at its top edge
+	# and gone by its bottom. A single polygon leaves a visible outline where
+	# it ends, so it's drawn as several nested copies at low opacity. They
+	# pile up toward the middle, which is a blurred highlight for free. It
+	# shrinks when pressed, and that is most of why a press reads as the
+	# surface tilting away from the light.
+	# Every pass starts at the same top edge, so their alphas stack there and
+	# the highlight is near-white where the light hits; they differ only in
+	# width and in how far down they reach, which softens the fade-out.
+	const GLOSS_PASSES: int = 6
+	var gloss_top: float = rect.position.y + 9.0
+	var gloss_height: float = rect.size.y * (0.58 - 0.18 * press)
+	for i in GLOSS_PASSES:
+		# 1.0 for the widest and shortest, down to 0.62 for the narrowest.
+		var spread: float = lerpf(1.0, 0.62, float(i) / (GLOSS_PASSES - 1))
+		var inset: float = rect.size.x * (0.5 - 0.45 * spread)
+		var gloss_rect := Rect2(
+			Vector2(rect.position.x + inset, gloss_top),
+			Vector2(rect.size.x - inset * 2.0, gloss_height * lerpf(0.72, 1.0, spread)))
+		var gloss: PackedVector2Array = rounded_points(gloss_rect,
+			minf(gloss_rect.size.y * 0.5, radius))
+		ci.draw_polygon(gloss, vertical_ramp(gloss, gloss_rect,
+			Color(1.0, 1.0, 1.0, 0.30 * (1.0 - 0.35 * press)), Color(1.0, 1.0, 1.0, 0.0)))
+
+	# 5. Rim, last so nothing paints over it, and a bevel line just inside it
+	# so the edge looks rounded over rather than cut off.
+	var inner_rect: Rect2 = rect.grow(-8.0)
+	var inner: PackedVector2Array = rounded_points(inner_rect, maxf(radius - 8.0, 1.0))
+	var inner_closed: PackedVector2Array = inner.duplicate()
+	inner_closed.append(inner[0])
+	ci.draw_polyline(inner_closed, Color(1.0, 1.0, 1.0, 0.4), 3.0, true)
+	ci.draw_polyline(closed, accent, 7.0, true)
 
 
 ## The darker inset plate a setting's current value sits on.

@@ -1,22 +1,27 @@
 class_name MenuPanel
 extends BaseButton
-## One big panel you point at and click: the only kind of button the menus use.
+## One big glossy panel you point at and click: the only kind of button the
+## menus use.
 ##
 ## BaseButton is a button with no look of its own (unlike Button), so the whole
-## panel is drawn here in _draw: shadow, cream face, a coloured bar along the
-## top, the icon and the label. Pointing at it (or giving it keyboard focus)
-## raises it; clicking presses it back down. Both are animated by easing
-## `_lift` and `_sink` toward their targets every frame rather than with
-## tweens, so interrupting one mid-animation can't leave it half-finished.
+## thing is drawn here in _draw, via UiStyle.draw_glossy_panel, which does the
+## shadow, the lit body, the rim, the bevel and the gloss.
+##
+## Pointing at it (or giving it keyboard focus) raises it; clicking pushes it
+## in. Both are animated by easing `_lift` and `_sink` toward their targets
+## every frame rather than with tweens, so interrupting one mid-animation
+## can't leave it half-finished. Those same values drive how strong the gloss
+## and the shadow are, so the panel looks like it's tilting into the light
+## rather than just sliding up and down.
 
-## Shown in the coloured bar's colour, above the label.
+## Shown above the label, drawn in the accent colour.
 @export var icon_name: String = ""
 ## A character drawn instead of an icon, for the small +/- steppers.
 @export var glyph: String = ""
 @export var label_text: String = ""
-## The bar along the top and the icon colour.
+## The rim and the icon.
 @export var accent: Color = UiStyle.AMBER
-## Compact panels (the steppers) have no top bar and a tighter radius.
+## Compact panels (the steppers) are drawn as circles or near-circles.
 @export var compact: bool = false
 
 var _lift: float = 0.0
@@ -62,61 +67,54 @@ func _play(stream: AudioStream) -> void:
 func _process(delta: float) -> void:
 	# Ease each value a fixed fraction of the way to its target per second.
 	var raised: bool = is_hovered() or has_focus()
-	var target_lift: float = UiStyle.LIFT if raised else 0.0
-	var target_sink: float = 1.0 if button_pressed else 0.0
-	_lift = lerpf(_lift, target_lift, clampf(delta * 16.0, 0.0, 1.0))
-	_sink = lerpf(_sink, target_sink, clampf(delta * 22.0, 0.0, 1.0))
+	_lift = lerpf(_lift, 1.0 if raised else 0.0, clampf(delta * 14.0, 0.0, 1.0))
+	_sink = lerpf(_sink, 1.0 if button_pressed else 0.0, clampf(delta * 22.0, 0.0, 1.0))
 	queue_redraw()
 
 
 func _draw() -> void:
-	var radius: int = 22 if compact else UiStyle.PANEL_RADIUS
-	var raised: bool = is_hovered() or has_focus()
-	var face: Color = UiStyle.PANEL_HOVER if raised else UiStyle.PANEL
-	# The panel is drawn higher than its layout rect when raised, and squashed
-	# down by a couple of pixels while held.
-	var offset := Vector2(0.0, -_lift + _sink * 5.0)
-	var rect := Rect2(offset, size)
-
-	UiStyle.panel_box(face, radius, 10.0 + _lift * 1.6).draw(get_canvas_item(), rect)
-
-	if has_focus():
-		var ring := StyleBoxFlat.new()
-		ring.bg_color = Color.TRANSPARENT
-		ring.set_corner_radius_all(radius + 8)
-		ring.set_border_width_all(6)
-		ring.border_color = accent
-		ring.draw(get_canvas_item(), rect.grow(10.0))
-
-	if not compact:
-		# The accent bar: a full rounded rect clipped to the panel's top edge by
-		# drawing it taller than the visible strip and letting the panel's own
-		# corners define the shape.
-		var bar := UiStyle.panel_box(accent, radius, 0.0)
-		bar.draw(get_canvas_item(), Rect2(rect.position, Vector2(size.x, 14.0 + radius)))
-		UiStyle.panel_box(face, radius, 0.0).draw(get_canvas_item(),
-			Rect2(rect.position + Vector2(0.0, 14.0), size - Vector2(0.0, 14.0)))
+	# Anything much wider than it is tall is drawn as a pill, with the icon
+	# tucked in at the left and the label across the middle. Steppers are
+	# circles. Anything else is a gumdrop: a square rounded by a good fraction
+	# of its own height, rather than by a fixed number of pixels.
+	var pill: bool = size.x > size.y * 2.0
+	var radius: float = size.y * 0.5 if (compact or pill) \
+		else minf(size.x, size.y) * UiStyle.PANEL_ROUNDNESS
+	# The panel is drawn above its layout rect when raised, and pushed back
+	# down into the page while held.
+	var rect := Rect2(Vector2(0.0, -UiStyle.LIFT * _lift + 6.0 * _sink), size)
+	UiStyle.draw_glossy_panel(self, rect, radius, accent, _lift, _sink)
 
 	var font: Font = UiStyle.font(700)
 
 	if glyph != "":
-		var glyph_size: int = int(size.y * 0.5)
-		var glyph_width: float = font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, glyph_size).x
-		draw_string(font, rect.position + Vector2((size.x - glyph_width) * 0.5, size.y * 0.68),
-			glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, glyph_size, UiStyle.INK)
+		var glyph_size: int = int(size.y * 0.46)
+		var measured: Vector2 = font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, glyph_size)
+		_draw_engraved(font, rect.position + Vector2((size.x - measured.x) * 0.5, size.y * 0.66),
+			glyph, glyph_size)
 		return
 
 	if icon_name != "":
-		var box: float = size.y * 0.34
-		UiStyle.draw_icon(self, icon_name,
-			Rect2(rect.position + Vector2((size.x - box) * 0.5, size.y * 0.24),
-				Vector2(box, box)), accent)
+		var box: float = size.y * (0.56 if pill else 0.34)
+		var icon_at := Vector2(size.y * 0.34, (size.y - box) * 0.5) if pill \
+			else Vector2((size.x - box) * 0.5, size.y * 0.22)
+		UiStyle.draw_icon(self, icon_name, Rect2(rect.position + icon_at, Vector2(box, box)), accent)
 
 	if label_text != "":
-		var label_size: int = UiStyle.LABEL_FONT_SIZE
-		var text_width: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x
-		draw_string(font, rect.position + Vector2((size.x - text_width) * 0.5, size.y * 0.82),
-			label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size, UiStyle.INK)
+		var label_size: int = UiStyle.PILL_FONT_SIZE if pill else UiStyle.LABEL_FONT_SIZE
+		var width: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x
+		var baseline: float = size.y * (0.64 if pill else 0.82)
+		_draw_engraved(font, rect.position + Vector2((size.x - width) * 0.5, baseline),
+			label_text, label_size)
+
+
+## Text with a pale copy a little below it. Light comes from above, so a
+## highlight along the lower edge reads as the letters being cut into the
+## surface. It's a small thing that stops the type looking stuck on top.
+func _draw_engraved(font: Font, at: Vector2, text: String, font_size: int) -> void:
+	draw_string(font, at + Vector2(0.0, 2.5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+		Color(1.0, 1.0, 1.0, 0.6))
+	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiStyle.INK)
 
 
 ## Builds a panel in one call, instead of five lines of property setting.
@@ -128,10 +126,18 @@ static func make(icon: String, text: String, tint: Color) -> MenuPanel:
 	return panel
 
 
-## A small square stepper button showing a single character.
+## A wide pill: icon at the left, label across the middle.
+static func make_pill(icon: String, text: String, tint: Color) -> MenuPanel:
+	var panel := make(icon, text, tint)
+	panel.custom_minimum_size = UiStyle.PILL_SIZE
+	return panel
+
+
+## A small round stepper button showing a single character.
 static func make_stepper(character: String) -> MenuPanel:
 	var panel := MenuPanel.new()
 	panel.glyph = character
 	panel.compact = true
-	panel.custom_minimum_size = Vector2(110.0, 110.0)
+	panel.accent = UiStyle.SKY
+	panel.custom_minimum_size = Vector2(118.0, 118.0)
 	return panel

@@ -48,30 +48,28 @@ func _build() -> void:
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(heading)
 
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 40)
-	column.add_child(row)
+	# The same stack of pills as the title screen, so pausing feels like the
+	# same menu rather than a different one.
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", 28)
+	column.add_child(stack)
 
-	var resume := MenuPanel.make("play", "Resume", UiStyle.AMBER)
-	resume.custom_minimum_size = UiStyle.PANEL_SIZE_SMALL
+	var resume := MenuPanel.make_pill("play", "Resume", UiStyle.AMBER)
 	resume.pressed.connect(close)
-	row.add_child(resume)
+	stack.add_child(resume)
 
-	var settings := MenuPanel.make("sliders", "Settings", UiStyle.MINT)
-	settings.custom_minimum_size = UiStyle.PANEL_SIZE_SMALL
+	var settings := MenuPanel.make_pill("sliders", "Settings", UiStyle.MINT)
 	settings.pressed.connect(_on_settings)
-	row.add_child(settings)
+	stack.add_child(settings)
 
-	var restart := MenuPanel.make("loop", "Restart", UiStyle.SKY)
-	restart.custom_minimum_size = UiStyle.PANEL_SIZE_SMALL
+	var restart := MenuPanel.make_pill("loop", "Restart", UiStyle.SKY)
 	restart.pressed.connect(_on_restart)
-	row.add_child(restart)
+	stack.add_child(restart)
 
-	var quit := MenuPanel.make("house", "Title", UiStyle.CORAL)
-	quit.custom_minimum_size = UiStyle.PANEL_SIZE_SMALL
+	var quit := MenuPanel.make_pill("house", "Title", UiStyle.CORAL)
 	quit.pressed.connect(_on_quit_to_title)
-	row.add_child(quit)
+	stack.add_child(quit)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -139,12 +137,14 @@ func _on_quit_to_title() -> void:
 	get_tree().change_scene_to_file("res://scenes/title.tscn")
 
 
-func _first_panel() -> MenuPanel:
-	for child in (_panels.get_child(0) as Node).get_children():
-		if child is HBoxContainer:
-			for panel in (child as Node).get_children():
-				if panel is MenuPanel:
-					return panel as MenuPanel
+## The topmost panel, whatever the panels are arranged in.
+func _first_panel(from: Node = null) -> MenuPanel:
+	for child in (from if from != null else _panels).get_children():
+		if child is MenuPanel:
+			return child as MenuPanel
+		var deeper: MenuPanel = _first_panel(child)
+		if deeper != null:
+			return deeper
 	return null
 
 

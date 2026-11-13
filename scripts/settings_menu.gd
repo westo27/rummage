@@ -44,8 +44,8 @@ func _ready() -> void:
 	spacer2.custom_minimum_size = Vector2(0.0, 40.0)
 	column.add_child(spacer2)
 
-	var back := MenuPanel.make("back", "Back", UiStyle.MINT)
-	back.custom_minimum_size = Vector2(380.0, 200.0)
+	var back := MenuPanel.make_pill("back", "Back", UiStyle.MINT)
+	back.custom_minimum_size = Vector2(560.0, 140.0)
 	back.pressed.connect(_close)
 	var back_row := CenterContainer.new()
 	back_row.add_child(back)

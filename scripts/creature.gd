@@ -355,7 +355,13 @@ func _best_hiding_prop() -> Prop:
 	var best_score: float = INF
 	for node in get_tree().get_nodes_in_group("props"):
 		var prop := node as Prop
-		if prop.is_held or prop.global_position.y > 1.2:
+		if prop.is_held:
+			continue
+		# Only things standing on the floor. A prop's centre sits about its
+		# own size above the ground; anything higher is up on a shelf or a
+		# table, and the "spot behind it" would be somewhere unreachable,
+		# like between a bookcase and the wall.
+		if prop.global_position.y > prop.hold_radius + 0.25:
 			continue
 		if global_position.distance_to(prop.global_position) > HIDE_SEARCH_RADIUS:
 			continue

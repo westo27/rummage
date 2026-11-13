@@ -65,22 +65,24 @@ func _build() -> void:
 	gap.custom_minimum_size = Vector2(0.0, 80.0)
 	_panels.add_child(gap)
 
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 44)
-	_panels.add_child(row)
+	# A stack of wide pills rather than a row of tiles: the long shape shows
+	# the gloss off, and one column is easier to run down with the keyboard.
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", 34)
+	_panels.add_child(stack)
 
-	var play := MenuPanel.make("creature", "Play", UiStyle.AMBER)
+	var play := MenuPanel.make_pill("creature", "Play", UiStyle.AMBER)
 	play.pressed.connect(_on_play)
-	row.add_child(play)
+	stack.add_child(play)
 
-	var settings := MenuPanel.make("sliders", "Settings", UiStyle.MINT)
+	var settings := MenuPanel.make_pill("sliders", "Settings", UiStyle.MINT)
 	settings.pressed.connect(_on_settings)
-	row.add_child(settings)
+	stack.add_child(settings)
 
-	var quit := MenuPanel.make("exit", "Quit", UiStyle.CORAL)
+	var quit := MenuPanel.make_pill("exit", "Quit", UiStyle.CORAL)
 	quit.pressed.connect(_on_quit)
-	row.add_child(quit)
+	stack.add_child(quit)
 
 	_hint = UiStyle.label("WASD to move  ·  hold left mouse to grab  ·  Q to ping  ·  Esc to pause",
 		UiStyle.HINT_FONT_SIZE, UiStyle.CREAM_SOFT, 400)
@@ -111,9 +113,13 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	draw_texture_rect(UiStyle.gradient(), Rect2(Vector2.ZERO, size), false)
+	var screen := Rect2(Vector2.ZERO, size)
+	draw_texture_rect(UiStyle.gradient(), screen, false)
 	for i in _blob_positions.size():
 		draw_circle(_blob_positions[i], _blob_radii[i], _blob_colors[i])
+	# Over the blobs, so the edges of the screen fall away and the middle
+	# reads as lit.
+	draw_texture_rect(UiStyle.vignette(), screen, false)
 
 
 func _on_play() -> void:

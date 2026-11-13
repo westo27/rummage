@@ -70,6 +70,34 @@ var _catch_started: float = 0.0
 const CATCH_REACH_TIME: float = 0.06
 var _aimed_creature: Creature = null
 var _capture_sound := AudioStreamPlayer.new()
+## The beam's sounds: a warm whirr while holding something (rising and
+## swelling as you swing it) and a crackle while straining against
+## something too heavy. Both are loops, faded in and out rather than
+## started and stopped, so they never click. They play from your hand, so
+## they're not placed in 3D. See Tones.whirr() and Tones.strain_crackle().
+var _hum := AudioStreamPlayer.new()
+var _strain := AudioStreamPlayer.new()
+## Each sound's current loudness (0 to 1), eased toward where it should be.
+var _hum_gain: float = 0.0
+var _strain_gain: float = 0.0
+## How hard you're swinging what you hold, 0 (still) to 1 (flinging),
+## eased so it swells and settles rather than jumping.
+var _swing: float = 0.0
+## How fast the grab point moved last physics tick, and where it was.
+var _point_speed: float = 0.0
+var _last_point: Vector3 = Vector3.ZERO
+
+## The whirr's loudness when the held thing is still, and when it's being
+## swung at full speed (decibels; the creature squeaks are at -4).
+const HUM_STILL_DB: float = -18.0
+const HUM_SWINGING_DB: float = -9.0
+## How much higher the whirr goes at a full swing (1.6 = 60% higher).
+const HUM_SWING_PITCH: float = 1.6
+## A grab point moving this fast (m/s) counts as a full swing.
+const SWING_FULL_SPEED: float = 6.0
+const STRAIN_DB: float = -13.0
+## How quickly the sounds fade in and out (higher is snappier).
+const SOUND_EASE: float = 14.0
 ## The grab button only counts if its press reached this script as an event.
 ## The click that recaptures the mouse is swallowed by player.gd, so it can't
 ## accidentally grab something.
@@ -111,13 +139,18 @@ func _ready() -> void:
 	_capture_sound.stream = Tones.slurp()
 	_capture_sound.volume_db = -6.0
 	add_child(_capture_sound)
+	_hum.stream = Tones.whirr()
+	add_child(_hum)
+	_strain.stream = Tones.strain_crackle()
+	add_child(_strain)
 
 
 # The beam line is purely visual, so it's redrawn every rendered frame (_process)
 # rather than every physics tick; on a 144 Hz monitor that keeps the hand end
 # glued to the camera instead of stepping at 60 Hz.
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_beam_mesh()
+	_update_sound(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -136,7 +169,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_hold_distance = maxf(_hold_distance - Game.tune.hold_distance_step, _min_hold_distance(held))
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if held != null:
 		if _grab_armed:
 			_drive_held()
@@ -161,6 +194,14 @@ func _physics_process(_delta: float) -> void:
 				_rejected.shudder()
 
 	_update_aim_state()
+
+	# How fast the grab point is moving: what the whirr follows.
+	if held != null:
+		var point: Vector3 = grab_point()
+		_point_speed = point.distance_to(_last_point) / maxf(delta, 0.0001)
+		_last_point = point
+	else:
+		_point_speed = 0.0
 
 
 ## While latched onto something too heavy: keep it shuddering until the button
@@ -239,6 +280,7 @@ func _grab(prop: Prop, point: Vector3) -> void:
 	prop.start_hold(_player)
 	# A sleeping body ignores velocity changes, so make sure it's awake.
 	prop.sleeping = false
+	_last_point = point  # so the first tick doesn't read as a jump
 
 
 ## The grab point in world space, where it is right now.
@@ -540,3 +582,32 @@ func _draw_ribbon(mesh: ImmediateMesh, start: Vector3, control: Vector3, end: Ve
 		mesh.surface_set_uv(Vector2(1.0, t))
 		mesh.surface_add_vertex(point + side)
 	mesh.surface_end()
+
+
+# ---------------------------------------------------------------- sound
+
+## Eases the whirr and the crackle toward how loud (and, for the whirr, how
+## high) they should be right now, every rendered frame.
+func _update_sound(delta: float) -> void:
+	var ease: float = clampf(delta * SOUND_EASE, 0.0, 1.0)
+	var swinging: float = clampf(_point_speed / SWING_FULL_SPEED, 0.0, 1.0) if held != null else 0.0
+	_swing = lerpf(_swing, swinging, ease)
+	var hum_target: float = db_to_linear(lerpf(HUM_STILL_DB, HUM_SWINGING_DB, _swing)) if held != null else 0.0
+	_hum_gain = lerpf(_hum_gain, hum_target, ease)
+	_hum.pitch_scale = lerpf(1.0, HUM_SWING_PITCH, _swing)
+	_set_loop_level(_hum, _hum_gain)
+	var strain_target: float = db_to_linear(STRAIN_DB) if _rejected != null else 0.0
+	_strain_gain = lerpf(_strain_gain, strain_target, ease)
+	_set_loop_level(_strain, _strain_gain)
+
+
+## Plays a looping sound at `gain` (0 to 1), and stops it once it has faded
+## to nothing, so silent loops don't keep running.
+func _set_loop_level(player: AudioStreamPlayer, gain: float) -> void:
+	if gain < 0.001:
+		if player.playing:
+			player.stop()
+		return
+	if not player.playing:
+		player.play()
+	player.volume_db = linear_to_db(gain)

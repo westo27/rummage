@@ -207,6 +207,15 @@ its light onto the room, and a cosy bloom over everything.
   a spark. Colours: cyan holding, red straining, the creature's colour when
   catching. Straining also makes it "agitated": faster pulses, more flicker
   and a wilder filament.
+- **The beam's sound** (your choices: a warm whirr that reacts to swinging,
+  and crackle and fizz when straining). `Tones.whirr()` is a rounded 140 Hz
+  tone with soft harmonics and a gentle sway, a seamless one-second loop.
+  While you hold something it plays at -18 dB; swing it and it rises up to
+  60% higher and swells to about -10 dB, then settles when you hold still
+  (`HUM_*` and `SWING_FULL_SPEED` at the top of beam.gd). Straining plays
+  `Tones.strain_crackle()`: a strained, wavering hum with irregular pops,
+  at -13 dB. Both fade in and out, and come from your hand rather than the
+  object. `tests/render_knocks.tscn` saves them as WAVs too.
 - **Light on the room:** two lights travel with the beam, a stronger one
   just off the grab point and a softer one halfway along, both in the
   beam's colour and flickering with it, so it tints the object, the floor
@@ -374,6 +383,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
 | check_room | a ball thrown hard at the window stays in the room; props are glossy |
 | check_lamp | the lamp hangs still; a thrown book swings it and its light; it stays on its cord; it settles; the beam can't grab it |
+| check_beam_sound | silent when idle; the whirr fades in on grabbing, rises and swells when swung, settles, fades out on letting go; crackle only while straining; both loop; quieter than squeaks |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.

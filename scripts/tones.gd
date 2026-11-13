@@ -195,6 +195,103 @@ static func knock(material: ImpactMaterial, variant: int) -> AudioStreamWAV:
 	return wav
 
 
+## The beam's hum while holding something: a warm, rounded whirr with a gentle
+## wobble, like a friendly toy gadget. A seamless loop: beam.gd plays it on
+## repeat and bends its pitch and loudness as you swing.
+##
+## Every frequency in it (tone, harmonics, wobbles) goes through a whole
+## number of cycles in the loop's one second, so the end joins the start
+## without a click.
+static func whirr() -> AudioStreamWAV:
+	if _cache.has("whirr"):
+		return _cache["whirr"]
+	const SECONDS: int = 1
+	const TONE: float = 140.0
+	var count: int = SECONDS * MIX_RATE
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 777
+	var samples := PackedFloat32Array()
+	samples.resize(count)
+	var breath: float = 0.0
+	var peak: float = 0.0
+	for i in count:
+		var t: float = float(i) / MIX_RATE
+		# A slow sway in pitch (5 times a second) and in loudness (3 times).
+		var sway: float = 0.35 * sin(TAU * 5.0 * t)
+		var tone: float = sin(TAU * TONE * t + sway) * 0.6 \
+			+ sin(TAU * TONE * 2.0 * t + sway * 2.0) * 0.22 \
+			+ sin(TAU * TONE * 3.0 * t + sway * 3.0) * 0.08
+		var swell: float = 0.85 + 0.15 * sin(TAU * 3.0 * t)
+		# A whisper of soft air under it, so it's not a pure electronic tone.
+		breath += (rng.randf_range(-1.0, 1.0) - breath) * 0.08
+		samples[i] = tone * swell + breath * 0.25
+		peak = maxf(peak, absf(samples[i]))
+	return _store_loop("whirr", samples, peak)
+
+
+## The beam straining against something too heavy: a strained, wavering hum
+## with irregular electric crackles and pops over it. A seamless two-second
+## loop; the pops are kept clear of its ends so the join can't click.
+static func strain_crackle() -> AudioStreamWAV:
+	if _cache.has("strain"):
+		return _cache["strain"]
+	const SECONDS: int = 2
+	var count: int = SECONDS * MIX_RATE
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 909
+	var samples := PackedFloat32Array()
+	samples.resize(count)
+	# The pops, laid out first as one loudness curve: each starts at a random
+	# moment, at a random loudness, and dies away within a few milliseconds.
+	var crackle := PackedFloat32Array()
+	crackle.resize(count)
+	var at: float = 0.02
+	while at < SECONDS - 0.04:
+		var start: int = int(at * MIX_RATE)
+		var loudness: float = rng.randf_range(0.4, 1.0)
+		var decay: float = rng.randf_range(0.002, 0.008) * MIX_RATE
+		for j in int(0.03 * MIX_RATE):
+			crackle[start + j] += loudness * exp(-j / decay)
+		at += rng.randf_range(0.02, 0.14)
+	var previous: float = 0.0
+	var fizz: float = 0.0
+	var peak: float = 0.0
+	for i in count:
+		var t: float = float(i) / MIX_RATE
+		# The strained hum: higher than the whirr, wobbling fast and unevenly,
+		# and driven hard (tanh) so it's edgy rather than round.
+		var wobble: float = 1.2 * sin(TAU * 11.0 * t) + 0.8 * sin(TAU * 3.0 * t)
+		var hum: float = tanh(1.8 * sin(TAU * 220.0 * t + wobble)) * 0.32
+		var white: float = rng.randf_range(-1.0, 1.0)
+		# Fizz: a thin, restless hiss under everything.
+		fizz += (white - fizz) * 0.6
+		var value: float = hum + (white - previous) * 0.04 + fizz * 0.03 * (0.5 + 0.5 * sin(TAU * 7.0 * t))
+		previous = white
+		# Crackles: bright noise, shaped by the pops' loudness curve.
+		value += white * crackle[i]
+		samples[i] = value
+		peak = maxf(peak, absf(value))
+	return _store_loop("strain", samples, peak)
+
+
+## Turns samples into a looping sound, peaking at the same level as the rest.
+static func _store_loop(key: String, samples: PackedFloat32Array, peak: float) -> AudioStreamWAV:
+	var data := PackedByteArray()
+	data.resize(samples.size() * 2)
+	for i in samples.size():
+		data.encode_s16(i * 2, int(samples[i] / peak * 0.8 * 32767.0))
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = MIX_RATE
+	wav.stereo = false
+	wav.data = data
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = samples.size()
+	_cache[key] = wav
+	return wav
+
+
 ## Marbles knocking together in the HUD bag: very short and high, so it reads
 ## as glass or stone rather than a voice.
 static func clack() -> AudioStreamWAV:

@@ -30,6 +30,11 @@ func _ready() -> void:
 		for entry: Array in PROPS:
 			_render(entry, folder)
 	Tones.slurp().save_to_wav("user://knocks/catch_slurp.wav")
+	# The beam's loops, a few seconds each: the whirr at rest, the whirr as it
+	# sounds mid-swing (higher), and the strain crackle.
+	_save_loop(Tones.whirr(), 3, 1.0, "beam_whirr")
+	_save_loop(Tones.whirr(), 3, 1.5, "beam_whirr_swinging")
+	_save_loop(Tones.strain_crackle(), 2, 1.0, "beam_strain")
 	print("Saved to %s" % ProjectSettings.globalize_path("user://knocks"))
 	get_tree().quit()
 
@@ -50,3 +55,16 @@ func _render(entry: Array, folder: String) -> void:
 	wav.mix_rate = int(Tones.MIX_RATE * pitch)
 	wav.data = data
 	wav.save_to_wav("%s/%s.wav" % [folder, entry[0]])
+
+
+## Saves `repeats` copies of a loop end to end, played at `pitch`.
+func _save_loop(loop: AudioStreamWAV, repeats: int, pitch: float, name: String) -> void:
+	var data := PackedByteArray()
+	for i in repeats:
+		data.append_array(loop.data)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.stereo = false
+	wav.mix_rate = int(Tones.MIX_RATE * pitch)
+	wav.data = data
+	wav.save_to_wav("user://knocks/%s.wav" % name)

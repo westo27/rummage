@@ -56,20 +56,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Throws away the whole scene tree under Main and loads it fresh from the
 		# .tscn file. The Game autoload is not part of the scene, so it survives.
 		get_tree().reload_current_scene()
-		return
-	# Temporary: 1, 2 and 3 switch the props between glossy, satin and matte.
-	for i in Game.PROP_FINISH_NAMES.size():
-		if event.is_action_pressed("finish_%d" % (i + 1)):
-			Game.prop_finish = i as Game.PropFinish
-			_apply_prop_finish()
-			_hud.show_toast("Props: %s  (keys 1-3)" % Game.PROP_FINISH_NAMES[i])
 
 
-## Sets how shiny every prop is (Game.prop_finish). Roughness is how blurry
+## Gives every prop a glossy toy-plastic finish. Roughness is how blurry
 ## reflections are (0 = mirror, 1 = chalk); clearcoat is a second, glassy
-## layer of varnish on top, which is what makes toy plastic look wet-shiny.
-## Prop materials are shared between copies of the same prop, so this sets
-## the same values on a material several times; that's harmless.
+## layer of varnish on top, which is what makes plastic look wet-shiny.
+## (Satin and matte were tried too; glossy was chosen.) Prop materials are
+## shared between copies of the same prop, so this sets the same values on
+## a material several times; that's harmless.
 func _apply_prop_finish() -> void:
 	for prop: Prop in get_tree().get_nodes_in_group("props"):
 		for child in prop.get_children():
@@ -77,21 +71,11 @@ func _apply_prop_finish() -> void:
 			if mesh == null or not (mesh.material_override is StandardMaterial3D):
 				continue
 			var material := mesh.material_override as StandardMaterial3D
-			match Game.prop_finish:
-				Game.PropFinish.GLOSSY:
-					material.roughness = 0.12
-					material.metallic_specular = 0.7
-					material.clearcoat_enabled = true
-					material.clearcoat = 0.8
-					material.clearcoat_roughness = 0.08
-				Game.PropFinish.SATIN:
-					material.roughness = 0.45
-					material.metallic_specular = 0.5
-					material.clearcoat_enabled = false
-				Game.PropFinish.MATTE:
-					material.roughness = 1.0
-					material.metallic_specular = 0.5
-					material.clearcoat_enabled = false
+			material.roughness = 0.12
+			material.metallic_specular = 0.7
+			material.clearcoat_enabled = true
+			material.clearcoat = 0.8
+			material.clearcoat_roughness = 0.08
 
 
 func _on_creature_captured(creature: Creature) -> void:

@@ -15,13 +15,6 @@ var settings: Settings
 ## Plays the knocks when props hit things. See scripts/impact_audio.gd.
 var impacts: ImpactAudio
 
-## How shiny the props are. Three versions to compare in play, switched with
-## the 1, 2 and 3 keys (main.gd). Kept here so the choice survives pressing
-## R. Temporary: once one is chosen, the others and the keys can go.
-enum PropFinish { GLOSSY, SATIN, MATTE }
-const PROP_FINISH_NAMES: Array[String] = ["glossy toy plastic", "satin", "matte"]
-var prop_finish: PropFinish = PropFinish.GLOSSY
-
 
 func _ready() -> void:
 	_setup_input_map()
@@ -57,10 +50,6 @@ func _setup_input_map() -> void:
 	_add_mouse("grab", MOUSE_BUTTON_LEFT)
 	_add_mouse("beam_nearer", MOUSE_BUTTON_WHEEL_DOWN)
 	_add_mouse("beam_further", MOUSE_BUTTON_WHEEL_UP)
-	# Temporary: compare the three prop finishes (see PropFinish above).
-	_add_key("finish_1", KEY_1)
-	_add_key("finish_2", KEY_2)
-	_add_key("finish_3", KEY_3)
 
 
 func _add_key(action: String, key: Key) -> void:

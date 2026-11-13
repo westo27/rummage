@@ -298,28 +298,24 @@ static func clack(variant: int = 0) -> AudioStreamWAV:
 	var key: String = "clack-%d" % variant
 	if _cache.has(key):
 		return _cache[key]
-	# Two glass marbles hitting: a crack with body rather than a tick. A
-	# softened click, a short low knock underneath for weight, and a ring at
-	# two unrelated mid-high pitches (unrelated is what makes it glass rather
-	# than a note), dying away over about 60 ms.
+	# Two glass marbles hitting: a bright, sharp crack with a very short ring
+	# at two unrelated high pitches (unrelated is what makes it glass rather
+	# than a note). Tom picked this one ("A, bright crack") from five
+	# candidates; tests/render_clacks.tscn renders them all.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 500 + variant
-	var ring_a: float = 1400.0 * rng.randf_range(0.92, 1.08)
-	var ring_b: float = 2300.0 * rng.randf_range(0.92, 1.08)
-	var knock: float = 750.0 * rng.randf_range(0.9, 1.1)
-	var count: int = int(0.09 * MIX_RATE)
+	var ring_a: float = 2600.0 * rng.randf_range(0.93, 1.07)
+	var ring_b: float = 4100.0 * rng.randf_range(0.93, 1.07)
+	var count: int = int(0.08 * MIX_RATE)
 	var samples := PackedFloat32Array()
 	samples.resize(count)
-	var soft: float = 0.0
+	var crack: float = 0.0
 	var peak: float = 0.0
 	for i in count:
 		var t: float = float(i) / MIX_RATE
-		# Noise through a gentle low-pass: a crack, not a hiss.
-		soft += (rng.randf_range(-1.0, 1.0) - soft) * 0.45
-		var click: float = soft * exp(-t / 0.002)
-		var body: float = sin(TAU * knock * t) * exp(-t / 0.012) * 0.6
-		var ring: float = sin(TAU * ring_a * t) * exp(-t / 0.035) * 0.7 			+ sin(TAU * ring_b * t) * exp(-t / 0.022) * 0.4
-		samples[i] = (click * 0.9 + body + ring) * clampf((count - i) / (0.006 * MIX_RATE), 0.0, 1.0)
+		crack += (rng.randf_range(-1.0, 1.0) - crack) * 0.9
+		var value: float = crack * exp(-t / 0.0012) 			+ sin(TAU * ring_a * t) * exp(-t / 0.012) * 0.6 			+ sin(TAU * ring_b * t) * exp(-t / 0.008) * 0.4
+		samples[i] = value * clampf((count - i) / (0.005 * MIX_RATE), 0.0, 1.0)
 		peak = maxf(peak, absf(samples[i]))
 	var data := PackedByteArray()
 	data.resize(count * 2)

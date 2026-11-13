@@ -81,8 +81,8 @@ a root node and a script.
   can't touch the 3D game. One function, `_outline()`, gives the bag's shape
   for both drawing and the walls the balls hit, so the two always match.
   Balls clack like glass marbles when they land and knock together
-  (`Tones.clack`: a soft crack, a low knock for weight and a two-pitch glass
-  ring around 1.4 and 2.3 kHz, three takes).
+  (`Tones.clack`: a bright crack with a very short two-pitch glass ring,
+  three takes; you picked it from five in `tests/render_clacks.tscn`).
   Catches made close together queue up and drop 0.16 s apart. The neck
   loosens while balls go in, and the bag squashes a little when each lands.
   To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`

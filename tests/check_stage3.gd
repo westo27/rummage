@@ -48,6 +48,8 @@ func _run() -> void:
 	await get_tree().physics_frame
 	_check("a hidden creature's tell plays a squeak", shy._voice.playing, "")
 	_check("giving a tell doesn't reveal it", shy.state == Creature.State.HIDDEN, "state=%s" % shy.state)
+	await _wait(0.1)
+	_check("its eyes glint as it gives itself away", shy._eyes.is_glinting(), "")
 
 	# --- Lifting a crate reveals what's under it; it flees away from the player ---
 	var crate: Prop = _props.get_node("CrateA")  # (2.5, 0.3, -1.5)
@@ -59,13 +61,18 @@ func _run() -> void:
 	_press("grab")
 	await _wait(0.3)
 	_check("grabbing the crate reveals the creature", under.state == Creature.State.FLEEING, "state=%s" % under.state)
+	_check("found, its eyes go wide (or already squint cheekily)",
+		under._eyes.mood in [CreatureEyes.Mood.WIDE, CreatureEyes.Mood.SQUINT], "mood=%s" % under._eyes.mood)
 	_check("revealed creature can be aimed at", under._pick_zone.collision_layer == 8, "")
 	_aim_at(Vector3(2.5, 2.0, -1.5))  # lift the crate up out of the way
 	# Watch its "up" while it runs: rolling like a marble tips it right over.
 	var most_tipped: float = 0.0
+	var most_glanced: float = 0.0
 	for i in 8:
 		await _wait(0.1)
 		most_tipped = maxf(most_tipped, under._visual.global_basis.y.angle_to(Vector3.UP))
+		most_glanced = maxf(most_glanced, under._eyes.look_angle(0))
+	_check("it glances back at you as it rolls", most_glanced > 0.3, "pupils turned up to %.2f rad" % most_glanced)
 	_check("a fleeing creature rolls like a marble", most_tipped > 1.0, "tipped up to %.2f rad" % most_tipped)
 	var gap: float = _flat_distance(under.global_position, _player.global_position)
 	_check("fleeing creature runs away from the player", gap > start_gap + 1.0,
@@ -186,6 +193,25 @@ func _run() -> void:
 	_check("it settles upright", cower._visual.global_basis.y.angle_to(Vector3.UP) < 0.1, "")
 	var to_player: Vector3 = (_player.global_position - cower.global_position) * Vector3(1, 0, 1)
 	_check("facing the player", (-cower._visual.global_basis.z).angle_to(to_player) < 0.2, "")
+
+	# --- Eyes: it blinks, winks while it waits, and is happy to be caught ---
+	var least_open: float = 1.0
+	var wink_seen: bool = false
+	cower._wink_next = 0.0
+	for i in int(6.0 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		var l: float = cower._eyes.openness(0)
+		var r: float = cower._eyes.openness(1)
+		least_open = minf(least_open, minf(l, r))
+		if absf(l - r) > 0.5:
+			wink_seen = true
+	_check("it blinks", least_open < 0.3, "least open %.2f" % least_open)
+	_check("it winks (one eye at a time)", wink_seen, "")
+	cower.capture(_player.global_position + Vector3.UP * 1.2)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check("caught, its eyes squeeze into happy arcs", cower._eyes.mood == CreatureEyes.Mood.HAPPY
+		and cower._eyes._arcs[0].visible, "mood=%s" % cower._eyes.mood)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

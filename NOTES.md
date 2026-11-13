@@ -492,6 +492,26 @@ in a happy bounce instead of the old shiver, which looked sad (Grace's
 playtest). `BOUNCE_*`, `SETTLE_RATE` and `ROLL_RADIUS` are at the top of
 creature.gd.
 
+## The creatures' eyes
+
+The creatures are cheeky and playful, and all of it is in the eyes
+(`scripts/creature_eyes.gd`, on Visual/Eyes). Each eye is a pivot with a
+white and a pupil: scaling the pivot blinks, widens or squints it, and the
+pupil slides across the white to look (up to 42° off straight ahead).
+- Always: blinks every 2-5 s; catchlights on the pupils; the whites glow
+  faintly so they read as white at night.
+- Hidden: every 3-8 s it peeks at you for a second; its giveaway (and a
+  ping) makes the eyes glint, bright enough for bloom.
+- Found: wide eyes for 0.35 s, then a cheeky squint as it bolts.
+- Running and cowering: it keeps its eyes on you, and winks now and then
+  while it waits.
+- Caught: happy ^ ^ arcs as it's pulled into the beam.
+Timings are constants at the top of creature_eyes.gd and creature.gd.
+
+A cover lifted by the beam (an upturned crate) used to be able to scoop its
+creature up inside it as it popped out. The creature now passes through a
+lifted cover for a second as it escapes.
+
 ## Where creatures hide after fleeing
 
 When a creature stops fleeing it looks at every floor prop within 5 m and

@@ -51,6 +51,18 @@ const BOUNCE_HEIGHT: float = 0.035
 const BOUNCE_RATE: float = 1.8
 ## How quickly a stopped creature rolls back upright to look at you (per s).
 const SETTLE_RATE: float = 6.0
+## While hidden, it now and then peeks out at you: this often, for this long.
+const PEEK_GAP_MIN: float = 3.0
+const PEEK_GAP_MAX: float = 8.0
+const PEEK_SECONDS: float = 1.0
+## While cowering, it winks at you about this often.
+const WINK_GAP_MIN: float = 2.5
+const WINK_GAP_MAX: float = 6.0
+## How long a creature passes through a cover that's being lifted off it.
+const ESCAPE_SECONDS: float = 1.0
+## When found: eyes wide with surprise, then a cheeky squint as it bolts.
+const STARTLED_SECONDS: float = 0.35
+const CHEEKY_SECONDS: float = 0.6
 const BODY_COLORS: Array[Color] = [
 	Color(0.45, 0.95, 0.4), Color(1.0, 0.55, 0.75), Color(1.0, 0.85, 0.25),
 	Color(0.45, 0.8, 1.0), Color(0.85, 0.55, 1.0), Color(1.0, 0.6, 0.3),
@@ -75,8 +87,12 @@ var body_color: Color = Color.WHITE
 ## Time spent cowering, for the bounce, and a random offset so a group of
 ## them doesn't bob in step.
 var _bounce_time: float = 0.0
+var _peek_next: float = 0.0
+var _peek_left: float = 0.0
+var _wink_next: float = 0.0
 
 @onready var _visual: Node3D = $Visual
+@onready var _eyes: CreatureEyes = $Visual/Eyes
 @onready var _pick_zone: Area3D = $PickZone
 @onready var _glow: OmniLight3D = $Glow
 @onready var _voice: AudioStreamPlayer3D = $Voice
@@ -89,9 +105,12 @@ func _ready() -> void:
 	_voice.stream = Tones.squeak()
 	_voice.volume_db = Game.tune.squeak_volume_db
 	_apply_random_color()
+	_peek_next = randf_range(PEEK_GAP_MIN, PEEK_GAP_MAX)
+	_wink_next = randf_range(WINK_GAP_MIN, WINK_GAP_MAX)
 
 
 func _physics_process(delta: float) -> void:
+	_update_eyes(delta)
 	match state:
 		State.HIDDEN:
 			_update_hidden(delta)
@@ -110,6 +129,31 @@ func _physics_process(delta: float) -> void:
 
 
 # ---------------------------------------------------------------- states
+
+## The eyes carry the creature's character (see creature_eyes.gd). Hidden, it
+## peeks out at you now and then; once found, it keeps an eye on you as it
+## runs, and winks while it waits to be caught.
+func _update_eyes(delta: float) -> void:
+	match state:
+		State.HIDDEN:
+			_peek_next -= delta
+			if _peek_next <= 0.0:
+				_peek_next = randf_range(PEEK_GAP_MIN, PEEK_GAP_MAX)
+				_peek_left = PEEK_SECONDS
+			_peek_left = maxf(_peek_left - delta, 0.0)
+			_eyes.look_target = _player_eye() if _peek_left > 0.0 else Vector3.ZERO
+		State.FLEEING, State.SEEKING:
+			_eyes.look_target = _player_eye()
+		State.COWERING:
+			_eyes.look_target = _player_eye()
+			_wink_next -= delta
+			if _wink_next <= 0.0:
+				_wink_next = randf_range(WINK_GAP_MIN, WINK_GAP_MAX)
+				_eyes.wink()
+		State.CAPTURED:
+			_eyes.look_target = Vector3.ZERO
+	_eyes.step(delta)
+
 
 func _update_hidden(delta: float) -> void:
 	_check_left -= delta
@@ -204,7 +248,9 @@ func _reveal() -> void:
 	_flee_dir = _away_from_player()
 	velocity = _flee_dir * Game.tune.flee_speed + Vector3.UP * Game.tune.pop_speed
 	_bump_covers_out_of_the_way()
+	_slip_out_of_lifted_covers()
 	squeak(1.25)
+	_eyes.show_mood(CreatureEyes.Mood.WIDE, STARTLED_SECONDS, CreatureEyes.Mood.SQUINT, CHEEKY_SECONDS)
 
 
 ## If the creature bolts while still under something (a crate it was startled in
@@ -223,6 +269,21 @@ func _bump_covers_out_of_the_way() -> void:
 			# apply_impulse's second argument is where on the body to push,
 			# relative to its centre; pushing off-centre also makes it tip.
 			prop.apply_impulse(shove, _flee_dir * 0.2)
+
+
+## A cover being lifted by the beam (an upturned crate, say) would otherwise
+## scoop the creature up inside it as it pops. It passes through such covers
+## for a moment while it escapes.
+func _slip_out_of_lifted_covers() -> void:
+	for prop: Prop in _covers:
+		if not is_instance_valid(prop) or not prop.is_held:
+			continue
+		add_collision_exception_with(prop)
+		# A timer that runs on physics ticks; when it's done, collide again.
+		get_tree().create_timer(ESCAPE_SECONDS, false, true).timeout.connect(
+			func() -> void:
+				if is_instance_valid(prop) and is_inside_tree():
+					remove_collision_exception_with(prop))
 
 
 func _start_seeking() -> void:
@@ -248,6 +309,7 @@ func capture(toward: Vector3) -> void:
 	if state == State.CAPTURED:
 		return
 	state = State.CAPTURED
+	_eyes.show_mood(CreatureEyes.Mood.HAPPY, 0.0)  # and it stays happy
 	_set_catchable(false)
 	collision_layer = 0
 	collision_mask = 0
@@ -281,6 +343,7 @@ func _finish_capture() -> void:
 ## A hidden creature gives itself away: always a squeak, plus one visible clue.
 func _give_tell() -> void:
 	squeak(1.0)
+	_eyes.glint()
 	match randi() % 3:
 		0:
 			var cover: Prop = _nearest_cover()
@@ -300,6 +363,7 @@ func answer_ping() -> void:
 		return
 	squeak(1.1)
 	flash()
+	_eyes.glint()
 
 
 func squeak(pitch: float) -> void:

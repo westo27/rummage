@@ -131,6 +131,14 @@ func _run() -> void:
 	await _wait(0.5)
 	_check("timer stops after winning", _label("TimerLabel") == t1, "%s -> %s" % [t1, _label("TimerLabel")])
 
+	# --- The marble bag: one ball per catch, all still inside once settled ---
+	# Batches of catches queue up and drop one at a time, so give the last of
+	# them time to fall and stop rolling.
+	await _wait(6.0)
+	_check("one ball in the bag per catch", _hud._bag.marble_count() == 25,
+		"%d balls" % _hud._bag.marble_count())
+	_check("every ball stays inside the bag", _hud._bag.all_inside(), "")
+
 	# --- R restarts everything ---
 	_press("restart")
 	await _wait(0.5)
@@ -139,6 +147,8 @@ func _run() -> void:
 	_check("R reloads a fresh game", _label("CaughtLabel") == "Caught: 0 / 25" and not (_main.get_node("HUD/WinPanel") as Control).visible,
 		"'%s'" % _label("CaughtLabel"))
 	_check("lift is reset after restart", is_equal_approx(_beam.lift_limit, 10.0), "%.0f" % _beam.lift_limit)
+	_check("the bag is empty after restart", _hud._bag.marble_count() == 0,
+		"%d balls" % _hud._bag.marble_count())
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

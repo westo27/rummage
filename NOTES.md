@@ -32,6 +32,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
 ├─ HUD                  scenes/hud.tscn (scripts/hud.gd, scripts/crosshair.gd)
+│  └─ MarbleBag         built by hud.gd (scripts/marble_bag.gd, scripts/bag_marble.gd)
 └─ PauseMenu            scenes/pause_menu.tscn (scripts/pause_menu.gd)
 ```
 
@@ -73,6 +74,16 @@ a root node and a script.
   do nothing. Esc still backs out of menus.
 - `scripts/glossy_card.gd` is the same finish as a container, used for the
   win screen's card.
+- **The marble bag** (`scripts/marble_bag.gd`, `scripts/bag_marble.gd`) sits
+  in the HUD's bottom-right corner. Each catch drops a ball in that
+  creature's colour, with eyes, into a drawstring bag where it rolls and
+  piles up. It's a SubViewport with its own 2D physics world, so the balls
+  can't touch the 3D game. One function, `_outline()`, gives the bag's shape
+  for both drawing and the walls the balls hit, so the two always match.
+  Catches made close together queue up and drop 0.16 s apart. The neck
+  loosens while balls go in, and the bag squashes a little when each lands.
+  To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`
+  (21): all 25 currently fill a little over half of it.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu. Each setting is a −/+ stepper rather than a slider, so
   every control is the same panel and nothing needs dragging.
@@ -86,8 +97,8 @@ a root node and a script.
   Display), which the window scales to fit, so the numbers in the UI scripts
   are about twice what they look on a 1080p screen.
 
-`tests/shoot.tscn` renders the title, settings, game and pause screens to PNGs
-in `user://shots` so they can be checked without playing. It needs a real
+`tests/shoot.tscn` renders the title, settings, game, pause and win screens,
+plus close-ups of the marble bag part-full and full, to PNGs in `user://shots` so they can be checked without playing. It needs a real
 window, so run it without `--headless`:
 
 ```
@@ -164,7 +175,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage1 | movement speeds, walls, doorway, gravity 14, fall reset |
 | check_stage2 | settling, grab, hold, throw speeds, walls stop held objects, swing-fling, beam arc, too-heavy latch |
 | check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority, gate sums |
-| check_stage4 | ping range and cooldown, both gates, wardrobe off the doorway, side room, win, timer, restart |
+| check_stage4 | ping range and cooldown, both gates, wardrobe off the doorway, side room, win, timer, marble bag (one ball per catch, none escape), restart |
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |

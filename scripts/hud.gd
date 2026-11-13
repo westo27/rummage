@@ -22,6 +22,9 @@ var _toast_left: float = 0.0
 ## The win screen, built in code by _build_win_screen: a dimmed backdrop with a
 ## glossy card holding the heading, the time and two pills. Named WinPanel and
 ## WinLabel so tests can find them.
+## The drawstring bag in the bottom-right corner that caught creatures drop
+## into. See marble_bag.gd.
+var _bag: MarbleBag
 var _win_panel: Control
 var _win_heading: Label
 var _win_label: Label
@@ -57,7 +60,29 @@ func _ready() -> void:
 	_toast_label.add_theme_font_size_override("font_size", TOAST_FONT_SIZE)
 	_toast_label.add_theme_color_override("font_color", UiStyle.AMBER)
 	_toast_label.add_theme_constant_override("outline_size", 12)
+	_build_bag()
+	# Built after the bag, so the win screen's dimming covers it.
 	_build_win_screen()
+
+
+func _build_bag() -> void:
+	_bag = MarbleBag.new()
+	_bag.name = "MarbleBag"
+	# Pinned to the bottom-right corner at its natural size.
+	_bag.anchor_left = 1.0
+	_bag.anchor_top = 1.0
+	_bag.anchor_right = 1.0
+	_bag.anchor_bottom = 1.0
+	_bag.offset_left = -MarbleBag.VIEW_SIZE.x - 40.0
+	_bag.offset_top = -MarbleBag.VIEW_SIZE.y - 16.0
+	_bag.offset_right = -40.0
+	_bag.offset_bottom = -16.0
+	add_child(_bag)
+
+
+## Drops a ball of this colour into the bag. Called by main.gd on each catch.
+func add_to_bag(color: Color) -> void:
+	_bag.drop(color)
 
 
 func _build_win_screen() -> void:

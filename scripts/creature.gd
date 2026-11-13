@@ -62,6 +62,9 @@ var _seek_target: Prop = null
 ## Which way to go round an obstacle that's dead ahead (+1 or -1).
 var _detour_sign: float = 1.0
 var _base_pitch: float = 1.0
+## Picked at random when the creature spawns. The HUD's marble bag uses it so
+## the ball that drops in is the same colour as the creature you caught.
+var body_color: Color = Color.WHITE
 
 @onready var _visual: Node3D = $Visual
 @onready var _pick_zone: Area3D = $PickZone
@@ -465,6 +468,7 @@ func _set_catchable(on: bool) -> void:
 func _apply_random_color() -> void:
 	var body := $Visual/Body as MeshInstance3D
 	var color: Color = BODY_COLORS.pick_random()
+	body_color = color
 	# duplicate() so each creature gets its own colour instead of sharing one material.
 	var mat := body.material_override.duplicate() as StandardMaterial3D
 	mat.albedo_color = color

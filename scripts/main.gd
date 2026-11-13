@@ -56,8 +56,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().reload_current_scene()
 
 
-func _on_creature_captured(_creature: Creature) -> void:
+func _on_creature_captured(creature: Creature) -> void:
 	_caught += 1
+	_hud.add_to_bag(creature.body_color)
 	_beam.add_lift(Game.tune.lift_per_capture)
 	_hud.set_caught(_caught, _total_creatures)
 	_announce_unlocked_props()

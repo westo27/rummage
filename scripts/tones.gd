@@ -20,6 +20,12 @@ static func capture() -> AudioStreamWAV:
 	return chirp(500.0, 1900.0, 0.2)
 
 
+## Marbles knocking together in the HUD bag: very short and high, so it reads
+## as glass or stone rather than a voice.
+static func clack() -> AudioStreamWAV:
+	return chirp(2900.0, 2200.0, 0.03)
+
+
 ## Menu sounds. Soft and short: a single high blip when the pointer lands on a
 ## panel, a rising pair when you choose one, a falling pair when you back out.
 static func ui_hover() -> AudioStreamWAV:

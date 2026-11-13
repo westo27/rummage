@@ -1,29 +1,171 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+[ext_resource type="Script" path="res://scripts/wardrobe.gd" id="1_wardrobe"]
+[ext_resource type="Script" path="res://scripts/prop.gd" id="2_prop"]
 
-[sub_resource type="StandardMaterial3D" id="Mat"]
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
 albedo_color = Color(0.7, 0.46, 0.26, 1)
 
-[sub_resource type="BoxMesh" id="Mesh_0"]
-size = Vector3(0.6, 2.1, 1.8)
+[sub_resource type="StandardMaterial3D" id="Mat_door"]
+albedo_color = Color(0.78, 0.53, 0.31, 1)
 
-[sub_resource type="BoxShape3D" id="Shape_0"]
-size = Vector3(0.6, 2.1, 1.8)
+[sub_resource type="StandardMaterial3D" id="Mat_inner"]
+albedo_color = Color(0.55, 0.36, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Back"]
+size = Vector3(0.03, 2.1, 1.8)
+
+[sub_resource type="BoxShape3D" id="Shape_Back"]
+size = Vector3(0.03, 2.1, 1.8)
+
+[sub_resource type="BoxMesh" id="Mesh_SideA"]
+size = Vector3(0.6, 2.1, 0.03)
+
+[sub_resource type="BoxShape3D" id="Shape_SideA"]
+size = Vector3(0.6, 2.1, 0.03)
+
+[sub_resource type="BoxMesh" id="Mesh_SideB"]
+size = Vector3(0.6, 2.1, 0.03)
+
+[sub_resource type="BoxShape3D" id="Shape_SideB"]
+size = Vector3(0.6, 2.1, 0.03)
+
+[sub_resource type="BoxMesh" id="Mesh_Top"]
+size = Vector3(0.6, 0.03, 1.8)
+
+[sub_resource type="BoxShape3D" id="Shape_Top"]
+size = Vector3(0.6, 0.03, 1.8)
+
+[sub_resource type="BoxMesh" id="Mesh_Bottom"]
+size = Vector3(0.6, 0.03, 1.8)
+
+[sub_resource type="BoxShape3D" id="Shape_Bottom"]
+size = Vector3(0.6, 0.03, 1.8)
+
+[sub_resource type="BoxMesh" id="Mesh_HatShelf"]
+size = Vector3(0.57, 0.03, 1.74)
+
+[sub_resource type="BoxShape3D" id="Shape_HatShelf"]
+size = Vector3(0.57, 0.03, 1.74)
+
+[sub_resource type="BoxMesh" id="Mesh_door"]
+size = Vector3(0.03, 2.04, 0.865)
+
+[sub_resource type="BoxShape3D" id="Shape_door"]
+size = Vector3(0.03, 2.04, 0.865)
+
+[sub_resource type="SphereMesh" id="Mesh_knob"]
+radius = 0.025
+height = 0.05
 
 [node name="Wardrobe" type="RigidBody3D"]
 collision_layer = 4
 collision_mask = 7
-mass = 80
-script = ExtResource("1_prop")
+mass = 80.0
+script = ExtResource("1_wardrobe")
 hold_radius = 1.2
 keep_upright_until_grabbed = true
 
-[node name="Mesh0" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-mesh = SubResource("Mesh_0")
-material_override = SubResource("Mat")
+[node name="Back" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.285, 0, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_Back")
 
-[node name="Shape0" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-shape = SubResource("Shape_0")
+[node name="BackShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.285, 0, 0)
+shape = SubResource("Shape_Back")
+
+[node name="SideA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.885)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_SideA")
+
+[node name="SideAShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.885)
+shape = SubResource("Shape_SideA")
+
+[node name="SideB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.885)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_SideB")
+
+[node name="SideBShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.885)
+shape = SubResource("Shape_SideB")
+
+[node name="Top" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.035, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_Top")
+
+[node name="TopShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.035, 0)
+shape = SubResource("Shape_Top")
+
+[node name="Bottom" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.035, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_Bottom")
+
+[node name="BottomShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.035, 0)
+shape = SubResource("Shape_Bottom")
+
+[node name="HatShelf" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0.7, 0)
+material_override = SubResource("Mat_inner")
+mesh = SubResource("Mesh_HatShelf")
+
+[node name="HatShelfShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0.7, 0)
+shape = SubResource("Shape_HatShelf")
+
+[node name="DoorA" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.315, 0, -0.4425)
+collision_layer = 4
+collision_mask = 7
+mass = 3.5
+script = ExtResource("2_prop")
+hold_radius = 0.5
+
+[node name="Panel" type="MeshInstance3D" parent="DoorA"]
+material_override = SubResource("Mat_door")
+mesh = SubResource("Mesh_door")
+
+[node name="PanelShape" type="CollisionShape3D" parent="DoorA"]
+shape = SubResource("Shape_door")
+
+[node name="Knob" type="MeshInstance3D" parent="DoorA"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, 0.05, 0.36)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_knob")
+
+[node name="DoorAHinge" type="HingeJoint3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.315, 0, -0.885)
+node_a = NodePath("..")
+node_b = NodePath("../DoorA")
+
+[node name="DoorB" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.315, 0, 0.4425)
+collision_layer = 4
+collision_mask = 7
+mass = 3.5
+script = ExtResource("2_prop")
+hold_radius = 0.5
+
+[node name="Panel" type="MeshInstance3D" parent="DoorB"]
+material_override = SubResource("Mat_door")
+mesh = SubResource("Mesh_door")
+
+[node name="PanelShape" type="CollisionShape3D" parent="DoorB"]
+shape = SubResource("Shape_door")
+
+[node name="Knob" type="MeshInstance3D" parent="DoorB"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, 0.05, -0.36)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_knob")
+
+[node name="DoorBHinge" type="HingeJoint3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.315, 0, 0.885)
+node_a = NodePath("..")
+node_b = NodePath("../DoorB")

@@ -445,6 +445,16 @@ tell whether any of it is fun or readable. Not verified:
   creatures cornered behind heavy furniture, and a held wardrobe swept through a
   room full of clutter. None of these were tried.
 
+## The wardrobe
+
+A hollow cupboard (`scripts/wardrobe.gd`) with two 3.5 kg doors, each a
+Prop on a `HingeJoint3D` that swings outward up to 110°. Grab a door and
+pull. Two creatures (InWardrobe1/2) hide inside; opening a door reveals
+them. Door damping (`HINGE_DAMP`) stands in for stiff hinges, because a
+hinge motor locks a Jolt hinge solid. The wardrobe is frozen (static) until
+the beam first lifts it, so pulling a door can't drag it off the doorway
+before its gate.
+
 ## How creatures move
 
 They roll like marbles, eyes and all: each tick the ball turns about the

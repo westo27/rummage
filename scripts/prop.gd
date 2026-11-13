@@ -139,6 +139,17 @@ func start_hold(holder: PhysicsBody3D) -> void:
 	holder.add_collision_exception_with(self)
 
 
+## For props with moving parts that are bodies of their own, joined on by a
+## joint (the bedside table's drawer, the wardrobe's doors). A physics body
+## under another would be dragged about by its parent's transform as well as
+## by physics; top_level cuts that tie, keeping the part where it is.
+func _detach_part(part: Node3D) -> void:
+	var placed: Transform3D = part.global_transform
+	part.top_level = true
+	part.global_transform = placed
+	part.reset_physics_interpolation()
+
+
 ## Called by the beam when it lets go (dropped, thrown, or snapped off).
 func end_hold() -> void:
 	is_held = false

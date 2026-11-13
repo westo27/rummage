@@ -62,11 +62,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.092, 1.6)
 [node name="UnderBin04" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 0.092, -2.4)
 
-[node name="UnderBin06" parent="." instance=ExtResource("creature")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 0.092, -3.2)
+[node name="InWardrobe1" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.58, 0.124, -0.45)
 
-[node name="UnderBin07" parent="." instance=ExtResource("creature")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.092, 4.4)
+[node name="InWardrobe2" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.58, 0.124, 0.45)
 
 [node name="UnderBin09" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.092, 0.9)

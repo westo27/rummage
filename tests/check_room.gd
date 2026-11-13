@@ -1,7 +1,7 @@
 extends Node
 ## Headless check for the room's new parts: the window holds things in, the
 ## props are glossy, the bedside lamp stands on its table, and the table's
-## drawer slides out and back by physics. (How the room looks can only be judged in
+## drawer slides out and back by physics, and the wardrobe doors swing open. (How the room looks can only be judged in
 ## tests/shoot.tscn's pictures.) Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_room.tscn
 
@@ -72,6 +72,38 @@ func _run() -> void:
 	await _wait(0.2)
 	_check("the beam can grab the drawer", beam.held == drawer, "held=%s" % beam.held)
 	beam._release()
+
+	# --- Wardrobe doors swing on hinges; the wardrobe itself stays put ---
+	var wardrobe: Node = _main.get_node("MainRoomProps/Wardrobe")
+	var door: Prop = wardrobe.get_node("DoorA")
+	var hidden_inside := _main.get_node("MainRoomCreatures/InWardrobe1") as Creature
+	var wardrobe_at: Vector3 = wardrobe.global_position
+	_check("the wardrobe doors start shut", wardrobe.door_angle("DoorA") < 0.05 and wardrobe.door_angle("DoorB") < 0.05,
+		"%.2f, %.2f rad" % [wardrobe.door_angle("DoorA"), wardrobe.door_angle("DoorB")])
+	_check("a creature hides inside", hidden_inside.state == Creature.State.HIDDEN, "")
+	player.global_position = Vector3(4.4, 0.05, -0.5)
+	player.reset_physics_interpolation()
+	var handle: Vector3 = door.global_position + Vector3(0, 0, 0.3)  # near its free edge
+	var head := player.get_node("Head") as Node3D
+	var look: Vector3 = (handle - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	beam._grab_armed = true
+	beam._grab(door, handle)
+	# Back away, pulling the door's free edge out after you.
+	for i in 30:
+		player.global_position.x -= 0.03
+		await get_tree().physics_frame
+	await _wait(0.5)
+	beam._release()
+	await _wait(0.3)
+	_check("pulling a door swings it open", wardrobe.door_angle("DoorA") > 0.6, "%.2f rad" % wardrobe.door_angle("DoorA"))
+	_check("the other door stays shut", wardrobe.door_angle("DoorB") < 0.1, "%.2f rad" % wardrobe.door_angle("DoorB"))
+	_check("the wardrobe doesn't budge (it guards the doorway)", wardrobe.global_position.distance_to(wardrobe_at) < 0.005,
+		"moved %.3f m" % wardrobe.global_position.distance_to(wardrobe_at))
+	_check("opening the door reveals the creature inside", hidden_inside.state != Creature.State.HIDDEN,
+		"state=%s" % hidden_inside.state)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

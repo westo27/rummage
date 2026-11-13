@@ -24,13 +24,7 @@ const RUNNER_FRICTION: float = 2.5
 
 func _ready() -> void:
 	super()
-	# A physics body under another one would be dragged about by its parent's
-	# transform as well as by physics. top_level cuts that tie, keeping where
-	# it is in the world.
-	var placed: Transform3D = drawer.global_transform
-	drawer.top_level = true
-	drawer.global_transform = placed
-	drawer.reset_physics_interpolation()
+	_detach_part(drawer)
 
 	# The joint's axes are its own (lined up with the table's). Every axis is
 	# locked by default; free the slide along Z, between the stops.

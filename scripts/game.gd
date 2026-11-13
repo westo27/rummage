@@ -12,6 +12,8 @@ var tune: Tunables = preload("res://config/tunables.tres")
 ## The player's own preferences (look sensitivity, volume, invert). Lives here
 ## so it survives scene changes and restarts. See scripts/settings.gd.
 var settings: Settings
+## Plays the knocks when props hit things. See scripts/impact_audio.gd.
+var impacts: ImpactAudio
 
 
 func _ready() -> void:
@@ -23,6 +25,8 @@ func _ready() -> void:
 	settings.apply_audio()
 	# Swap the mouse arrow for the menus' pointing hand. See pointer_cursor.gd.
 	add_child(PointerCursor.new())
+	impacts = ImpactAudio.new()
+	add_child(impacts)
 
 
 ## Controls are defined here in code rather than in Project Settings > Input Map

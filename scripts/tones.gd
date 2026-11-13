@@ -20,6 +20,92 @@ static func capture() -> AudioStreamWAV:
 	return chirp(500.0, 1900.0, 0.2)
 
 
+## What a prop is made of, which decides how it sounds when it hits something.
+## Set per prop scene (Prop.impact_material).
+enum ImpactMaterial { PAPER, WOOD, SOFT, RUBBER, PLASTIC }
+
+## How many slightly different takes of each knock are made, so the same
+## object hitting the floor twice doesn't sound copy-pasted.
+const KNOCK_VARIANTS: int = 3
+
+## The recipe for each material's knock. A knock is a burst of noise (the
+## slap or click of contact) plus a few ringing tones (the body of the object
+## sounding), each fading away at its own rate.
+##   length   seconds of audio
+##   attack   seconds to reach full volume (soft things push in slowly)
+##   noise    [loudness, fade time in s, brightness 0..1]
+##   modes    ringing tones: [frequency Hz, loudness, fade time in s]
+##   drop     how much higher the tones start than they end (rubber's "bonk")
+const KNOCK_RECIPES: Dictionary = {
+	ImpactMaterial.PAPER: {"length": 0.12, "attack": 0.0005, "noise": [0.9, 0.018, 0.55],
+		"modes": [[260.0, 0.35, 0.03], [640.0, 0.15, 0.02]], "drop": 0.0},
+	ImpactMaterial.WOOD: {"length": 0.32, "attack": 0.0005, "noise": [0.45, 0.012, 0.35],
+		"modes": [[180.0, 0.55, 0.11], [420.0, 0.4, 0.07], [810.0, 0.2, 0.04]], "drop": 0.0},
+	ImpactMaterial.SOFT: {"length": 0.26, "attack": 0.006, "noise": [0.5, 0.05, 0.06],
+		"modes": [[95.0, 0.6, 0.07]], "drop": 0.0},
+	ImpactMaterial.RUBBER: {"length": 0.22, "attack": 0.002, "noise": [0.12, 0.01, 0.3],
+		"modes": [[230.0, 0.75, 0.09], [560.0, 0.15, 0.04]], "drop": 0.3},
+	ImpactMaterial.PLASTIC: {"length": 0.16, "attack": 0.0005, "noise": [0.5, 0.015, 0.5],
+		"modes": [[520.0, 0.4, 0.05], [1150.0, 0.3, 0.035], [1900.0, 0.15, 0.02]], "drop": 0.0},
+}
+
+
+## One take of a material's knock. Built once and cached, like the others.
+## Each variant nudges the tones' pitches a little and uses different noise.
+static func knock(material: ImpactMaterial, variant: int) -> AudioStreamWAV:
+	var key: String = "knock-%d-%d" % [material, variant]
+	if _cache.has(key):
+		return _cache[key]
+
+	var recipe: Dictionary = KNOCK_RECIPES[material]
+	# A seeded random generator: the same material and variant always gives
+	# the same sound, so it doesn't change between runs.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = material * 100 + variant
+	var modes: Array = []
+	for mode: Array in recipe["modes"]:
+		modes.append([mode[0] * rng.randf_range(0.94, 1.06), mode[1], mode[2]])
+
+	var length: int = int(recipe["length"] * MIX_RATE)
+	var noise: Array = recipe["noise"]
+	var samples := PackedFloat32Array()
+	samples.resize(length)
+	var phases := PackedFloat32Array()
+	phases.resize(modes.size())
+	var filtered: float = 0.0
+	var peak: float = 0.0
+	for i in length:
+		var t: float = float(i) / MIX_RATE
+		var attack: float = minf(t / recipe["attack"], 1.0)
+		# Noise through a one-pole low-pass filter: brightness 1 lets it all
+		# through (a hiss), near 0 leaves only the low rumble (a thud).
+		filtered += (rng.randf_range(-1.0, 1.0) - filtered) * noise[2]
+		var value: float = filtered * noise[0] * exp(-t / noise[1])
+		var bend: float = 1.0 + recipe["drop"] * exp(-t / 0.03)
+		for m in modes.size():
+			var mode: Array = modes[m]
+			phases[m] += TAU * mode[0] * bend / MIX_RATE
+			value += sin(phases[m]) * mode[1] * exp(-t / mode[2])
+		# Fade the last 10 ms to silence so the end never clicks.
+		var tail: float = clampf((length - i) / (0.01 * MIX_RATE), 0.0, 1.0)
+		value *= attack * tail
+		samples[i] = value
+		peak = maxf(peak, absf(value))
+
+	# Every take peaks at the same level, so loudness is set only at play time.
+	var data := PackedByteArray()
+	data.resize(length * 2)
+	for i in length:
+		data.encode_s16(i * 2, int(samples[i] / peak * 0.85 * 32767.0))
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = MIX_RATE
+	wav.stereo = false
+	wav.data = data
+	_cache[key] = wav
+	return wav
+
+
 ## Marbles knocking together in the HUD bag: very short and high, so it reads
 ## as glass or stone rather than a voice.
 static func clack() -> AudioStreamWAV:

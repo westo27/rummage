@@ -19,6 +19,8 @@ extends RigidBody3D
 ## first lifts it. Used for the sofa and wardrobe, so a lucky throw can't topple
 ## a gated object and skip the gate.
 @export var keep_upright_until_grabbed: bool = false
+## What it's made of, which picks its knock when it hits something.
+@export var impact_material: Tones.ImpactMaterial = Tones.ImpactMaterial.WOOD
 
 ## Collision layer bit values: layer N has value 2^(N-1). See NOTES.md.
 const LAYER_WORLD: int = 1
@@ -28,8 +30,26 @@ const LAYER_CLUTTER: int = 16
 
 const SHUDDER_SECONDS: float = 0.35
 const SHUDDER_AMOUNT: float = 0.035
+## At most one knock per object this often (seconds), so a box rattling on
+## the floor doesn't buzz.
+const KNOCK_COOLDOWN: float = 0.07
+## No knocks for this long after the room loads, while everything settles.
+const QUIET_AFTER_LOAD: float = 1.2
 
 var is_held: bool = false
+
+## How hard the contacts were pushing last physics tick. A knock is a sudden
+## jump above this, so steady pushes (resting on the floor, being dragged
+## along it) make no sound however hard they press.
+var _last_contact_push: float = 0.0
+var _knock_ready_at: float = 0.0
+## A hit is gathered over a few ticks before it's played, because something
+## big lands corner by corner rather than all at once. While gathering:
+## ticks left, the push it was resting with before the hit, and the extra
+## push added up so far.
+var _gather_ticks: int = 0
+var _gather_baseline: float = 0.0
+var _gather_total: float = 0.0
 
 var _meshes: Array[MeshInstance3D] = []
 var _mesh_rest_positions: Array[Vector3] = []
@@ -51,6 +71,10 @@ func _ready() -> void:
 	if keep_upright_until_grabbed:
 		axis_lock_angular_x = true
 		axis_lock_angular_z = true
+	# Contacts are only reported to _integrate_forces with monitoring on.
+	contact_monitor = true
+	max_contacts_reported = 4
+	_knock_ready_at = _now() + QUIET_AFTER_LOAD
 	# _physics_process runs every tick once enabled. Most props sit still, so it
 	# stays off until a shudder or a player-collision check needs it.
 	set_physics_process(false)
@@ -95,6 +119,49 @@ func _physics_process(delta: float) -> void:
 	var waiting_for_player: bool = _ignored_body != null and not is_held
 	if _shudder_left <= 0.0 and not waiting_for_player:
 		set_physics_process(false)
+
+
+## Called by the physics engine during each step, for awake bodies only, with
+## that step's contacts. Used here just to listen for hits.
+##
+## Each contact reports the impulse (push) it gave this tick. Divided by
+## mass, pushes measure how much a hit changed the object's velocity, so a
+## book and a wardrobe are on the same scale.
+##
+## A hit starts when the push jumps sharply above what it was the tick
+## before. From then, the extra push over the next GATHER_TICKS ticks is
+## added up and played as one knock, so a sofa landing leg by leg sounds as
+## hard as it really was.
+const GATHER_TICKS: int = 3
+
+
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	var push: float = 0.0
+	for i in state.get_contact_count():
+		push += state.get_contact_impulse(i).length()
+	var jump: float = (push - _last_contact_push) / mass
+	_last_contact_push = push
+
+	if _gather_ticks > 0:
+		_gather_total += maxf(push - _gather_baseline, 0.0)
+		_gather_ticks -= 1
+		if _gather_ticks == 0:
+			Game.impacts.play(impact_material, state.transform.origin, _gather_total / mass, mass)
+		return
+
+	if jump < Game.tune.impact_min_speed:
+		return
+	var now: float = _now()
+	if now < _knock_ready_at:
+		return
+	_knock_ready_at = now + KNOCK_COOLDOWN
+	_gather_baseline = push - jump * mass  # what it was pushing with before
+	_gather_total = push - _gather_baseline
+	_gather_ticks = GATHER_TICKS - 1
+
+
+func _now() -> float:
+	return Time.get_ticks_msec() / 1000.0
 
 
 func _update_shudder(delta: float) -> void:

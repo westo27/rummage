@@ -1,0 +1,40 @@
+extends Node
+## Tool, not a test: saves each prop's knock as a WAV in user://knocks, at the
+## pitch it plays for that prop's mass, so they can be listened to outside the
+## game. Each file has the three variants one after another.
+## Run: Godot --headless --path . res://tests/render_knocks.tscn
+
+const PROPS: Array = [
+	["01_book", Tones.ImpactMaterial.PAPER, 0.66],
+	["02_small_box", Tones.ImpactMaterial.PAPER, 2.0],
+	["03_ball", Tones.ImpactMaterial.RUBBER, 0.3],
+	["04_bin", Tones.ImpactMaterial.PLASTIC, 2.5],
+	["05_cushion", Tones.ImpactMaterial.SOFT, 0.4],
+	["06_crate", Tones.ImpactMaterial.WOOD, 7.0],
+	["07_table", Tones.ImpactMaterial.WOOD, 6.0],
+	["08_bookcase", Tones.ImpactMaterial.WOOD, 9.0],
+	["09_sofa", Tones.ImpactMaterial.SOFT, 60.0],
+	["10_wardrobe", Tones.ImpactMaterial.WOOD, 115.0],
+]
+
+
+func _ready() -> void:
+	DirAccess.make_dir_recursive_absolute("user://knocks")
+	for entry: Array in PROPS:
+		var pitch: float = clampf(pow(ImpactAudio.REFERENCE_MASS[entry[1]] / entry[2], 0.2), 0.5, 1.6)
+		var data := PackedByteArray()
+		for variant in Tones.KNOCK_VARIANTS:
+			data.append_array(Tones.knock(entry[1], variant).data)
+			# 0.35 s of silence between takes.
+			var gap := PackedByteArray()
+			gap.resize(int(0.35 * Tones.MIX_RATE) * 2)
+			data.append_array(gap)
+		var wav := AudioStreamWAV.new()
+		wav.format = AudioStreamWAV.FORMAT_16_BITS
+		wav.stereo = false
+		# Playing the same samples at a different rate is the pitch change.
+		wav.mix_rate = int(Tones.MIX_RATE * pitch)
+		wav.data = data
+		wav.save_to_wav("user://knocks/%s.wav" % entry[0])
+	print("Saved to %s" % ProjectSettings.globalize_path("user://knocks"))
+	get_tree().quit()

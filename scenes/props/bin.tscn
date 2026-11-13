@@ -30,6 +30,7 @@ mass = 2.5
 continuous_cd = true
 script = ExtResource("1_prop")
 hold_radius = 0.3
+impact_material = 4
 tint_variation = 0.25
 
 [node name="Mesh0" type="MeshInstance3D" parent="."]

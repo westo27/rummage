@@ -96,3 +96,15 @@ extends Resource
 ## Each creature answers after (its distance × this) seconds, so the answers
 ## ripple outward like sonar and nearer ones come first.
 @export var ping_delay_per_metre: float = 0.07
+
+@export_group("Impacts")
+## A hit has to change an object's speed by at least this much (m/s) to make
+## a sound. Below it, things settling, rolling and sliding stay quiet.
+@export var impact_min_speed: float = 0.8
+## A hit this hard (m/s) or harder plays at full loudness. A crate dropped
+## from head height lands at about 7.
+@export var impact_full_speed: float = 7.0
+## Loudness of the hardest knock, in decibels. The creature squeaks play at
+## squeak_volume_db (-4); keeping this well below means a squeak can always
+## be heard through a crash.
+@export var impact_max_db: float = -10.0

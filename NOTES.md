@@ -46,7 +46,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, gate toasts, win, restart
   under a different object just works.
 - `scripts/game.gd` is an autoload called `Game`. It holds the tunables and
   defines the controls.
-- `scripts/tones.gd` builds every sound from sine waves. There are no audio files.
+- `scripts/tones.gd` builds every sound from sine waves and noise. There are no audio files.
 
 ## Menus and settings
 
@@ -135,6 +135,36 @@ object's middle. `held_spin_damping` still applies: it's what makes a
 dangling object settle after a swing or two instead of swinging on. Lower it
 for floppier, more pendulum-like handling.
 
+## Impact sounds
+
+Your choices: real knocks, a sound per material, placed in 3D, and quieter
+than the creature squeaks.
+
+- **Materials.** Each prop scene sets `impact_material` (Prop's export):
+  paper (books, small boxes), wood (crates, bookcase, table, wardrobe; the
+  default), soft (cushions, sofa), rubber (balls), plastic (bins).
+- **The sounds** are recipes in `Tones.KNOCK_RECIPES`: a burst of filtered
+  noise (the slap or click) plus a few ringing tones (the body), each fading
+  at its own rate. There are three slightly different takes of each, so
+  repeated hits don't sound copy-pasted. To change how a material sounds,
+  edit its recipe. `tests/render_knocks.tscn` saves every prop's knock to
+  WAV files in `user://knocks` so you can listen without playing.
+- **Heavier is lower.** Each material is tuned for one mass
+  (`ImpactAudio.REFERENCE_MASS`). Heavier props play it slower and lower, so
+  the cushion's thump becomes the sofa's thud.
+- **Detecting a hit** (`Prop._integrate_forces`): Jolt reports how hard each
+  contact pushed this tick. A hit is a sudden jump in that push, so resting,
+  rolling and being dragged along the floor make no sound. The push over the
+  next three ticks is added up and played as one knock, because big things
+  land leg by leg. Divided by mass, it's on the same scale for a book and a
+  wardrobe.
+- **Where and how loud.** `scripts/impact_audio.gd` (`Game.impacts`) is a pool
+  of 14 3D speakers, so a whole shelf falling is a clatter, not a wall of
+  noise. Loudness tunables are under Impacts: `impact_min_speed` (0.8 m/s:
+  softer hits are silent), `impact_full_speed` (7 m/s: full volume) and
+  `impact_max_db` (-10, kept below the squeaks' -4).
+- Nothing knocks for the first 1.2 s after the room loads, while it settles.
+
 ## Tunables
 
 Everything you're likely to tweak is in **`config/tunables.tres`**. Click it in
@@ -211,6 +241,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels, settings steppers and saving, pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
+| check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 

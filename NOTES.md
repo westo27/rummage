@@ -255,11 +255,13 @@ child up past your bedtime". So it's night.
 - **The main room is a child's bedroom.** The bed under the window took the
   sofa's place and its job (60 kg gate, four creatures underneath), with
   two pillows and a bedside table. The table's lamp is its own 1.2 kg
-  prop (`bedside_lamp.tscn`, a shadowless glow). The table is hollow and
-  its drawer slides open the first time the beam picks it up or throws it,
-  and stays open (`scripts/bedside_table.gd`, via `Prop.thrown()`). Four
-  toy blocks (`toy_block.tscn`, 0.1 kg) ride out with the drawer and get
-  flung out of it; the push is in the `SPILL_*` constants.
+  prop (`bedside_lamp.tscn`, a shadowless glow). The table's drawer is a
+  1 kg prop of its own on a `Generic6DOFJoint3D` (DrawerRunner) that only
+  lets it slide 0.26 m in and out, so it moves by physics: a sudden stop or
+  a forward tip slides it out, the reverse slides it home, and the beam can
+  pull it by its front. Runner friction is a zero-speed joint motor
+  (`RUNNER_FRICTION`, 2.5 N, in `scripts/bedside_table.gd`). Four toy blocks
+  (`toy_block.tscn`, 0.1 kg) sit inside and can fall out.
 
 - **Light** (main.tscn): the pendant lamps are turned down to a warm orange
   glow (their shades block light upward, which is the darker band at the
@@ -402,7 +404,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
-| check_room | a ball thrown hard at the window stays in the room; props are glossy; the bedside lamp stands on its table; picking up the table opens the drawer, the four blocks land on the floor, and it stays open |
+| check_room | a ball thrown hard at the window stays in the room; props are glossy; the bedside lamp stands on its table; the drawer rests shut, slides out when the table stops suddenly and home when shoved back, and can be grabbed |
 | check_lamp | the lamp hangs still; a thrown book swings it and its light; it stays on its cord; it settles; the beam can't grab it |
 | check_beam_sound | silent when idle; the whirr fades in on grabbing, rises and swells when swung, settles, fades out on letting go; crackle only while straining; both loop; quieter than squeaks |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the bed and balls get their materials; the bed thuds lower than a pillow; knocks stay below squeak volume |

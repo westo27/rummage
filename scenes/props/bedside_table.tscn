@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/bedside_table.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/bedside_table.gd" id="1_table"]
+[ext_resource type="Script" path="res://scripts/prop.gd" id="2_prop"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_wood"]
 albedo_color = Color(0.82, 0.58, 0.34, 1)
@@ -59,10 +60,10 @@ size = Vector3(0.39, 0.19, 0.025)
 [sub_resource type="BoxShape3D" id="Shape_DrawerFront"]
 size = Vector3(0.39, 0.19, 0.025)
 
-[sub_resource type="BoxMesh" id="Mesh_DrawerBottom"]
+[sub_resource type="BoxMesh" id="Mesh_DrawerFloor"]
 size = Vector3(0.36, 0.015, 0.34)
 
-[sub_resource type="BoxShape3D" id="Shape_DrawerBottom"]
+[sub_resource type="BoxShape3D" id="Shape_DrawerFloor"]
 size = Vector3(0.36, 0.015, 0.34)
 
 [sub_resource type="BoxMesh" id="Mesh_DrawerSideL"]
@@ -91,7 +92,7 @@ height = 0.044
 collision_layer = 4
 collision_mask = 7
 mass = 8.0
-script = ExtResource("1_script")
+script = ExtResource("1_table")
 hold_radius = 0.4
 
 [node name="Top" type="MeshInstance3D" parent="."]
@@ -157,52 +158,66 @@ mesh = SubResource("Mesh_LowerFront")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1125, 0.1875)
 shape = SubResource("Shape_LowerFront")
 
-[node name="DrawerFront" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0.1875)
+[node name="Drawer" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.105, 0)
+collision_layer = 4
+collision_mask = 7
+mass = 1.0
+continuous_cd = true
+script = ExtResource("2_prop")
+hold_radius = 0.2
+
+[node name="Front" type="MeshInstance3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.1875)
 material_override = SubResource("Mat_front")
 mesh = SubResource("Mesh_DrawerFront")
 
-[node name="DrawerFrontShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0.1875)
+[node name="FrontShape" type="CollisionShape3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.1875)
 shape = SubResource("Shape_DrawerFront")
 
-[node name="DrawerBottom" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0325, 0)
+[node name="Floor" type="MeshInstance3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0725, 0)
 material_override = SubResource("Mat_inner")
-mesh = SubResource("Mesh_DrawerBottom")
+mesh = SubResource("Mesh_DrawerFloor")
 
-[node name="DrawerBottomShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0325, 0)
-shape = SubResource("Shape_DrawerBottom")
+[node name="FloorShape" type="CollisionShape3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0725, 0)
+shape = SubResource("Shape_DrawerFloor")
 
-[node name="DrawerSideL" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1725, 0.105, 0)
+[node name="SideL" type="MeshInstance3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1725, 0, 0)
 material_override = SubResource("Mat_inner")
 mesh = SubResource("Mesh_DrawerSideL")
 
-[node name="DrawerSideLShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1725, 0.105, 0)
+[node name="SideLShape" type="CollisionShape3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1725, 0, 0)
 shape = SubResource("Shape_DrawerSideL")
 
-[node name="DrawerSideR" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1725, 0.105, 0)
+[node name="SideR" type="MeshInstance3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1725, 0, 0)
 material_override = SubResource("Mat_inner")
 mesh = SubResource("Mesh_DrawerSideR")
 
-[node name="DrawerSideRShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1725, 0.105, 0)
+[node name="SideRShape" type="CollisionShape3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1725, 0, 0)
 shape = SubResource("Shape_DrawerSideR")
 
-[node name="DrawerBack" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.105, -0.1625)
+[node name="Back" type="MeshInstance3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.1625)
 material_override = SubResource("Mat_inner")
 mesh = SubResource("Mesh_DrawerBack")
 
-[node name="DrawerBackShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.105, -0.1625)
+[node name="BackShape" type="CollisionShape3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.1625)
 shape = SubResource("Shape_DrawerBack")
 
-[node name="DrawerKnob" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.125, 0.215)
+[node name="Knob" type="MeshInstance3D" parent="Drawer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.215)
 material_override = SubResource("Mat_wood")
 mesh = SubResource("Mesh_knob")
+
+[node name="DrawerRunner" type="Generic6DOFJoint3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.105, 0)
+node_a = NodePath("..")
+node_b = NodePath("../Drawer")

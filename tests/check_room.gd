@@ -1,7 +1,7 @@
 extends Node
 ## Headless check for the room's new parts: the window holds things in, the
 ## props are glossy, the bedside lamp stands on its table, and the table's
-## drawer spills its blocks. (How the room looks can only be judged in
+## drawer slides out and back by physics. (How the room looks can only be judged in
 ## tests/shoot.tscn's pictures.) Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_room.tscn
 
@@ -42,36 +42,33 @@ func _run() -> void:
 		absf(lamp.global_position.y - 0.652) < 0.03 and lamp.global_basis.y.y > 0.99,
 		"y = %.3f, upright %.2f" % [lamp.global_position.y, lamp.global_basis.y.y])
 
-	# --- The bedside table's drawer: opens on pickup, and the blocks spill out ---
-	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
-	var table: Prop = _main.get_node("MainRoomProps/BedsideTable")
-	var drawer := table.get_node("DrawerFront") as Node3D
-	var shut_z: float = drawer.position.z
-	var blocks: Array[Prop] = []
-	for i in 4:
-		blocks.append(_main.get_node("MainRoomProps/DrawerBlock%d" % (i + 1)) as Prop)
+	# --- The bedside table's drawer slides on its runner by physics alone ---
+	var table: Node = _main.get_node("MainRoomProps/BedsideTable")
+	var drawer: Prop = table.drawer
 	var inside: int = 0
-	for block in blocks:
-		if absf(table.to_local(block.global_position).y - 0.07) < 0.03:
+	for i in 4:
+		var block := _main.get_node("MainRoomProps/DrawerBlock%d" % (i + 1)) as Node3D
+		if absf(drawer.to_local(block.global_position).y + 0.035) < 0.03:
 			inside += 1
-	_check("four blocks sit in the shut drawer", inside == 4 and is_equal_approx(drawer.position.z, shut_z),
-		"%d inside" % inside)
+	_check("four blocks sit in the shut drawer", inside == 4, "%d inside" % inside)
+	_check("the drawer rests shut", absf(table.drawer_out()) < 0.005, "%.3f m out" % table.drawer_out())
+	# Shove the table forward along the floor: friction stops it, the drawer
+	# carries on and slides out.
+	table.linear_velocity = Vector3(0, 0, 3.0)
+	await _wait(1.0)
+	_check("stopping the table suddenly slides the drawer out", table.drawer_out() > 0.2,
+		"%.3f m out" % table.drawer_out())
+	_check("but no further than its stop", table.drawer_out() < 0.27, "%.3f m out" % table.drawer_out())
+	table.linear_velocity = Vector3(0, 0, -3.0)
+	await _wait(1.0)
+	_check("a shove the other way slides it home", table.drawer_out() < 0.02, "%.3f m out" % table.drawer_out())
+	# The drawer is a prop of its own: the beam can take hold of it.
+	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
 	beam._grab_armed = true
-	beam._grab(table, table.global_position)
-	await _wait(0.5)
-	_check("picking the table up slides the drawer open", drawer.position.z - shut_z > 0.25,
-		"moved %.3f m" % (drawer.position.z - shut_z))
-	_check("the drawer's collision moves with it",
-		is_equal_approx((table.get_node("DrawerFrontShape") as Node3D).position.z, drawer.position.z), "")
+	beam._grab(drawer, drawer.global_position)
+	await _wait(0.2)
+	_check("the beam can grab the drawer", beam.held == drawer, "held=%s" % beam.held)
 	beam._release()
-	await _wait(2.0)
-	var out: int = 0
-	for block in blocks:
-		var local: Vector3 = table.to_local(block.global_position)
-		if block.global_position.y < 0.15 and not (absf(local.x) < 0.23 and absf(local.z) < 0.5):
-			out += 1
-	_check("the blocks fell out onto the floor", out == 4, "%d of 4 out" % out)
-	_check("the drawer stays open", drawer.position.z - shut_z > 0.25, "")
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

@@ -216,12 +216,13 @@ its light onto the room, and a cosy bloom over everything.
   `MID_LIGHT_ENERGY`, the two colours) and uniforms at the top of the shader
   (`intensity`, pulse speed and spacing in `fragment()`).
 - **Bloom** is on the main scene's WorldEnvironment (select it in main.tscn
-  and look under Glow): soft, wide glow levels, a little bloom haze on
-  everything, and the Screen blend, which lightens rather than burns out.
-  The tone curve is Filmic, so the bright ceiling hotspot rolls off softly
-  instead of clipping to white. Creature glows and the catch sparkles pick
-  up the bloom too. To make it more or less dreamy, change Glow > Intensity
-  (0.8) and Glow > Bloom (0.08).
+  and look under Glow): soft, wide glow levels and the Screen blend, which
+  lightens rather than burns out. Only things brighter than white glow (the
+  beam, the lamp's hotspot, creature glows, sparkles). The tone curve is
+  Filmic at exposure 0.9, so the ceiling hotspot rolls off softly instead of
+  clipping. Your first look was too bright, so it was toned down: Glow >
+  Intensity 0.8 to 0.5, Glow > Bloom (a haze over everything) 0.08 to 0,
+  and the beam, its contact glow and its lights to about two thirds.
 
 ## Tunables
 

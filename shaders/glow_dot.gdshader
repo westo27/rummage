@@ -6,7 +6,7 @@ shader_type spatial;
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled;
 
 uniform vec4 glow_color : source_color = vec4(0.35, 0.85, 1.0, 1.0);
-uniform float intensity = 3.5;
+uniform float intensity = 2.2;
 
 void vertex() {
 	// Turn the quad to face the camera (a billboard): keep its position but

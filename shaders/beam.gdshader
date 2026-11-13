@@ -18,7 +18,7 @@ render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabl
 // when catching.
 uniform vec4 beam_color : source_color = vec4(0.35, 0.85, 1.0, 1.0);
 // Overall brightness. Above 1 feeds the bloom.
-uniform float intensity = 3.0;
+uniform float intensity = 2.0;
 // 0 = calm, 1 = straining (too heavy): faster pulses, more flicker.
 uniform float agitation = 0.0;
 // 1 for the thin crackling filament: core only, no halo, no fade.

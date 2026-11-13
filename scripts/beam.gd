@@ -42,11 +42,11 @@ const STRAIN_COLOR := Color(1.0, 0.22, 0.15)
 ## The lights the beam casts: one where it meets the object, a softer one
 ## halfway along. Range in metres and brightness.
 const END_LIGHT_RANGE: float = 2.6
-const END_LIGHT_ENERGY: float = 1.2
+const END_LIGHT_ENERGY: float = 0.8
 const MID_LIGHT_RANGE: float = 2.2
-const MID_LIGHT_ENERGY: float = 0.7
+const MID_LIGHT_ENERGY: float = 0.45
 ## Size of the glowing dot where the beam meets the object.
-const CONTACT_GLOW_SIZE: float = 0.38
+const CONTACT_GLOW_SIZE: float = 0.28
 
 var lift_limit: float = 0.0
 var held: Prop = null
@@ -427,7 +427,7 @@ func _build_beam_look() -> void:
 	_filament_material = ShaderMaterial.new()
 	_filament_material.shader = beam_shader
 	_filament_material.set_shader_parameter("filament", 1.0)
-	_filament_material.set_shader_parameter("intensity", 2.2)
+	_filament_material.set_shader_parameter("intensity", 1.5)
 	_filament = MeshInstance3D.new()
 	_filament.mesh = ImmediateMesh.new()
 	_filament.material_override = _filament_material

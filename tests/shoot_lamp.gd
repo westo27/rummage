@@ -24,6 +24,15 @@ func _run() -> void:
 	_look(player, head, Vector3(0.0, 2.6, -0.5))
 	await get_tree().create_timer(1.5).timeout
 	_shoot("lamp_still")
+	# The same view at each Graphics > Lighting level.
+	var saved: Settings.Lighting = Game.settings.lighting
+	for level in [Settings.Lighting.HIGH, Settings.Lighting.MEDIUM, Settings.Lighting.LOW]:
+		Game.settings.lighting = level
+		Game.settings.apply_lighting(main)
+		await get_tree().create_timer(0.6).timeout
+		_shoot("lamp_still_%s" % Settings.LIGHTING_NAMES[level].to_lower())
+	Game.settings.lighting = saved
+	Game.settings.apply_lighting(main)
 
 	var book := main.get_node("MainRoomProps/ShelfBook02") as Prop
 	book.global_position = Vector3(-1.4, 2.27, 0.0)

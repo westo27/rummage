@@ -11,6 +11,10 @@ extends Control
 
 signal closed
 
+## The width of a setting row (name, two steppers, value, gaps), so the
+## section headings line up with the rows' left edge.
+const ROW_WIDTH: float = 620.0 + 110.0 + 240.0 + 110.0 + 26.0 * 3
+
 var _value_labels: Dictionary = {}
 
 
@@ -23,7 +27,7 @@ func _ready() -> void:
 	add_child(centre)
 
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 34)
+	column.add_theme_constant_override("separation", 20)
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	centre.add_child(column)
 
@@ -35,9 +39,13 @@ func _ready() -> void:
 	spacer.custom_minimum_size = Vector2(0.0, 20.0)
 	column.add_child(spacer)
 
+	column.add_child(_build_section("Controls"))
 	column.add_child(_build_row("look", "Look sensitivity"))
 	column.add_child(_build_row("invert", "Invert look (Y)"))
+	column.add_child(_build_section("Sound"))
 	column.add_child(_build_row("volume", "Volume"))
+	column.add_child(_build_section("Graphics"))
+	column.add_child(_build_row("lighting", "Lighting"))
 
 	var spacer2 := Control.new()
 	spacer2.custom_minimum_size = Vector2(0.0, 40.0)
@@ -51,6 +59,16 @@ func _ready() -> void:
 	column.add_child(back_row)
 
 	_refresh()
+
+
+## A small heading over a group of rows, lined up with their left edge.
+func _build_section(title: String) -> Control:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var label := UiStyle.label(title, 40, UiStyle.CREAM_SOFT, 700)
+	label.custom_minimum_size = Vector2(ROW_WIDTH, 0.0)
+	row.add_child(label)
+	return row
 
 
 ## One setting: name on the left, then [-] value [+].
@@ -93,6 +111,10 @@ func _adjust(key: String, by: int) -> void:
 			Game.settings.adjust_volume(by)
 		"invert":
 			Game.settings.invert_look = not Game.settings.invert_look
+		"lighting":
+			Game.settings.adjust_lighting(by)
+			# Straight away, so from the pause menu you see the change.
+			Game.settings.apply_lighting(get_tree().current_scene)
 	_refresh()
 
 
@@ -100,6 +122,7 @@ func _refresh() -> void:
 	(_value_labels["look"] as Label).text = str(Game.settings.sensitivity_step)
 	(_value_labels["volume"] as Label).text = "%d%%" % Game.settings.volume_percent
 	(_value_labels["invert"] as Label).text = "On" if Game.settings.invert_look else "Off"
+	(_value_labels["lighting"] as Label).text = Settings.LIGHTING_NAMES[Game.settings.lighting]
 
 
 func _unhandled_input(event: InputEvent) -> void:

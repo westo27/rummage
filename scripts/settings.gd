@@ -18,10 +18,24 @@ const SENSITIVITY_MAX: int = 24
 ## Volume as a percentage, in steps of 5.
 const VOLUME_STEP: int = 5
 
+## Graphics > Lighting: how much GPU time the lamps' shadows get. They're
+## most of the game's GPU cost (see tests/bench_gpu.tscn), so this is the
+## one quality setting.
+##   HIGH    soft shadows that blur more the further they fall (the lamp has
+##           a size), filtered at Ultra, with TAA to smooth their grain
+##   MEDIUM  the same with a smaller lamp and Medium filtering: about a third
+##           cheaper, still soft
+##   LOW     shadows given a plain, even blur instead, no corner shading
+##           (SSAO), FXAA instead of TAA: about a quarter of High's cost
+enum Lighting { LOW, MEDIUM, HIGH }
+const LIGHTING_NAMES: Array[String] = ["Low", "Medium", "High"]
+
 var sensitivity_step: int = 8
 var volume_percent: int = 80
 ## When on, moving the mouse down looks up, as in a flight sim.
 var invert_look: bool = false
+## Medium by default, so the game runs well on most machines out of the box.
+var lighting: Lighting = Lighting.MEDIUM
 
 var _loaded_from_disk: bool = false
 
@@ -47,6 +61,7 @@ func load_from_disk() -> void:
 		SENSITIVITY_MIN, SENSITIVITY_MAX)
 	invert_look = bool(cfg.get_value("look", "invert", invert_look))
 	volume_percent = clampi(int(cfg.get_value("audio", "volume_percent", volume_percent)), 0, 100)
+	lighting = clampi(int(cfg.get_value("graphics", "lighting", lighting)), 0, 2) as Lighting
 	_loaded_from_disk = true
 
 
@@ -55,6 +70,7 @@ func save() -> void:
 	cfg.set_value("look", "sensitivity_step", sensitivity_step)
 	cfg.set_value("look", "invert", invert_look)
 	cfg.set_value("audio", "volume_percent", volume_percent)
+	cfg.set_value("graphics", "lighting", lighting)
 	cfg.save(PATH)
 
 
@@ -78,3 +94,34 @@ func adjust_sensitivity(by: int) -> void:
 func adjust_volume(by: int) -> void:
 	volume_percent = clampi(volume_percent + by * VOLUME_STEP, 0, 100)
 	apply_audio()
+
+
+func adjust_lighting(by: int) -> void:
+	lighting = clampi(lighting + by, 0, 2) as Lighting
+
+
+## Puts the lighting setting into effect. The renderer-wide parts (shadow
+## filtering, anti-aliasing, shadow resolution) apply straight away; the
+## parts that live in a level (its lamps and its WorldEnvironment) apply to
+## `scene` if one is given. main.gd calls this when a level loads, and the
+## settings page calls it when the setting changes.
+func apply_lighting(scene: Node = null) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var low: bool = lighting == Lighting.LOW
+	var high: bool = lighting == Lighting.HIGH
+	RenderingServer.positional_soft_shadow_filter_set_quality(
+		RenderingServer.SHADOW_QUALITY_SOFT_ULTRA if high
+		else RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM)
+	var viewport: Viewport = tree.root
+	viewport.use_taa = not low
+	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if low else Viewport.SCREEN_SPACE_AA_DISABLED
+	viewport.positional_shadow_atlas_size = 8192 if high else 4096
+	if scene == null:
+		return
+	for lamp: PendantLamp in tree.get_nodes_in_group("lamps"):
+		# Light size makes shadows soften with distance; plain blur is the
+		# cheap stand-in on Low.
+		lamp.set_shadow_softness(0.25 if high else 0.12 if not low else 0.0, 6.0 if low else 1.5)
+	var world := scene.get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if world != null:
+		world.environment.ssao_enabled = not low

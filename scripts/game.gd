@@ -23,6 +23,7 @@ func _ready() -> void:
 	settings = Settings.new()
 	settings.load_from_disk()
 	settings.apply_audio()
+	settings.apply_lighting()
 	# Swap the mouse arrow for the menus' pointing hand. See pointer_cursor.gd.
 	add_child(PointerCursor.new())
 	impacts = ImpactAudio.new()

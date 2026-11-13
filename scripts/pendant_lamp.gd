@@ -34,6 +34,8 @@ const SHADE_GLOW_SHARE: float = 0.2
 
 
 func _ready() -> void:
+	# Lets the Graphics > Lighting setting find every lamp (Settings.apply_lighting).
+	add_to_group("lamps")
 	_light.light_energy = light_energy
 	_light.omni_range = light_range
 	_glow.light_energy = light_energy * SHADE_GLOW_SHARE
@@ -69,6 +71,20 @@ func _place_cord() -> void:
 	x_axis = x_axis.normalized()
 	var z_axis: Vector3 = x_axis.cross(y_axis)
 	_cord.global_transform = Transform3D(Basis(x_axis, y_axis * length, z_axis), (top + shade_top) * 0.5)
+
+
+## How soft the lamp's shadows are. `size` is the light's size in metres:
+## bigger makes shadows blur more the further they fall from the shade,
+## which looks best and costs the most. `blur` softens every shadow evenly,
+## which is cheap. Set by Settings.apply_lighting.
+func set_shadow_softness(size: float, blur: float) -> void:
+	_light.light_size = size
+	_light.shadow_blur = blur
+
+
+## The lamp's light, for tests.
+func light() -> OmniLight3D:
+	return _light
 
 
 ## Where the light is right now: for tests.

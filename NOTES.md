@@ -96,13 +96,14 @@ a root node and a script.
   During play the cursor is captured and hidden, so it only shows in menus.
   It's our own hand (cream, amber cuff, no player number), not the Wii's.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
-  and the pause menu. Each setting is a −/+ stepper rather than a slider, so
+  and the pause menu, in three sections: Controls, Sound and Graphics. Each
+  setting is a −/+ stepper rather than a slider, so
   every control is the same panel and nothing needs dragging.
 - `scripts/pause_menu.gd` owns the Esc key: it pauses the tree, frees the
   cursor and hides the HUD. Its node's process mode is Always, so it keeps
   running while everything else is frozen.
 - `scripts/settings.gd` holds what the player chose (look sensitivity, invert
-  Y, volume) in `user://settings.cfg`, reachable as `Game.settings`. The
+  Y, volume, lighting quality) in `user://settings.cfg`, reachable as `Game.settings`. The
   `mouse_sensitivity` tunable is now only the default for a brand-new player.
 - Sizes are in the project's 2560x1440 design space (Project Settings >
   Display), which the window scales to fit, so the numbers in the UI scripts
@@ -272,11 +273,20 @@ child up past your bedtime". So it's night.
   light with no shadows (GlowThroughShade, 20% of the lamp's brightness) is
   the glow through the fabric: without it, whatever the shade blocks gets
   no lamp light and the shadow ends in a hard line on the walls.
-  Three project settings (Rendering) keep those edges clean: positional
-  shadow atlas 8192, soft shadow filter quality Ultra, and TAA (temporal
-  anti-aliasing), which smooths out the grain soft shadows otherwise show.
-  These cost some GPU time; if frame rate suffers on a weaker machine, drop
-  the filter quality first. `tests/shoot_lamp.tscn` renders the ceiling
+  How soft and how costly is the player's choice (below).
+- **Settings > Graphics > Lighting: High / Medium / Low** (`Settings.apply_lighting`).
+  The lamps' soft shadows were about half the GPU's work per frame, so this
+  is the one quality setting. Measured on an RTX 5080 at 1080p with the lamp
+  swinging (`tests/bench_gpu.tscn` re-measures):
+  | Level | GPU per frame | What it does |
+  |---|---|---|
+  | High | 1.8 ms | lamp has a size (0.25) so shadows soften with distance; Ultra filtering; TAA; shadow atlas 8192 |
+  | Medium (default) | 0.9 ms | smaller lamp size (0.12), Medium filtering, TAA, atlas 4096. Looks almost the same as High |
+  | Low | 0.46 ms | no lamp size, a plain even shadow blur, no SSAO, FXAA instead of TAA, atlas 4096 |
+  It applies straight away, including from the pause menu, and is saved
+  with the other settings. New players start on Medium; your own saved
+  settings will also start on Medium, so switch to High if you prefer it.
+  `tests/shoot_lamp.tscn` renders the ceiling
   around the lamp, still and mid-swing, for checking.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.
@@ -358,7 +368,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
-| check_menus | title panels, settings steppers and saving, pause/resume, restart, quit to title |
+| check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |

@@ -14,7 +14,8 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	_saved = [Game.settings.sensitivity_step, Game.settings.volume_percent, Game.settings.invert_look]
+	_saved = [Game.settings.sensitivity_step, Game.settings.volume_percent, Game.settings.invert_look,
+		Game.settings.lighting]
 
 	# --- Title screen ---
 	var title: Control = (load("res://scenes/title.tscn") as PackedScene).instantiate()
@@ -46,8 +47,14 @@ func _run() -> void:
 	var settings_menu: SettingsMenu = _settings_under(title)
 	_check("Settings opens the settings page", settings_menu != null, "")
 	var steppers: Array[MenuPanel] = _panels_under(settings_menu)
-	_check("settings page has 3 rows of steppers plus Back", steppers.size() == 7,
+	_check("settings page has 4 rows of steppers plus Back", steppers.size() == 9,
 		"%d panels" % steppers.size())
+	var section_titles: Array[String] = []
+	for label in settings_menu.find_children("*", "Label", true, false):
+		if (label as Label).text in ["Controls", "Sound", "Graphics"]:
+			section_titles.append((label as Label).text)
+	_check("the page has Controls, Sound and Graphics sections",
+		section_titles == ["Controls", "Sound", "Graphics"], "%s" % [section_titles])
 
 	var before: int = Game.settings.sensitivity_step
 	steppers[1].pressed.emit()  # the "+" of the first row
@@ -74,6 +81,25 @@ func _run() -> void:
 	_check("volume steps down by 5", Game.settings.volume_percent == volume_before - Settings.VOLUME_STEP,
 		"%d -> %d" % [volume_before, Game.settings.volume_percent])
 
+	# --- Graphics > Lighting ---
+	Game.settings.lighting = Settings.Lighting.MEDIUM
+	steppers[7].pressed.emit()  # the "+" of the Lighting row
+	await _wait(0.05)
+	_check("Lighting + goes from Medium to High", Game.settings.lighting == Settings.Lighting.HIGH,
+		"%s" % Settings.LIGHTING_NAMES[Game.settings.lighting])
+	steppers[7].pressed.emit()
+	await _wait(0.05)
+	_check("Lighting stops at High", Game.settings.lighting == Settings.Lighting.HIGH, "")
+	steppers[6].pressed.emit()
+	steppers[6].pressed.emit()
+	steppers[6].pressed.emit()
+	await _wait(0.05)
+	_check("Lighting stops at Low", Game.settings.lighting == Settings.Lighting.LOW, "")
+	_check("the Lighting row shows its level",
+		(settings_menu._value_labels["lighting"] as Label).text == "Low", "")
+	_check("Low switches TAA off and FXAA on",
+		not get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_FXAA, "")
+
 	# Clamping at the ends.
 	for i in 40:
 		Game.settings.adjust_volume(-1)
@@ -86,7 +112,7 @@ func _run() -> void:
 		Game.settings.sensitivity_step == Settings.SENSITIVITY_MAX, "%d" % Game.settings.sensitivity_step)
 
 	# --- Back closes it and writes the file ---
-	steppers[6].pressed.emit()  # Back
+	steppers[8].pressed.emit()  # Back
 	await _wait(0.2)
 	_check("Back closes the settings page", _settings_under(title) == null, "")
 	_check("the title panels come back", _panels_under(title).size() == 3, "")
@@ -96,8 +122,8 @@ func _run() -> void:
 	_check("settings survive a reload from disk",
 		reloaded.sensitivity_step == Game.settings.sensitivity_step \
 		and reloaded.volume_percent == Game.settings.volume_percent \
-		and reloaded.invert_look == Game.settings.invert_look,
-		"%d/%d/%s" % [reloaded.sensitivity_step, reloaded.volume_percent, reloaded.invert_look])
+		and reloaded.invert_look == Game.settings.invert_look 		and reloaded.lighting == Game.settings.lighting,
+		"%d/%d/%s/%d" % [reloaded.sensitivity_step, reloaded.volume_percent, reloaded.invert_look, reloaded.lighting])
 
 	title.queue_free()
 	await _wait(0.2)
@@ -134,6 +160,17 @@ func _run() -> void:
 	_panels_under(pause)[1].pressed.emit()  # Settings
 	await _wait(0.2)
 	_check("the pause menu can open settings", _settings_under(pause) != null, "")
+	# Changing Lighting from the pause menu reaches the lamps straight away.
+	var lamp: PendantLamp = main.get_node("House/LampMain")
+	_check("the level loaded with the saved Lighting (Low): lamp has no size",
+		is_zero_approx(lamp.light().light_size), "%.2f" % lamp.light().light_size)
+	var pause_steppers: Array[MenuPanel] = _panels_under(_settings_under(pause))
+	pause_steppers[7].pressed.emit()  # Lighting +, to Medium
+	await _wait(0.05)
+	_check("Lighting changed in the pause menu applies to the lamps at once",
+		is_equal_approx(lamp.light().light_size, 0.12), "%.2f" % lamp.light().light_size)
+	_check("and to the room's corner shading",
+		(main.get_node("WorldEnvironment") as WorldEnvironment).environment.ssao_enabled, "")
 	_press("ui_cancel")
 	await _wait(0.2)
 	_check("Esc in settings returns to the pause panels",
@@ -160,7 +197,9 @@ func _run() -> void:
 	Game.settings.sensitivity_step = _saved[0]
 	Game.settings.volume_percent = _saved[1]
 	Game.settings.invert_look = _saved[2]
+	Game.settings.lighting = _saved[3]
 	Game.settings.save()
+	Game.settings.apply_lighting()
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

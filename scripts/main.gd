@@ -42,6 +42,8 @@ func _ready() -> void:
 			_locked_props.append(prop)
 
 	_apply_prop_finish()
+	# Graphics > Lighting, for this level's lamps and environment.
+	Game.settings.apply_lighting(self)
 
 
 func _process(delta: float) -> void:

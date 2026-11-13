@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://i1aa07ki5bbi" path="res://scripts/prop.gd" id="1_prop"]
 
 [sub_resource type="StandardMaterial3D" id="Mat"]
-albedo_color = Color(0.45, 0.25, 0.32, 1)
+albedo_color = Color(0.84, 0.24, 0.4, 1)
 
 [sub_resource type="BoxMesh" id="Mesh_0"]
 size = Vector3(2.2, 0.25, 0.9)

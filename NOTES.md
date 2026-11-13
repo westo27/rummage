@@ -224,6 +224,43 @@ its light onto the room, and a cosy bloom over everything.
   Intensity 0.8 to 0.5, Glow > Bloom (a haze over everything) 0.08 to 0,
   and the beam, its contact glow and its lights to about two thirds.
 
+## The room's look: cosy, up past bedtime
+
+Your direction: the bright colours and bloom of mid-2000s console games,
+warm cream and citrus, lamp light, and above all cosy, "as if you're a
+child up past your bedtime". So it's night.
+
+- **Light** (all in main.tscn): the pendant lamps are turned down to a warm
+  orange glow (LightMain, LightSide; their shades block light upward, which
+  is the darker band at the top of the walls). Moonlight is a cool
+  spotlight outside the window (Moonlight), shining down through it; the
+  wall's shadow limits it to the window's shape, so the frame's cross shows
+  on the floor. The rest of the room is lit only by a dim, cool blue fill
+  (the environment's ambient light, 0.2), which is what reads as night. Soft
+  shadowing in corners and under furniture comes from SSAO.
+- **Bloom** catches only things brighter than white: the lamp bulbs and
+  shades, the moon, the creatures (whose glow was raised to 0.8 so they're
+  little lights in the dark), the beam and the sparkles.
+- **Surfaces** are drawn by shaders, in metres in the world:
+  `shaders/wallpaper.gdshader` (cream polka dots, white skirting, plain
+  ceiling), `shaders/plank_floor.gdshader` (oak planks, each a slightly
+  different shade), `shaders/rug.gdshader` (the rounded rug), and
+  `shaders/sky.gdshader` (the night sky panel outside the window: stars that
+  twinkle, a moon, clouds drifting past lit silver near the moon). The side
+  room has a teal carpet.
+- **Props** are warm cream and citrus: raspberry sofa and books, lime
+  cushions and bins, teal crates, orange boxes and balls, honey-wood
+  furniture. Each is one `albedo_color` line in its scene.
+- **Shine, keys 1 / 2 / 3** (temporary, for comparing): glossy toy plastic,
+  satin or matte on every prop (`Main._apply_prop_finish`). Reflection
+  probes in each room let glossy surfaces reflect the room. Once you've
+  picked one, the others and the keys can go.
+- **The window** is a hole cut in the wall with a pane of invisible
+  collision in it, so nothing can be thrown out.
+- **Readability**: a darker room makes props and creatures harder to spot,
+  which changes the hunt. Worth watching in play. The quickest lever is the
+  ambient light energy (0.2) on the WorldEnvironment.
+
 ## Tunables
 
 Everything you're likely to tweak is in **`config/tunables.tres`**. Click it in
@@ -302,6 +339,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
+| check_room | a ball thrown hard at the window stays in the room; keys 1-3 switch the props' shine, with a toast |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.

@@ -3,8 +3,13 @@ extends Node3D
 ## The grab beam: aim, grab, hold, throw, and the lift limit.
 ##
 ## Lives under the camera in player.tscn. It never reparents or teleports the
-## held object: each physics tick it sets the object's velocity towards a hold
-## point in front of the camera, so walls and other objects still stop it.
+## held object. It holds the exact spot you clicked on (the grab point), and
+## each physics tick it gives that spot a push towards a hold point in front of
+## the camera. Because the push is at that spot rather than at the object's
+## centre, the rest of the object turns about it the way it would in a hand:
+## grab the top of the bookcase and pull down and it topples; grab the middle
+## and it lifts level; grab a corner and it hangs from it. Walls and other
+## objects still stop it, because it's only ever pushed, never placed.
 
 ## Signals are Godot's events: the beam announces changes and doesn't care who
 ## listens. main.gd connects these to the HUD. Like dispatching a Laravel event.
@@ -27,8 +32,17 @@ const ARC_HALF_WIDTH: float = 0.012
 var lift_limit: float = 0.0
 var held: Prop = null
 
+## How far in front of the camera the grab point is held.
 var _hold_distance: float = 0.0
+## The grab point, in the held object's own coordinates, so it moves and turns
+## with the object.
+var _grab_local: Vector3 = Vector3.ZERO
 var _aimed: Prop = null
+## Where the crosshair ray hit the aimed prop, in world space.
+var _aimed_point: Vector3 = Vector3.ZERO
+## For a too-heavy object: where on it the red beam is latched, in its own
+## coordinates.
+var _rejected_local: Vector3 = Vector3.ZERO
 var _aimed_creature: Creature = null
 var _capture_sound := AudioStreamPlayer.new()
 ## The grab button only counts if its press reached this script as an event.
@@ -106,9 +120,10 @@ func _physics_process(_delta: float) -> void:
 			_capture(_aimed_creature)
 		elif _grab_armed and _aimed != null:
 			if _aimed.mass <= lift_limit:
-				_grab(_aimed)
+				_grab(_aimed, _aimed_point)
 			else:
 				_rejected = _aimed
+				_rejected_local = _rejected.to_local(_aimed_point)
 				_rejected.shudder()
 
 	_update_aim_state()
@@ -173,30 +188,81 @@ func _find_aimed_prop() -> Prop:
 	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return null
+	_aimed_point = hit.position
 	# `as Prop` gives null if the ray hit a wall rather than a prop.
 	return hit.collider as Prop
 
 
-func _grab(prop: Prop) -> void:
+func _grab(prop: Prop, point: Vector3) -> void:
 	held = prop
 	_rejected = null
-	var distance: float = _camera.global_position.distance_to(prop.global_position)
+	_grab_local = prop.to_local(point)
+	# Hold the grab point where it is now, so nothing jumps when you click.
+	var distance: float = _camera.global_position.distance_to(point)
 	_hold_distance = clampf(distance, _min_hold_distance(prop), Game.tune.beam_reach)
 	prop.start_hold(_player)
 	# A sleeping body ignores velocity changes, so make sure it's awake.
 	prop.sleeping = false
 
 
+## The grab point in world space, where it is right now.
+func grab_point() -> Vector3:
+	return held.global_transform * _grab_local
+
+
 func _drive_held() -> void:
+	var point: Vector3 = grab_point()
 	var target: Vector3 = _camera.global_position + _forward() * _hold_distance
-	var error: Vector3 = target - held.global_position
+	var error: Vector3 = target - point
 	if error.length() > Game.tune.beam_break_distance:
 		_release()
 		_grab_armed = false  # need a fresh click to grab again
 		return
 	var top_speed: float = Game.tune.hold_speed_base / (1.0 + held.mass / Game.tune.hold_speed_mass_scale)
-	held.linear_velocity = (error * Game.tune.hold_stiffness).limit_length(top_speed)
-	held.angular_velocity *= 1.0 - Game.tune.held_spin_damping
+	var wanted: Vector3 = (error * Game.tune.hold_stiffness).limit_length(top_speed)
+	_push_point_to_velocity(point, wanted)
+
+
+## Gives the held object the one push (impulse), applied at `point`, that makes
+## that point move at `wanted` velocity. This is the maths a physics engine uses
+## for a pin joint.
+##
+## A push away from the centre both moves the object and turns it, so how much
+## the point speeds up depends on the object's mass, how hard it is to turn
+## (its inertia) and how far the point is from its centre of mass (r). That
+## relationship is a 3x3 matrix K:  point velocity change = K * impulse.
+## Inverting K gives the impulse for the velocity change we want.
+func _push_point_to_velocity(point: Vector3, wanted: Vector3) -> void:
+	# The direct body state exposes the values the solver itself uses.
+	var state: PhysicsDirectBodyState3D = PhysicsServer3D.body_get_direct_state(held.get_rid())
+	var centre: Vector3 = held.global_position + state.center_of_mass
+	var r: Vector3 = point - centre
+	var current: Vector3 = state.linear_velocity + state.angular_velocity.cross(r)
+	var change: Vector3 = wanted - current
+
+	# K = (1/m)·I − [r]× · I⁻¹ · [r]×, where [r]× is the matrix that does
+	# "cross product with r". Basis is Godot's 3x3 matrix, built from columns.
+	var r_cross := Basis(Vector3(0.0, r.z, -r.y), Vector3(-r.z, 0.0, r.x), Vector3(r.y, -r.x, 0.0))
+	var turn: Basis = r_cross * state.inverse_inertia_tensor * r_cross
+	var inv_mass: float = state.inverse_mass
+	var k := Basis(
+		Vector3(inv_mass, 0.0, 0.0) - turn.x,
+		Vector3(0.0, inv_mass, 0.0) - turn.y,
+		Vector3(0.0, 0.0, inv_mass) - turn.z)
+	var impulse: Vector3 = k.inverse() * change
+
+	# What that push does: it changes the velocity by impulse / mass and the
+	# spin by I⁻¹ · (r × impulse). Applied by setting the velocities directly
+	# rather than through apply_impulse, so the result is exact and in place
+	# before the damping below.
+	var linear: Vector3 = state.linear_velocity + impulse * inv_mass
+	var angular: Vector3 = state.angular_velocity + state.inverse_inertia_tensor * r.cross(impulse)
+	# Then take some spin off, so an object hanging from a corner settles
+	# after a swing or two instead of swinging on. Done after the push so the
+	# push can't put it back. The grab point drifts a hair as a result, which
+	# the next tick corrects.
+	held.linear_velocity = linear
+	held.angular_velocity = angular * (1.0 - Game.tune.held_spin_damping)
 
 
 ## Letting go just stops driving the object; it keeps whatever velocity it had,
@@ -215,8 +281,11 @@ func _throw() -> void:
 	_grab_armed = false
 
 
+## The grab point is on the object's surface, not its middle, so it can come a
+## bit closer than the centre used to; half the object's size keeps a big one
+## from filling the view.
 func _min_hold_distance(prop: Prop) -> float:
-	return Game.tune.min_hold_distance + prop.hold_radius
+	return Game.tune.min_hold_distance + prop.hold_radius * 0.5
 
 
 ## The camera looks down its own -Z axis (a Godot convention).
@@ -252,17 +321,20 @@ func _update_aim_state() -> void:
 
 func _update_beam_mesh() -> void:
 	var end_body: Prop = held
+	var end_local: Vector3 = _grab_local
 	var color := Color(0.35, 0.85, 1.0)
 	if end_body == null and _rejected != null:
 		end_body = _rejected
+		end_local = _rejected_local
 		color = Color(1.0, 0.2, 0.15)
 	if end_body == null:
 		_beam_mesh.visible = false
 		return
 	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
-	# Where the object is *drawn* this frame (see physics interpolation in
-	# player.gd), so the beam stays attached instead of wobbling against it.
-	var end: Vector3 = end_body.get_global_transform_interpolated().origin
+	# The grab point on the object as it's *drawn* this frame (see physics
+	# interpolation in player.gd), so the beam stays attached to the spot you
+	# grabbed instead of wobbling against it.
+	var end: Vector3 = end_body.get_global_transform_interpolated() * end_local
 	# The bend: aim_point is where you're pulling the object to (the hold point,
 	# or for a too-heavy object, the spot on your aim at the object's distance).
 	# The curve is pulled toward a point part-way from the hand to aim_point. When

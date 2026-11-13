@@ -57,9 +57,11 @@ func _run() -> void:
 	# Look up a bit and check it follows to the hold point.
 	_aim_at(crate.global_position + Vector3(0, 1.0, 0))
 	await _wait(0.8)
+	# The spot that was grabbed is what's held at the hold point, not the
+	# crate's centre.
 	var hold_point: Vector3 = _camera_pos() + _forward() * _beam._hold_distance
-	_check("held crate follows hold point", crate.global_position.distance_to(hold_point) < 0.15,
-		"off by %.3f m" % crate.global_position.distance_to(hold_point))
+	_check("held crate's grab point follows the hold point", _beam.grab_point().distance_to(hold_point) < 0.15,
+		"off by %.3f m" % _beam.grab_point().distance_to(hold_point))
 	await get_tree().process_frame
 	var steady_bend: float = _arc_bend()
 	_check("beam arc is nearly straight when object keeps up", steady_bend < 0.06, "bend %.3f m" % steady_bend)

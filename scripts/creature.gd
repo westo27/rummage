@@ -121,7 +121,13 @@ func _update_hidden(delta: float) -> void:
 func _update_fleeing(delta: float) -> void:
 	_state_left -= delta
 	# Turn gradually toward "away from the player", so it curves rather than snaps.
-	_flee_dir = _flat(_flee_dir.lerp(_away_from_player(), 3.0 * delta))
+	var away: Vector3 = _away_from_player()
+	if _flee_dir.dot(away) < -0.9:
+		# Blending between two directions can't turn one that points straight
+		# back the other way: halfway between them is still the same line. A
+		# sideways nudge first gives the turn a side to swing round.
+		_flee_dir = _flat(_flee_dir + away.cross(Vector3.UP))
+	_flee_dir = _flat(_flee_dir.lerp(away, 3.0 * delta))
 	if is_on_wall():
 		# Slide along the wall and push off it a little, so it doesn't stick.
 		var normal: Vector3 = _flat(get_wall_normal())

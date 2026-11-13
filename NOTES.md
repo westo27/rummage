@@ -116,6 +116,25 @@ window, so run it without `--headless`:
 "C:/Program Files/Godot/Godot_v4.7.2-stable_win64.exe" --path . --resolution 1600x900 res://tests/shoot.tscn
 ```
 
+## The grab beam holds the spot you clicked
+
+The beam grabs the exact point under the crosshair (`Beam._grab_local`, kept
+in the object's own coordinates so it moves with it). Each physics tick it
+works out the one push, applied at that point, that moves the point towards
+the hold point in front of the camera. This is the same maths a physics
+engine uses for a pin joint (`_push_point_to_velocity` in beam.gd). The rest
+of the object turns about that point on its own:
+
+- grab the middle of something and it lifts level
+- grab a corner and it hangs tilted from that corner
+- grab the top of the bookcase and pull down, and it topples over
+
+Wheel distance, throwing, the too-heavy latch and the lift limit are
+unchanged. The beam ribbon now ends at the grab point rather than the
+object's middle. `held_spin_damping` still applies: it's what makes a
+dangling object settle after a swing or two instead of swinging on. Lower it
+for floppier, more pendulum-like handling.
+
 ## Tunables
 
 Everything you're likely to tweak is in **`config/tunables.tres`**. Click it in
@@ -191,6 +210,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_smoothness | even movement per frame at 157 fps |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels, settings steppers and saving, pause/resume, restart, quit to title |
+| check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 

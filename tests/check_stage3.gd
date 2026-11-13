@@ -61,7 +61,12 @@ func _run() -> void:
 	_check("grabbing the crate reveals the creature", under.state == Creature.State.FLEEING, "state=%s" % under.state)
 	_check("revealed creature can be aimed at", under._pick_zone.collision_layer == 8, "")
 	_aim_at(Vector3(2.5, 2.0, -1.5))  # lift the crate up out of the way
-	await _wait(0.8)
+	# Watch its "up" while it runs: rolling like a marble tips it right over.
+	var most_tipped: float = 0.0
+	for i in 8:
+		await _wait(0.1)
+		most_tipped = maxf(most_tipped, under._visual.global_basis.y.angle_to(Vector3.UP))
+	_check("a fleeing creature rolls like a marble", most_tipped > 1.0, "tipped up to %.2f rad" % most_tipped)
 	var gap: float = _flat_distance(under.global_position, _player.global_position)
 	_check("fleeing creature runs away from the player", gap > start_gap + 1.0,
 		"distance %.2f -> %.2f m" % [start_gap, gap])
@@ -161,6 +166,26 @@ func _run() -> void:
 		"13 -> %.0f kg, 14 -> %.0f kg" % [start + per * 13, start + per * 14])
 	_check("wardrobe (80 kg) needs 19 of 21 caught", start + per * 18 < 80.0 and start + per * 19 >= 80.0,
 		"18 -> %.0f kg, 19 -> %.0f kg" % [start + per * 18, start + per * 19])
+
+	# --- Cowering: a happy bounce, not a shiver, and it rolls upright to look at you ---
+	var cower: Creature = _creatures.get_node("UnderBin09")
+	_player.global_position = cower.global_position + Vector3(0, 0, 3.0)
+	_player.reset_physics_interpolation()
+	cower._visual.basis = Basis(Vector3.RIGHT, 2.0)  # as if it stopped mid-roll
+	cower._start_cowering()
+	var lowest: float = 1.0
+	var highest: float = -1.0
+	var sideways: float = 0.0
+	for i in 60:
+		await get_tree().physics_frame
+		lowest = minf(lowest, cower._visual.position.y)
+		highest = maxf(highest, cower._visual.position.y)
+		sideways = maxf(sideways, Vector2(cower._visual.position.x, cower._visual.position.z).length())
+	_check("a cowering creature bounces", highest - lowest > 0.02, "%.3f m" % (highest - lowest))
+	_check("and doesn't shiver sideways", sideways < 0.001, "%.4f m" % sideways)
+	_check("it settles upright", cower._visual.global_basis.y.angle_to(Vector3.UP) < 0.1, "")
+	var to_player: Vector3 = (_player.global_position - cower.global_position) * Vector3(1, 0, 1)
+	_check("facing the player", (-cower._visual.global_basis.z).angle_to(to_player) < 0.2, "")
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

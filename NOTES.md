@@ -445,6 +445,15 @@ tell whether any of it is fun or readable. Not verified:
   creatures cornered behind heavy furniture, and a held wardrobe swept through a
   room full of clutter. None of these were tried.
 
+## How creatures move
+
+They roll like marbles, eyes and all: each tick the ball turns about the
+axis sideways to its travel, by distance over its radius (`_move` in
+creature.gd). Once cowering, they roll back upright to look at you and bob
+in a happy bounce instead of the old shiver, which looked sad (Grace's
+playtest). `BOUNCE_*`, `SETTLE_RATE` and `ROLL_RADIUS` are at the top of
+creature.gd.
+
 ## Where creatures hide after fleeing
 
 When a creature stops fleeing it looks at every floor prop within 5 m and

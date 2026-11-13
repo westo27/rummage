@@ -44,6 +44,13 @@ const HIDE_GAP: float = 0.12
 const MASK_SIGHT: int = 1 | 4 | 16
 ## How tall the creature is above its centre, for "can the player see my top?".
 const TOP_OFFSET: float = 0.08
+## The ball's radius, for rolling: it turns one radian per this many metres.
+const ROLL_RADIUS: float = 0.09
+## Cowering creatures bob up and down happily: this high (m), this often (Hz).
+const BOUNCE_HEIGHT: float = 0.035
+const BOUNCE_RATE: float = 1.8
+## How quickly a stopped creature rolls back upright to look at you (per s).
+const SETTLE_RATE: float = 6.0
 const BODY_COLORS: Array[Color] = [
 	Color(0.45, 0.95, 0.4), Color(1.0, 0.55, 0.75), Color(1.0, 0.85, 0.25),
 	Color(0.45, 0.8, 1.0), Color(0.85, 0.55, 1.0), Color(1.0, 0.6, 0.3),
@@ -65,6 +72,9 @@ var _base_pitch: float = 1.0
 ## Picked at random when the creature spawns. The HUD's marble bag uses it so
 ## the ball that drops in is the same colour as the creature you caught.
 var body_color: Color = Color.WHITE
+## Time spent cowering, for the bounce, and a random offset so a group of
+## them doesn't bob in step.
+var _bounce_time: float = 0.0
 
 @onready var _visual: Node3D = $Visual
 @onready var _pick_zone: Area3D = $PickZone
@@ -162,14 +172,22 @@ func _update_seeking(delta: float) -> void:
 
 func _update_cowering(delta: float) -> void:
 	_move(Vector3.ZERO, 0.0, delta)  # just gravity, in case it's on something
-	# Tremble (visual only). Done here in the physics tick rather than per frame
-	# because physics interpolation only expects transforms to change in ticks.
-	_visual.position = Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)) * 0.01
+	# A happy bounce, and roll back upright to look at the player. Done here in
+	# the physics tick rather than per frame because physics interpolation only
+	# expects transforms to change in ticks.
+	_bounce_time += delta
+	_visual.position.y = absf(sin(_bounce_time * BOUNCE_RATE * PI)) * BOUNCE_HEIGHT
+	var player := _player()
+	if player != null:
+		var to_player: Vector3 = _flat(player.global_position - global_position)
+		if to_player.length() > 0.01:
+			# Slerp turns smoothly from one orientation to another.
+			var facing := Basis.looking_at(to_player, Vector3.UP)
+			_visual.basis = _visual.basis.orthonormalized().slerp(facing, minf(SETTLE_RATE * delta, 1.0))
 	_check_left -= delta
 	if _check_left > 0.0:
 		return
 	_check_left = CHECK_INTERVAL
-	var player := _player()
 	var too_close: bool = player != null and \
 		global_position.distance_to(player.global_position) < Game.tune.startle_distance
 	if too_close or _is_disturbed():
@@ -219,6 +237,7 @@ func _start_cowering() -> void:
 	velocity = Vector3.ZERO
 	_record_covers(COVER_RADIUS_COWERING)
 	_check_left = CHECK_INTERVAL
+	_bounce_time = randf() * 2.0
 
 
 ## Called by the beam. The creature is sucked into the beam's hand
@@ -466,10 +485,15 @@ func _move(direction: Vector3, speed: float, delta: float) -> void:
 	velocity.z = direction.z * speed
 	if not is_on_floor():
 		velocity.y -= Game.tune.gravity * delta
+	var before: Vector3 = global_position
 	move_and_slide()
-	if direction.length() > 0.1:
-		# Face where we're running. The eyes are on the Visual's -Z side.
-		_visual.rotation.y = atan2(-direction.x, -direction.z)
+	# Roll like a marble: turn the ball (eyes and all) about the axis that's
+	# sideways to its travel, by the distance covered over its radius.
+	var travelled: Vector3 = global_position - before
+	travelled.y = 0.0
+	if travelled.length() > 0.0005:
+		var axis: Vector3 = Vector3.UP.cross(travelled.normalized())
+		_visual.basis = (Basis(axis, travelled.length() / ROLL_RADIUS) * _visual.basis).orthonormalized()
 
 
 func _away_from_player() -> Vector3:

@@ -41,6 +41,16 @@ func _run() -> void:
 	await _frames(60)
 	_shoot("game")
 
+	# The lamp, swinging after a book is thrown at it.
+	var book := main.get_node("MainRoomProps/ShelfBook02") as Prop
+	book.global_position = Vector3(0.0, 2.27, 1.5)
+	book.linear_velocity = Vector3(1.0, 0.0, -12.0)
+	book.sleeping = false
+	book.reset_physics_interpolation()
+	await get_tree().create_timer(0.45).timeout
+	_shoot("lamp_swing")
+	await get_tree().create_timer(4.0).timeout
+
 	# Fill the bag partway and let the pile settle.
 	var hud := main.get_node("HUD") as Hud
 	for i in 14:
@@ -84,7 +94,8 @@ func _run() -> void:
 	_look(player, head, Vector3(2.3, 1.0, -1.0))
 	await get_tree().create_timer(0.8).timeout
 	_shoot("beam_hold")
-	beam._release()
+	if beam.held != null:
+		beam._release()
 	# Let go of the button first, or the beam grabs whatever it passes over
 	# (a cushion) on the way to the sofa.
 	beam._grab_armed = false

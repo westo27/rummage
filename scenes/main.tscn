@@ -13,6 +13,7 @@
 [ext_resource type="Shader" path="res://shaders/plank_floor.gdshader" id="11_planks"]
 [ext_resource type="Shader" path="res://shaders/rug.gdshader" id="12_rug"]
 [ext_resource type="Shader" path="res://shaders/sky.gdshader" id="13_sky"]
+[ext_resource type="PackedScene" path="res://scenes/pendant_lamp.tscn" id="14_lamp"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -59,22 +60,6 @@ albedo_color = Color(0.85, 0.95, 1, 0.12)
 roughness = 0.05
 metallic_specular = 1.0
 
-[sub_resource type="StandardMaterial3D" id="Mat_shade"]
-cull_mode = 2
-albedo_color = Color(1, 0.86, 0.62, 1)
-emission_enabled = true
-emission = Color(1, 0.62, 0.32, 1)
-emission_energy_multiplier = 0.9
-
-[sub_resource type="StandardMaterial3D" id="Mat_bulb"]
-albedo_color = Color(1, 0.9, 0.7, 1)
-emission_enabled = true
-emission = Color(1, 0.7, 0.42, 1)
-emission_energy_multiplier = 3.0
-
-[sub_resource type="StandardMaterial3D" id="Mat_cord"]
-albedo_color = Color(0.22, 0.19, 0.17, 1)
-
 [sub_resource type="ShaderMaterial" id="Mat_rug"]
 shader = ExtResource("12_rug")
 
@@ -107,21 +92,6 @@ size = Vector2(18, 9)
 
 [sub_resource type="PlaneMesh" id="Mesh_rug"]
 size = Vector2(4.6, 3.2)
-
-[sub_resource type="CylinderMesh" id="Mesh_cord"]
-top_radius = 0.008
-bottom_radius = 0.008
-height = 0.6
-
-[sub_resource type="CylinderMesh" id="Mesh_shade"]
-top_radius = 0.1
-bottom_radius = 0.3
-height = 0.26
-cap_bottom = false
-
-[sub_resource type="SphereMesh" id="Mesh_bulb"]
-radius = 0.06
-height = 0.12
 
 [node name="Main" type="Node3D" unique_id=467943378]
 script = ExtResource("1_main")
@@ -241,44 +211,13 @@ cast_shadow = 0
 mesh = SubResource("Mesh_sky")
 surface_material_override/0 = SubResource("Mat_sky")
 
-[node name="PendantMain" type="Node3D" parent="House"]
+[node name="LampMain" parent="House" instance=ExtResource("14_lamp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 
-[node name="Cord" type="MeshInstance3D" parent="House/PendantMain"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
-cast_shadow = 0
-mesh = SubResource("Mesh_cord")
-surface_material_override/0 = SubResource("Mat_cord")
-
-[node name="Shade" type="MeshInstance3D" parent="House/PendantMain"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.27, 0)
-mesh = SubResource("Mesh_shade")
-surface_material_override/0 = SubResource("Mat_shade")
-
-[node name="Bulb" type="MeshInstance3D" parent="House/PendantMain"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
-cast_shadow = 0
-mesh = SubResource("Mesh_bulb")
-surface_material_override/0 = SubResource("Mat_bulb")
-
-[node name="PendantSide" type="Node3D" parent="House"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 0, 0)
-
-[node name="Cord" type="MeshInstance3D" parent="House/PendantSide"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
-cast_shadow = 0
-mesh = SubResource("Mesh_cord")
-surface_material_override/0 = SubResource("Mat_cord")
-
-[node name="Shade" type="MeshInstance3D" parent="House/PendantSide"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.27, 0)
-mesh = SubResource("Mesh_shade")
-surface_material_override/0 = SubResource("Mat_shade")
-
-[node name="Bulb" type="MeshInstance3D" parent="House/PendantSide"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
-cast_shadow = 0
-mesh = SubResource("Mesh_bulb")
-surface_material_override/0 = SubResource("Mat_bulb")
+[node name="LampSide" parent="House" instance=ExtResource("14_lamp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 3, 0)
+light_energy = 0.8
+light_range = 5.5
 
 [node name="ReflectionsMain" type="ReflectionProbe" parent="House"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
@@ -301,24 +240,6 @@ shadow_blur = 1.5
 spot_range = 12.0
 spot_angle = 22.0
 spot_attenuation = 0.6
-
-[node name="LightMain" type="OmniLight3D" parent="." unique_id=383430837]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.12, 0)
-light_color = Color(1, 0.68, 0.4, 1)
-light_energy = 1.3
-shadow_enabled = true
-shadow_blur = 2.0
-omni_range = 8.0
-omni_attenuation = 1.3
-
-[node name="LightSide" type="OmniLight3D" parent="." unique_id=1277577741]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 2.12, 0)
-light_color = Color(1, 0.68, 0.4, 1)
-light_energy = 0.8
-shadow_enabled = true
-shadow_blur = 2.0
-omni_range = 5.5
-omni_attenuation = 1.3
 
 [node name="Player" parent="." unique_id=936560623 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.5)

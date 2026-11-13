@@ -230,9 +230,9 @@ Your direction: the bright colours and bloom of mid-2000s console games,
 warm cream and citrus, lamp light, and above all cosy, "as if you're a
 child up past your bedtime". So it's night.
 
-- **Light** (all in main.tscn): the pendant lamps are turned down to a warm
-  orange glow (LightMain, LightSide; their shades block light upward, which
-  is the darker band at the top of the walls). Moonlight is a cool
+- **Light** (main.tscn): the pendant lamps are turned down to a warm orange
+  glow (their shades block light upward, which is the darker band at the
+  top of the walls). Moonlight is a cool
   spotlight outside the window (Moonlight), shining down through it; the
   wall's shadow limits it to the window's shape, so the frame's cross shows
   on the floor. The rest of the room is lit only by a dim, cool blue fill
@@ -255,6 +255,16 @@ child up past your bedtime". So it's night.
   plus a glassy clearcoat (`Main._apply_prop_finish`). You picked it over
   satin and matte. Reflection probes in each room let the gloss reflect
   the room.
+- **The lamps swing** (`scenes/pendant_lamp.tscn`, `scripts/pendant_lamp.gd`,
+  one per room as LampMain and LampSide). Each is a 1.5 kg RigidBody3D
+  hanging 0.73 m below its ceiling fixing on a PinJoint3D, which keeps that
+  one point fixed and lets it swing freely. The shade, bulb and light ride
+  on it, so a hit sends the light and its shadows sweeping around the room.
+  The cord is redrawn every frame between the fixing and the shade. It sits
+  on the props layer so thrown and held props hit it, but it isn't a Prop,
+  so the beam can't grab it. Damping (on the Lamp body) settles a big swing
+  in about five seconds; lower it for longer swinging. Each lamp's
+  brightness and reach are exports on the instance.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.
 - **Readability**: a darker room makes props and creatures harder to spot,
@@ -340,6 +350,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
 | check_room | a ball thrown hard at the window stays in the room; props are glossy |
+| check_lamp | the lamp hangs still; a thrown book swings it and its light; it stays on its cord; it settles; the beam can't grab it |
 | check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the sofa and balls get their materials; the sofa thuds lower than a cushion; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.

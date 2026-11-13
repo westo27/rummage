@@ -64,6 +64,9 @@ func _run() -> void:
 	_check("a shove the other way slides it home", table.drawer_out() < 0.02, "%.3f m out" % table.drawer_out())
 	# The drawer is a prop of its own: the beam can take hold of it.
 	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
+	var player := _main.get_node("Player") as Node3D
+	player.global_position = drawer.global_position + Vector3(0.5, -0.3, 1.5)  # within reach
+	player.reset_physics_interpolation()
 	beam._grab_armed = true
 	beam._grab(drawer, drawer.global_position)
 	await _wait(0.2)

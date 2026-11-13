@@ -10,7 +10,7 @@ var _caught: int = 0
 var _total_creatures: int = 0
 var _elapsed: float = 0.0
 var _won: bool = false
-## Props too heavy to lift at the start (the bed and wardrobe). When the lift
+## Props too heavy to lift at the start (crates, tables, bed, wardrobe...). When the lift
 ## limit first reaches one, the HUD announces it, then it's removed from here.
 var _locked_props: Array[Prop] = []
 
@@ -103,8 +103,20 @@ func _end_play() -> void:
 
 
 func _announce_unlocked_props() -> void:
+	# One toast naming every kind of thing that just became liftable, so six
+	# crates unlocking at once read as "crate", not six messages. The kind is
+	# the prop's scene file name: crate.tscn -> "crate".
+	var kinds: Array[String] = []
 	# Loop over a copy, because we remove items from the real list as we go.
 	for prop in _locked_props.duplicate():
 		if prop.mass <= _beam.lift_limit:
 			_locked_props.erase(prop)
-			_hud.show_toast("Your beam can lift the %s now  (%.0f kg)" % [prop.name.to_lower(), prop.mass])
+			var kind: String = prop.scene_file_path.get_file().get_basename().replace("_", " ")
+			if kind.is_empty():
+				kind = prop.name.to_lower()
+			if kind not in kinds:
+				kinds.append(kind)
+	if kinds.is_empty():
+		return
+	var listed: String = kinds[0] if kinds.size() == 1 		else ", ".join(kinds.slice(0, -1)) + " and " + kinds[-1]
+	_hud.show_toast("Your beam can lift the %s now  (%.0f kg)" % [listed, _beam.lift_limit])

@@ -338,12 +338,18 @@ A few visual constants stay as `const` at the top of their scripts, because
 they're look rather than feel: the shudder amount (prop.gd), the beam ribbon
 width (beam.gd), the creature pick radius (`PickZone` in creature.tscn, 0.25 m).
 
-**Lift per catch is 7 kg.** There are 21 creatures in the main room and the
-starting limit is 10 kg, so:
-- the 60 kg **bed** unlocks at **8** catches (66 kg; 7 catches give 59 kg)
-- the 115 kg **wardrobe** unlocks at **15** catches (exactly 115 kg)
+**You start weak: 4 kg, plus 4 kg per catch** (Grace's playtest: work up to
+it). At first only books, balls, bins, pillows and small boxes lift. With 21
+creatures in the main room:
+- crates, the table and the bedside table unlock at **1** catch (8 kg), the
+  bookcase at **2** (12 kg)
+- the 60 kg **bed** unlocks at **14** catches (exactly 60 kg)
+- the 80 kg **wardrobe** (was 115) unlocks at **19** catches (exactly 80 kg)
 
-The HUD announces each one as it unlocks. If you move creatures between rooms or
+The beam reaches **4 m** (was 7), for grabbing and catching, so you have to
+walk up to things.
+
+The HUD announces each kind once as it unlocks (one toast listing them all). If you move creatures between rooms or
 change `lift_per_capture`, redo this sum (`tests/check_stage3.gd` checks it).
 
 ## Collision layers

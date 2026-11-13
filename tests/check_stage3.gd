@@ -19,6 +19,8 @@ func _run() -> void:
 	get_tree().root.add_child(_main)
 	_player = _main.get_node("Player")
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
+	# These checks grab 7 kg crates, heavier than the 4 kg start.
+	_beam.lift_limit = 10.0
 	_props = _main.get_node("MainRoomProps")
 	_creatures = _main.get_node("MainRoomCreatures")
 
@@ -70,6 +72,11 @@ func _run() -> void:
 
 	# --- Capture: track the creature with the crosshair and click ---
 	var lift_before: float = _beam.lift_limit
+	# Walk after it: it has run further than the beam reaches.
+	var toward: Vector3 = (_player.global_position - under.global_position) * Vector3(1, 0, 1)
+	_player.global_position = Vector3(under.global_position.x, 0.05, under.global_position.z) \
+		+ toward.normalized() * 2.0
+	_player.reset_physics_interpolation()
 	for i in 3:
 		_aim_at(under.global_position)
 		await get_tree().physics_frame
@@ -79,7 +86,7 @@ func _run() -> void:
 	await _wait(0.5)
 	_release("grab")
 	_check("clicking catches the creature", not is_instance_valid(under), "")
-	_check("catching raises lift by 7 kg", is_equal_approx(_beam.lift_limit, lift_before + 7.0),
+	_check("catching raises lift by 4 kg", is_equal_approx(_beam.lift_limit, lift_before + 4.0),
 		"%.1f -> %.1f" % [lift_before, _beam.lift_limit])
 	var hud_text: String = (_main.get_node("HUD") as Hud).caught_text()
 	_check("bag tag shows caught count", hud_text == "1 / 25", "'%s'" % hud_text)
@@ -150,10 +157,10 @@ func _run() -> void:
 	# --- Gate arithmetic from the tunables ---
 	var start: float = Game.tune.start_lift_limit
 	var per: float = Game.tune.lift_per_capture
-	_check("bed (60 kg) needs 8 of 21 caught", start + per * 7 < 60.0 and start + per * 8 >= 60.0,
-		"7 -> %.0f kg, 8 -> %.0f kg" % [start + per * 7, start + per * 8])
-	_check("wardrobe (115 kg) needs 15 of 21 caught", start + per * 14 < 115.0 and start + per * 15 >= 115.0,
-		"14 -> %.0f kg, 15 -> %.0f kg" % [start + per * 14, start + per * 15])
+	_check("bed (60 kg) needs 14 of 21 caught", start + per * 13 < 60.0 and start + per * 14 >= 60.0,
+		"13 -> %.0f kg, 14 -> %.0f kg" % [start + per * 13, start + per * 14])
+	_check("wardrobe (80 kg) needs 19 of 21 caught", start + per * 18 < 80.0 and start + per * 19 >= 80.0,
+		"18 -> %.0f kg, 19 -> %.0f kg" % [start + per * 18, start + per * 19])
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

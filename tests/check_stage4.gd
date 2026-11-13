@@ -26,7 +26,7 @@ func _run() -> void:
 	_check("25 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 25, "")
 	_check("4 of them in the side room", _main.get_node("SideRoomCreatures").get_child_count() == 4, "")
 	_check("bag tag shows 0 / 25", _hud.caught_text() == "0 / 25", "'%s'" % _hud.caught_text())
-	_check("HUD shows lift", _label("LiftLabel") == "Lift: 10 kg", "'%s'" % _label("LiftLabel"))
+	_check("HUD shows lift", _label("LiftLabel") == "Lift: 4 kg", "'%s'" % _label("LiftLabel"))
 	_check("timer is counting up", _label("TimerLabel") != "0:00.0", "'%s'" % _label("TimerLabel"))
 	_check("HUD shows ping ready", _label("PingLabel").begins_with("Ping ready"), "'%s'" % _label("PingLabel"))
 
@@ -57,10 +57,10 @@ func _run() -> void:
 
 	var bed: Prop = _main.get_node("MainRoomProps/Bed")
 	var wardrobe: Prop = _main.get_node("MainRoomProps/Wardrobe")
-	await _catch(order.slice(0, 7))
-	_check("after 7 catches the bed is still too heavy", bed.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-	await _catch(order.slice(7, 8))
-	_check("after 8 catches the bed is liftable", bed.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
+	await _catch(order.slice(0, 13))
+	_check("after 13 catches the bed is still too heavy", bed.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
+	await _catch(order.slice(13, 14))
+	_check("after 14 catches the bed is liftable", bed.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
 	_check("HUD announces the bed", _label("ToastLabel").contains("bed"), "'%s'" % _label("ToastLabel"))
 
 	# Actually lift the bed with the beam.
@@ -81,10 +81,10 @@ func _run() -> void:
 			bed_hidden += 1
 	_check("lifting the bed reveals the creatures under it", bed_hidden == 0, "%d still hidden" % bed_hidden)
 
-	await _catch(order.slice(8, 14))
-	_check("after 14 catches the wardrobe is still too heavy", wardrobe.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-	await _catch(order.slice(14, 15))
-	_check("after 15 catches the wardrobe is liftable", wardrobe.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
+	await _catch(order.slice(14, 18))
+	_check("after 18 catches the wardrobe is still too heavy", wardrobe.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
+	await _catch(order.slice(18, 19))
+	_check("after 19 catches the wardrobe is liftable", wardrobe.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
 	_check("HUD announces the wardrobe", _label("ToastLabel").contains("wardrobe"), "'%s'" % _label("ToastLabel"))
 
 	# --- Drag the wardrobe off the doorway, then walk into the side room ---
@@ -149,7 +149,7 @@ func _run() -> void:
 	_bind()
 	_check("R reloads a fresh game", _hud.caught_text() == "0 / 25" and not (_main.get_node("HUD/WinPanel") as Control).visible,
 		"'%s'" % _hud.caught_text())
-	_check("lift is reset after restart", is_equal_approx(_beam.lift_limit, 10.0), "%.0f" % _beam.lift_limit)
+	_check("lift is reset after restart", is_equal_approx(_beam.lift_limit, 4.0), "%.0f" % _beam.lift_limit)
 	_check("the bag is empty after restart", _hud._bag.marble_count() == 0,
 		"%d balls" % _hud._bag.marble_count())
 

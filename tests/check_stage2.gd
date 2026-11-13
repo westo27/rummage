@@ -21,6 +21,8 @@ func _run() -> void:
 	get_tree().root.add_child(_main)
 	_player = _main.get_node("Player")
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
+	# These checks grab 7 kg crates, heavier than the 4 kg start.
+	_beam.lift_limit = 10.0
 	var props: Node = _main.get_node("MainRoomProps")
 
 	# --- Everything settles where it was placed (no exploding stacks) ---

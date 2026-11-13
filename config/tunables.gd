@@ -30,7 +30,7 @@ extends Resource
 
 @export_group("Beam")
 ## How far the beam can reach to grab something, in metres.
-@export var beam_reach: float = 7.0
+@export var beam_reach: float = 4.0
 ## Held object velocity = (distance from hold point) × this. Higher = snappier.
 @export var hold_stiffness: float = 12.0
 ## Held top speed = hold_speed_base / (1 + mass / hold_speed_mass_scale).
@@ -55,11 +55,12 @@ extends Resource
 
 @export_group("Lift")
 ## Heaviest mass (kg) the beam can lift at the start.
-@export var start_lift_limit: float = 10.0
+@export var start_lift_limit: float = 4.0
 ## Added to the lift limit per creature caught. With 21 creatures in the main
-## room and a 10 kg start: the 60 kg bed unlocks at 8 caught (66 kg) and the
-## 115 kg wardrobe at 15 caught (115 kg).
-@export var lift_per_capture: float = 7.0
+## room and a 4 kg start: crates, tables and the bookcase unlock within two
+## catches, the 60 kg bed at 14 caught (60 kg) and the 80 kg wardrobe at 19
+## (80 kg).
+@export var lift_per_capture: float = 4.0
 
 @export_group("Creatures")
 ## Running speed while fleeing, m/s.

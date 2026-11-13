@@ -92,4 +92,3 @@ func _end_play() -> void:
 	$Player.set_process_input(false)
 	_beam.set_process_unhandled_input(false)
 	$PauseMenu.set_process_unhandled_input(false)
-

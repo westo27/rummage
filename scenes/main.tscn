@@ -7,11 +7,11 @@
 [ext_resource type="PackedScene" path="res://scenes/main_room_creatures.tscn" id="5_creatures"]
 [ext_resource type="PackedScene" path="res://scenes/side_room_props.tscn" id="6_side_props"]
 [ext_resource type="PackedScene" path="res://scenes/side_room_creatures.tscn" id="7_side_creatures"]
-[ext_resource type="Script" path="res://scripts/ping.gd" id="8_ping"]
+[ext_resource type="Script" uid="uid://cl0gjjbkxpaeg" path="res://scripts/ping.gd" id="8_ping"]
 [ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="9_pause"]
-[ext_resource type="Shader" path="res://shaders/wallpaper.gdshader" id="10_wallpaper"]
-[ext_resource type="Shader" path="res://shaders/plank_floor.gdshader" id="11_planks"]
-[ext_resource type="Shader" path="res://shaders/sky.gdshader" id="13_sky"]
+[ext_resource type="Shader" uid="uid://uwf75qo7l8ij" path="res://shaders/wallpaper.gdshader" id="10_wallpaper"]
+[ext_resource type="Shader" uid="uid://c6u7v6dlbftmd" path="res://shaders/plank_floor.gdshader" id="11_planks"]
+[ext_resource type="Shader" uid="uid://bw2l7uf24dgmf" path="res://shaders/sky.gdshader" id="13_sky"]
 [ext_resource type="PackedScene" path="res://scenes/pendant_lamp.tscn" id="14_lamp"]
 
 [sub_resource type="Environment" id="Environment_main"]
@@ -21,49 +21,75 @@ ambient_light_source = 2
 ambient_light_color = Color(0.36, 0.41, 0.64, 1)
 ambient_light_energy = 0.2
 tonemap_mode = 2
-tonemap_exposure = 1.0
 ssao_enabled = true
 ssao_radius = 0.9
 ssao_intensity = 1.6
 glow_enabled = true
-glow_levels/1 = 0.0
 glow_levels/2 = 1.0
 glow_levels/3 = 1.0
 glow_levels/4 = 0.7
 glow_levels/5 = 0.45
 glow_intensity = 0.6
-glow_strength = 1.0
-glow_bloom = 0.0
-glow_blend_mode = 1
-glow_hdr_threshold = 1.0
 adjustment_enabled = true
 adjustment_contrast = 1.04
 adjustment_saturation = 1.12
 
 [sub_resource type="ShaderMaterial" id="Mat_wall"]
+render_priority = 0
 shader = ExtResource("10_wallpaper")
+shader_parameter/paper = Color(0.97, 0.92, 0.82, 1)
+shader_parameter/star_color = Color(0.98, 0.76, 0.36, 1)
+shader_parameter/dot_color = Color(0.96, 0.82, 0.66, 1)
+shader_parameter/skirting = Color(0.99, 0.98, 0.95, 1)
+shader_parameter/ceiling = Color(0.99, 0.96, 0.9, 1)
+shader_parameter/star_spacing = 0.3
+shader_parameter/star_radius = 0.055
+shader_parameter/dot_radius = 0.012
+shader_parameter/skirting_height = 0.13
 
 [sub_resource type="ShaderMaterial" id="Mat_floor_main"]
+render_priority = 0
 shader = ExtResource("11_planks")
+shader_parameter/wood_light = Color(0.88, 0.63, 0.38, 1)
+shader_parameter/wood_dark = Color(0.72, 0.47, 0.26, 1)
+shader_parameter/gap_color = Color(0.4, 0.25, 0.14, 1)
+shader_parameter/plank_width = 0.2
+shader_parameter/plank_length = 1.6
 
 [sub_resource type="StandardMaterial3D" id="Mat_floor_side"]
 albedo_color = Color(0.3, 0.64, 0.62, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_frame"]
-albedo_color = Color(0.98, 0.97, 0.94, 1)
-roughness = 0.3
+[sub_resource type="StandardMaterial3D" id="Mat_trap_gap"]
+albedo_color = Color(0.1, 0.06, 0.035, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_glass"]
-transparency = 1
-albedo_color = Color(0.85, 0.95, 1, 0.12)
-roughness = 0.25
-metallic_specular = 0.35
+[sub_resource type="BoxMesh" id="Mesh_trap_gap"]
+size = Vector3(0.94, 0.002, 0.94)
 
-[sub_resource type="ShaderMaterial" id="Mat_sky"]
-shader = ExtResource("13_sky")
+[sub_resource type="StandardMaterial3D" id="Mat_trap_wood"]
+albedo_color = Color(0.56, 0.36, 0.19, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="Mesh_trap_door"]
+size = Vector3(0.88, 0.002, 0.88)
+
+[sub_resource type="StandardMaterial3D" id="Mat_trap_iron"]
+albedo_color = Color(0.22, 0.22, 0.24, 1)
+metallic = 0.6
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="Mesh_trap_strap"]
+size = Vector3(0.88, 0.001, 0.06)
+
+[sub_resource type="TorusMesh" id="Mesh_trap_ring"]
+inner_radius = 0.04
+outer_radius = 0.055
 
 [sub_resource type="BoxMesh" id="Mesh_frame_h"]
 size = Vector3(2.2, 0.06, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_frame"]
+albedo_color = Color(0.98, 0.97, 0.94, 1)
+roughness = 0.3
 
 [sub_resource type="BoxMesh" id="Mesh_frame_v"]
 size = Vector3(0.06, 1.1, 0.12)
@@ -80,36 +106,27 @@ size = Vector3(2.5, 0.05, 0.22)
 [sub_resource type="BoxMesh" id="Mesh_glass"]
 size = Vector3(2.16, 1.06, 0.01)
 
+[sub_resource type="StandardMaterial3D" id="Mat_glass"]
+transparency = 1
+albedo_color = Color(0.85, 0.95, 1, 0.12)
+metallic_specular = 0.35
+roughness = 0.25
+
 [sub_resource type="BoxShape3D" id="Shape_window"]
 size = Vector3(2.2, 1.1, 0.1)
 
 [sub_resource type="QuadMesh" id="Mesh_sky"]
 size = Vector2(18, 9)
 
-[sub_resource type="StandardMaterial3D" id="Mat_trap_gap"]
-albedo_color = Color(0.1, 0.06, 0.035, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_trap_wood"]
-albedo_color = Color(0.56, 0.36, 0.19, 1)
-roughness = 0.7
-
-[sub_resource type="StandardMaterial3D" id="Mat_trap_iron"]
-albedo_color = Color(0.22, 0.22, 0.24, 1)
-metallic = 0.6
-roughness = 0.4
-
-[sub_resource type="BoxMesh" id="Mesh_trap_gap"]
-size = Vector3(0.94, 0.002, 0.94)
-
-[sub_resource type="BoxMesh" id="Mesh_trap_door"]
-size = Vector3(0.88, 0.002, 0.88)
-
-[sub_resource type="BoxMesh" id="Mesh_trap_strap"]
-size = Vector3(0.88, 0.001, 0.06)
-
-[sub_resource type="TorusMesh" id="Mesh_trap_ring"]
-inner_radius = 0.04
-outer_radius = 0.055
+[sub_resource type="ShaderMaterial" id="Mat_sky"]
+render_priority = 0
+shader = ExtResource("13_sky")
+shader_parameter/zenith = Color(0.03, 0.05, 0.16, 1)
+shader_parameter/horizon = Color(0.2, 0.14, 0.32, 1)
+shader_parameter/moon_at = Vector2(0.62, 0.3)
+shader_parameter/moon_radius = 0.035
+shader_parameter/moon_colour = Color(1, 0.96, 0.85, 1)
+shader_parameter/drift = 0.003
 
 [node name="Main" type="Node3D" unique_id=467943378]
 script = ExtResource("1_main")
@@ -151,19 +168,19 @@ operation = 2
 size = Vector3(0.8, 2.2, 1.4)
 material = SubResource("Mat_wall")
 
-[node name="CubbyWest" type="CSGBox3D" parent="House/Walls"]
+[node name="CubbyWest" type="CSGBox3D" parent="House/Walls" unique_id=536241925]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.11, 1.45, 2)
 operation = 2
 size = Vector3(0.26, 0.24, 0.3)
 material = SubResource("Mat_wall")
 
-[node name="CubbySouth" type="CSGBox3D" parent="House/Walls"]
+[node name="CubbySouth" type="CSGBox3D" parent="House/Walls" unique_id=471300178]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.45, 5.11)
 operation = 2
 size = Vector3(0.3, 0.24, 0.26)
 material = SubResource("Mat_wall")
 
-[node name="WindowHole" type="CSGBox3D" parent="House/Walls"]
+[node name="WindowHole" type="CSGBox3D" parent="House/Walls" unique_id=2131496135]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -5.2)
 operation = 2
 size = Vector3(2.2, 1.1, 1)
@@ -183,131 +200,131 @@ collision_mask = 0
 size = Vector3(5.8, 0.3, 5.8)
 material = SubResource("Mat_floor_side")
 
-[node name="Trapdoor" type="Node3D" parent="House"]
+[node name="Trapdoor" type="Node3D" parent="House" unique_id=883748040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0, 1.3)
 
-[node name="Gap" type="MeshInstance3D" parent="House/Trapdoor"]
+[node name="Gap" type="MeshInstance3D" parent="House/Trapdoor" unique_id=1666491799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
 material_override = SubResource("Mat_trap_gap")
 mesh = SubResource("Mesh_trap_gap")
 
-[node name="Door" type="MeshInstance3D" parent="House/Trapdoor"]
+[node name="Door" type="MeshInstance3D" parent="House/Trapdoor" unique_id=1192192190]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
 material_override = SubResource("Mat_trap_wood")
 mesh = SubResource("Mesh_trap_door")
 
-[node name="StrapA" type="MeshInstance3D" parent="House/Trapdoor"]
+[node name="StrapA" type="MeshInstance3D" parent="House/Trapdoor" unique_id=1878819514]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0035, -0.25)
 material_override = SubResource("Mat_trap_iron")
 mesh = SubResource("Mesh_trap_strap")
 
-[node name="StrapB" type="MeshInstance3D" parent="House/Trapdoor"]
+[node name="StrapB" type="MeshInstance3D" parent="House/Trapdoor" unique_id=347654743]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0035, 0.25)
 material_override = SubResource("Mat_trap_iron")
 mesh = SubResource("Mesh_trap_strap")
 
-[node name="Ring" type="MeshInstance3D" parent="House/Trapdoor"]
+[node name="Ring" type="MeshInstance3D" parent="House/Trapdoor" unique_id=71030780]
 transform = Transform3D(1, 0, 0, 0, 0.15, 0, 0, 0, 1, 0, 0.0045, 0.34)
 material_override = SubResource("Mat_trap_iron")
 mesh = SubResource("Mesh_trap_ring")
 
-[node name="Window" type="Node3D" parent="House"]
+[node name="Window" type="Node3D" parent="House" unique_id=1894942518]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -5.2)
 
-[node name="FrameTop" type="MeshInstance3D" parent="House/Window"]
+[node name="FrameTop" type="MeshInstance3D" parent="House/Window" unique_id=1741082039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52, 0)
 mesh = SubResource("Mesh_frame_h")
 surface_material_override/0 = SubResource("Mat_frame")
 
-[node name="FrameBottom" type="MeshInstance3D" parent="House/Window"]
+[node name="FrameBottom" type="MeshInstance3D" parent="House/Window" unique_id=1553210925]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.52, 0)
 mesh = SubResource("Mesh_frame_h")
 surface_material_override/0 = SubResource("Mat_frame")
 
-[node name="FrameLeft" type="MeshInstance3D" parent="House/Window"]
+[node name="FrameLeft" type="MeshInstance3D" parent="House/Window" unique_id=1937097871]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.07, 0, 0)
 mesh = SubResource("Mesh_frame_v")
 surface_material_override/0 = SubResource("Mat_frame")
 
-[node name="FrameRight" type="MeshInstance3D" parent="House/Window"]
+[node name="FrameRight" type="MeshInstance3D" parent="House/Window" unique_id=190302168]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.07, 0, 0)
 mesh = SubResource("Mesh_frame_v")
 surface_material_override/0 = SubResource("Mat_frame")
 
-[node name="Mullion" type="MeshInstance3D" parent="House/Window"]
+[node name="Mullion" type="MeshInstance3D" parent="House/Window" unique_id=422305593]
 mesh = SubResource("Mesh_mullion")
 surface_material_override/0 = SubResource("Mat_frame")
 
-[node name="Transom" type="MeshInstance3D" parent="House/Window"]
+[node name="Transom" type="MeshInstance3D" parent="House/Window" unique_id=379553653]
 mesh = SubResource("Mesh_transom")
 surface_material_override/0 = SubResource("Mat_frame")
 
-[node name="Sill" type="MeshInstance3D" parent="House/Window"]
+[node name="Sill" type="MeshInstance3D" parent="House/Window" unique_id=520231211]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.575, 0.27)
 mesh = SubResource("Mesh_sill")
 surface_material_override/0 = SubResource("Mat_frame")
 
-[node name="Glass" type="MeshInstance3D" parent="House/Window"]
+[node name="Glass" type="MeshInstance3D" parent="House/Window" unique_id=1296082267]
 cast_shadow = 0
 mesh = SubResource("Mesh_glass")
 surface_material_override/0 = SubResource("Mat_glass")
 
-[node name="Pane" type="StaticBody3D" parent="House/Window"]
+[node name="Pane" type="StaticBody3D" parent="House/Window" unique_id=467386279]
 collision_mask = 0
 
-[node name="Shape" type="CollisionShape3D" parent="House/Window/Pane"]
+[node name="Shape" type="CollisionShape3D" parent="House/Window/Pane" unique_id=769186783]
 shape = SubResource("Shape_window")
 
-[node name="Sky" type="MeshInstance3D" parent="House"]
+[node name="Sky" type="MeshInstance3D" parent="House" unique_id=354459404]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -7.5)
 cast_shadow = 0
 mesh = SubResource("Mesh_sky")
 surface_material_override/0 = SubResource("Mat_sky")
 
-[node name="LampMain" parent="House" instance=ExtResource("14_lamp")]
+[node name="LampMain" parent="House" unique_id=752221543 instance=ExtResource("14_lamp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 
-[node name="LampSide" parent="House" instance=ExtResource("14_lamp")]
+[node name="LampSide" parent="House" unique_id=1317748337 instance=ExtResource("14_lamp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 3, 0)
 light_energy = 0.8
 light_range = 5.5
 
-[node name="ReflectionsMain" type="ReflectionProbe" parent="House"]
+[node name="ReflectionsMain" type="ReflectionProbe" parent="House" unique_id=1423689574]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
 size = Vector3(11.9, 2.9, 9.9)
 box_projection = true
 interior = true
 
-[node name="ReflectionsSide" type="ReflectionProbe" parent="House"]
+[node name="ReflectionsSide" type="ReflectionProbe" parent="House" unique_id=813263880]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 1.4, 0)
 size = Vector3(4.9, 2.9, 4.9)
 box_projection = true
 interior = true
 
-[node name="Moonlight" type="SpotLight3D" parent="."]
+[node name="Moonlight" type="SpotLight3D" parent="." unique_id=140432628]
 transform = Transform3D(-1, 0, 0, 0, 0.822, 0.569, 0, 0.569, -0.822, 0.3, 3.6, -7.4)
 light_color = Color(0.58, 0.68, 1, 1)
 light_energy = 4.0
 shadow_enabled = true
 shadow_blur = 1.5
 spot_range = 12.0
-spot_angle = 22.0
 spot_attenuation = 0.6
+spot_angle = 22.0
 
 [node name="Player" parent="." unique_id=936560623 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.5)
 
-[node name="MainRoomProps" parent="." instance=ExtResource("4_props")]
+[node name="MainRoomProps" parent="." unique_id=820907010 instance=ExtResource("4_props")]
 
-[node name="MainRoomCreatures" parent="." instance=ExtResource("5_creatures")]
+[node name="MainRoomCreatures" parent="." unique_id=2125665769 instance=ExtResource("5_creatures")]
 
-[node name="SideRoomProps" parent="." instance=ExtResource("6_side_props")]
+[node name="SideRoomProps" parent="." unique_id=1971294074 instance=ExtResource("6_side_props")]
 
-[node name="SideRoomCreatures" parent="." instance=ExtResource("7_side_creatures")]
+[node name="SideRoomCreatures" parent="." unique_id=778888063 instance=ExtResource("7_side_creatures")]
 
-[node name="Ping" type="Node" parent="."]
+[node name="Ping" type="Node" parent="." unique_id=1748525914]
 script = ExtResource("8_ping")
 
-[node name="HUD" parent="." instance=ExtResource("3_hud")]
+[node name="HUD" parent="." unique_id=1571990731 instance=ExtResource("3_hud")]
 
-[node name="PauseMenu" parent="." instance=ExtResource("9_pause")]
+[node name="PauseMenu" parent="." unique_id=1731907651 instance=ExtResource("9_pause")]

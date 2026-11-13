@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/props/bed.tscn" id="bed"]
 [ext_resource type="PackedScene" path="res://scenes/props/bedside_table.tscn" id="bedside_table"]
 [ext_resource type="PackedScene" path="res://scenes/props/bedside_lamp.tscn" id="bedside_lamp"]
+[ext_resource type="PackedScene" path="res://scenes/props/toy_block.tscn" id="toy_block"]
 [ext_resource type="PackedScene" path="res://scenes/props/wardrobe.tscn" id="wardrobe"]
 [ext_resource type="PackedScene" path="res://scenes/props/bin.tscn" id="bin"]
 
@@ -23,6 +24,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.252, -4.7)
 
 [node name="BedsideLamp" parent="." instance=ExtResource("bedside_lamp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56, 0.654, -4.76)
+
+[node name="DrawerBlock1" parent="." instance=ExtResource("toy_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.58, 0.325, -4.77)
+
+[node name="DrawerBlock2" parent="." instance=ExtResource("toy_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.42, 0.325, -4.77)
+
+[node name="DrawerBlock3" parent="." instance=ExtResource("toy_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.58, 0.325, -4.63)
+
+[node name="DrawerBlock4" parent="." instance=ExtResource("toy_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.42, 0.325, -4.63)
 
 [node name="Wardrobe" parent="." instance=ExtResource("wardrobe")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.68, 1.052, 0)

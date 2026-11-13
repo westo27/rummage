@@ -41,10 +41,11 @@ const AIM_FONT_SIZE: int = 34
 const TOAST_FONT_SIZE: int = 44
 const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
-## Where the marble bag sits from the top-left corner. Negative y tucks the
-## empty space above its neck (where balls appear before dropping) off the
-## top of the screen.
-const BAG_MARGIN := Vector2(20.0, -40.0)
+## Where the marble bag sits from the top-left corner. It starts just below
+## the Lift readout (which stays at the very top left); the empty space above
+## its neck, where balls appear before dropping, overlaps the readout's row
+## but nothing is drawn there until a ball falls past.
+const BAG_MARGIN := Vector2(20.0, 40.0)
 
 
 func _ready() -> void:
@@ -79,10 +80,6 @@ func _build_bag() -> void:
 	_bag.offset_top = BAG_MARGIN.y
 	_bag.offset_right = BAG_MARGIN.x + MarbleBag.VIEW_SIZE.x
 	_bag.offset_bottom = BAG_MARGIN.y + MarbleBag.VIEW_SIZE.y
-	# The lift readout sits just to the right of the bag, level with the top
-	# of the screen.
-	_lift_label.offset_left = _bag.offset_right + 8.0
-	_lift_label.offset_right = _lift_label.offset_left + 600.0
 	add_child(_bag)
 
 

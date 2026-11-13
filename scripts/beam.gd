@@ -22,6 +22,7 @@ enum AimState { IDLE, CAN_GRAB, TOO_HEAVY, HOLDING, CREATURE }
 ## layer 4 = 8. The ray only "sees" bodies on layers included in its mask.
 const MASK_WORLD_AND_PROPS: int = 1 | 4 | 16 | 32  # world, props, clutter, rug
 const MASK_WORLD: int = 1
+const MASK_RUG: int = 32
 const MASK_CREATURES: int = 8
 
 ## Where the beam starts, relative to the camera: just below the bottom edge
@@ -192,7 +193,7 @@ func _physics_process(delta: float) -> void:
 		elif _grab_armed and _aimed_creature != null:
 			_capture(_aimed_creature)
 		elif _grab_armed and _aimed != null:
-			if _aimed.mass <= lift_limit:
+			if _can_lift(_aimed):
 				_grab(_aimed, _aimed_point)
 			else:
 				_rejected = _aimed
@@ -271,12 +272,23 @@ func _find_aimed_prop() -> Prop:
 	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return null
+	if not (hit.collider is Prop or hit.collider is SoftBody3D):
+		# A rug lying flat is level with the floor, so the floor can win the
+		# ray. Look again for the rug alone, and take it if it's right there.
+		query.collision_mask = MASK_RUG
+		var rug_hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+		if not rug_hit.is_empty() and rug_hit.position.distance_to(hit.position) < 0.05:
+			hit = rug_hit
 	_aimed_point = hit.position
+	# Cloth (the rug) isn't a Prop: it hands over its grip, a Prop that holds it.
+	if hit.collider is SoftBody3D and "grip" in hit.collider:
+		return hit.collider.grip
 	# `as Prop` gives null if the ray hit a wall rather than a prop.
 	return hit.collider as Prop
 
 
 func _grab(prop: Prop, point: Vector3) -> void:
+	prop.prepare_grab(point)
 	held = prop
 	_rejected = null
 	_grab_local = prop.to_local(point)
@@ -388,19 +400,31 @@ func _update_aim_state() -> void:
 		detail = "Catch!"
 	elif _rejected != null:
 		state = AimState.TOO_HEAVY
-		detail = "TOO HEAVY  %.0f kg  (lift %.0f kg)" % [_rejected.mass, lift_limit]
+		detail = _refusal(_rejected)
 	elif _aimed != null:
-		if _aimed.mass <= lift_limit:
+		if _can_lift(_aimed):
 			state = AimState.CAN_GRAB
 			detail = "%.1f kg" % _aimed.mass
 		else:
 			state = AimState.TOO_HEAVY
-			detail = "TOO HEAVY  %.0f kg  (lift %.0f kg)" % [_aimed.mass, lift_limit]
+			detail = _refusal(_aimed)
 	# Only announce real changes, so the HUD isn't redrawn 60 times a second.
 	if state != _state or detail != _detail:
 		_state = state
 		_detail = detail
 		aim_changed.emit(state, detail)
+
+
+func _can_lift(prop: Prop) -> bool:
+	return prop.mass <= lift_limit and prop.why_stuck().is_empty()
+
+
+## What the crosshair says when the beam can't lift `prop`.
+func _refusal(prop: Prop) -> String:
+	var stuck: String = prop.why_stuck()
+	if not stuck.is_empty():
+		return stuck
+	return "TOO HEAVY  %.0f kg  (lift %.0f kg)" % [prop.mass, lift_limit]
 
 
 func _update_beam_mesh() -> void:

@@ -1,26 +1,37 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/rug.gd" id="1_rug"]
-[ext_resource type="Shader" path="res://shaders/rug.gdshader" id="2_rug"]
+[ext_resource type="Script" path="res://scripts/rug_grip.gd" id="2_grip"]
+[ext_resource type="Shader" path="res://shaders/rug.gdshader" id="3_rug"]
 
 [sub_resource type="ShaderMaterial" id="Mat_rug"]
-shader = ExtResource("2_rug")
+shader = ExtResource("3_rug")
+shader_parameter/size = Vector2(1.8, 1.8)
+shader_parameter/corner = 0.2
 
 [sub_resource type="PlaneMesh" id="Mesh_rug"]
-size = Vector2(4.6, 3.2)
+size = Vector2(1.8, 1.8)
+subdivide_width = 13
+subdivide_depth = 13
 
-[sub_resource type="BoxShape3D" id="Shape_rug"]
-size = Vector3(4.4, 0.01, 3)
+[sub_resource type="SphereShape3D" id="Shape_grip"]
+radius = 0.08
 
-[node name="Rug" type="RigidBody3D"]
-mass = 2.0
-script = ExtResource("1_rug")
-hold_radius = 1.6
-impact_material = 2
-
-[node name="Mesh" type="MeshInstance3D" parent="."]
+[node name="Rug" type="SoftBody3D"]
+collision_layer = 32
+collision_mask = 1
 material_override = SubResource("Mat_rug")
 mesh = SubResource("Mesh_rug")
+total_mass = 1.0
+simulation_precision = 8
+script = ExtResource("1_rug")
 
-[node name="Shape" type="CollisionShape3D" parent="."]
-shape = SubResource("Shape_rug")
+[node name="Grip" type="RigidBody3D" parent="."]
+mass = 2.0
+script = ExtResource("2_grip")
+hold_radius = 1.2
+impact_material = 2
+frozen_until_grabbed = true
+
+[node name="Shape" type="CollisionShape3D" parent="Grip"]
+shape = SubResource("Shape_grip")

@@ -27,13 +27,14 @@ func _run() -> void:
 
 	# --- Everything settles where it was placed (no exploding stacks) ---
 	var start_positions: Dictionary = {}
-	for p: Prop in props.get_children():
-		start_positions[p] = p.global_position
+	for child in props.get_children():
+		if child is Prop:  # (the rug is cloth, not a Prop)
+			start_positions[child] = child.global_position
 	await _wait(3.0)
 	var worst: float = 0.0
 	var worst_name: String = ""
 	var asleep: int = 0
-	for p: Prop in props.get_children():
+	for p: Prop in start_positions:
 		var moved: float = p.global_position.distance_to(start_positions[p])
 		if moved > worst:
 			worst = moved
@@ -115,6 +116,12 @@ func _run() -> void:
 
 	# --- Swing and release flings a book ---
 	var book: Prop = props.get_node("FloorPileA_5")  # top of pile at (2.0, ~0.2, 1.5)
+	# The table stands just beside this pile; move it clear so the swung book
+	# doesn't clip it and lose speed.
+	var table := props.get_node("Table") as RigidBody3D
+	table.global_position += Vector3(0, 0, 3.0)
+	table.sleeping = false
+	await _wait(0.3)
 	_player.global_position = Vector3(2.0, 0.05, 3.3)
 	_aim_at(book.global_position)
 	await _wait(0.1)

@@ -148,6 +148,18 @@ func start_hold(holder: PhysicsBody3D) -> void:
 	holder.add_collision_exception_with(self)
 
 
+## Why the beam can't lift this right now, whatever its weight, or "" if it
+## can. The rug's grip says so while something heavy stands on the rug.
+func why_stuck() -> String:
+	return ""
+
+
+## Called by the beam just before it grabs this, with the spot it grabs.
+## Does nothing here; the rug's grip uses it to jump to that spot.
+func prepare_grab(_point: Vector3) -> void:
+	pass
+
+
 ## For props with moving parts that are bodies of their own, joined on by a
 ## joint (the bedside table's drawer, the wardrobe's doors). A physics body
 ## under another would be dragged about by its parent's transform as well as

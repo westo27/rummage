@@ -467,12 +467,21 @@ creature has no gravity, so it waits in the hole until revealed.
 
 ## The rug and the trapdoor
 
-The rug is a 2 kg prop (`rug.tscn`, `scripts/rug.gd`) you can drag aside
-from the start. Under it is a closed trapdoor (House/Trapdoor in main.tscn,
-meshes only). It doesn't open yet. The rug sits on its own physics layer
-(6, `rug`) that only meets the floor, so the table and balls on it stay put
-when it moves. The trade-off is that a lifted rug passes through furniture.
-The beam's aim ray includes that layer.
+The rug is cloth: a 1.8 m square `SoftBody3D` (`rug.tscn`, `scripts/rug.gd`)
+under the table, and both sit over a closed trapdoor (House/Trapdoor in
+main.tscn, meshes only; it doesn't open yet).
+- The beam only holds Props, so the rug has an invisible Prop, its Grip
+  (`scripts/rug_grip.gd`). Aiming at the cloth offers the grip; just before
+  the grab (`Prop.prepare_grab`) it jumps to that spot and pins the cloth
+  points within 0.3 m to it. While held, rug.gd moves those points with the
+  grip each tick (`soft_body_move_point`: Jolt ignores pin attachments).
+- It can't be lifted while anything of 5 kg or more stands on it
+  (`PIN_DOWN_MASS`): the crosshair says "SOMETHING'S ON IT" and the beam
+  strains (`Prop.why_stuck`). Move the table off first.
+- A flat rug is level with the floor, so the beam takes the rug when a
+  rug-only ray hits within 5 cm of where the floor was hit.
+- The rug's own physics layer (6) meets only the floor, so things on it stay
+  put and a lifted rug passes through furniture.
 
 ## How creatures move
 

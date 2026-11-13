@@ -1,6 +1,6 @@
 // The rug in the main room: a rounded rectangle with a raspberry border, an
 // orange stripe inside it and a cream middle, with a faint woven texture.
-// It's drawn on a flat plane (a prop now: scenes/props/rug.tscn); anything outside the rounded shape is cut away.
+// It's drawn on a flat plane (the cloth in scenes/props/rug.tscn); anything outside the rounded shape is cut away.
 shader_type spatial;
 // Drawn on both sides, so it still shows when lifted and tipped over.
 render_mode cull_disabled;
@@ -11,6 +11,12 @@ uniform vec3 stripe : source_color = vec3(0.98, 0.58, 0.16);
 // Must match the plane's size in metres.
 uniform vec2 size = vec2(4.6, 3.2);
 uniform float corner = 0.4;
+
+void vertex() {
+	// Drawn a few millimetres above where the cloth lies, so it covers the
+	// trapdoor drawn on the floor beneath it.
+	VERTEX.y += 0.008;
+}
 
 void fragment() {
 	vec2 p = (UV - 0.5) * size;  // metres from the rug's centre

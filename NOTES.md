@@ -268,7 +268,10 @@ child up past your bedtime". So it's night.
 - **Lamp shadows.** The shade is open at the top as well as the bottom, like
   a real one, so a soft circle of light sits on the ceiling above it, and a
   tilted shade throws a wedge of light up one side. The light has a size
-  (`light_size` 0.08, about a bulb), so its shadows soften with distance.
+  (`light_size` 0.25), so its shadows soften with distance. A second, weak
+  light with no shadows (GlowThroughShade, 20% of the lamp's brightness) is
+  the glow through the fabric: without it, whatever the shade blocks gets
+  no lamp light and the shadow ends in a hard line on the walls.
   Three project settings (Rendering) keep those edges clean: positional
   shadow atlas 8192, soft shadow filter quality Ultra, and TAA (temporal
   anti-aliasing), which smooths out the grain soft shadows otherwise show.

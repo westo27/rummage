@@ -22,12 +22,22 @@ const MASK_WORLD_PROPS_CLUTTER: int = 1 | 4 | 16
 
 @onready var _lamp: RigidBody3D = $Lamp
 @onready var _light: OmniLight3D = $Lamp/Light
+## A weaker light with no shadows: the glow that comes through the fabric of
+## the shade. Without it, everything the shade blocks gets no lamp light at
+## all and its shadow ends in a hard line on the walls; with it, that's a
+## gentle step from bright to dimmer.
+@onready var _glow: OmniLight3D = $Lamp/GlowThroughShade
+
+## How bright the glow through the shade is, compared with the lamp itself.
+const SHADE_GLOW_SHARE: float = 0.2
 @onready var _cord: MeshInstance3D = $Cord
 
 
 func _ready() -> void:
 	_light.light_energy = light_energy
 	_light.omni_range = light_range
+	_glow.light_energy = light_energy * SHADE_GLOW_SHARE
+	_glow.omni_range = light_range * 0.875
 	_lamp.collision_layer = LAYER_PROPS
 	_lamp.collision_mask = MASK_WORLD_PROPS_CLUTTER
 	# The cord is redrawn every frame from the ceiling to the top of the shade,

@@ -294,8 +294,41 @@ static func _store_loop(key: String, samples: PackedFloat32Array, peak: float) -
 
 ## Marbles knocking together in the HUD bag: very short and high, so it reads
 ## as glass or stone rather than a voice.
-static func clack() -> AudioStreamWAV:
-	return chirp(2900.0, 2200.0, 0.03)
+static func clack(variant: int = 0) -> AudioStreamWAV:
+	var key: String = "clack-%d" % variant
+	if _cache.has(key):
+		return _cache[key]
+	# Glass marbles: a sharp click, then a short bright ring at two
+	# unrelated high pitches (which is what makes it sound like glass rather
+	# than a note), gone within about 40 ms.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 500 + variant
+	var ring_a: float = 3100.0 * rng.randf_range(0.9, 1.1)
+	var ring_b: float = 4700.0 * rng.randf_range(0.9, 1.1)
+	var count: int = int(0.06 * MIX_RATE)
+	var samples := PackedFloat32Array()
+	samples.resize(count)
+	var previous: float = 0.0
+	var peak: float = 0.0
+	for i in count:
+		var t: float = float(i) / MIX_RATE
+		var white: float = rng.randf_range(-1.0, 1.0)
+		var click: float = (white - previous) * exp(-t / 0.0015)
+		previous = white
+		var ring: float = sin(TAU * ring_a * t) * exp(-t / 0.018) * 0.7 			+ sin(TAU * ring_b * t) * exp(-t / 0.011) * 0.45
+		samples[i] = (click * 0.8 + ring) * clampf((count - i) / (0.005 * MIX_RATE), 0.0, 1.0)
+		peak = maxf(peak, absf(samples[i]))
+	var data := PackedByteArray()
+	data.resize(count * 2)
+	for i in count:
+		data.encode_s16(i * 2, int(samples[i] / peak * 0.85 * 32767.0))
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = MIX_RATE
+	wav.stereo = false
+	wav.data = data
+	_cache[key] = wav
+	return wav
 
 
 ## Menu sounds. Soft and short: a single high blip when the pointer lands on a

@@ -35,6 +35,10 @@ func _ready() -> void:
 	_save_loop(Tones.whirr(), 3, 1.0, "beam_whirr")
 	_save_loop(Tones.whirr(), 3, 1.5, "beam_whirr_swinging")
 	_save_loop(Tones.strain_crackle(), 2, 1.0, "beam_strain")
+	# Marbles: the three clack takes, one after another.
+	_save_loop(Tones.clack(0), 1, 1.0, "marble_clack_1")
+	_save_loop(Tones.clack(1), 1, 1.0, "marble_clack_2")
+	_save_loop(Tones.clack(2), 1, 1.0, "marble_clack_3")
 	print("Saved to %s" % ProjectSettings.globalize_path("user://knocks"))
 	get_tree().quit()
 

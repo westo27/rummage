@@ -63,7 +63,14 @@ func _run() -> void:
 	await get_tree().physics_frame
 	_check("the tag hops", _hud._bag._tag_hop > 0.0, "%.2f" % _hud._bag._tag_hop)
 
-	await _wait(2.0)
+	# Listen for the ball clacking as it lands in the bag.
+	var clacked: bool = false
+	for i in 120:
+		await get_tree().physics_frame
+		for marble in _hud._bag._marbles.get_children():
+			if (marble as BagMarble)._voice.playing:
+				clacked = true
+	_check("the ball clacks like a marble as it lands in the bag", clacked, "")
 	_check("one ball ends up in the bag", _hud._bag.marble_count() == balls_before + 1,
 		"%d -> %d" % [balls_before, _hud._bag.marble_count()])
 	_check("the sparkles clean themselves up",

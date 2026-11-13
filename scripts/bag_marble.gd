@@ -46,7 +46,7 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 	_voice = AudioStreamPlayer.new()
-	_voice.stream = Tones.clack()
+	_voice.stream = Tones.clack(0)
 	add_child(_voice)
 
 
@@ -66,8 +66,12 @@ func _on_body_entered(_body: Node) -> void:
 	if not is_inside_tree():
 		return
 	if _last_speed > CLACK_SPEED:
-		_voice.pitch_scale = randf_range(0.85, 1.25)
-		_voice.volume_db = linear_to_db(clampf(_last_speed / 600.0, 0.12, 1.0)) - 6.0
+		# One of three takes, a little higher or lower each time, so a pile of
+		# balls settling sounds like a handful of marbles, not one sound repeated.
+		_voice.stream = Tones.clack(randi() % 3)
+		_voice.pitch_scale = randf_range(0.9, 1.15)
+		# Harder knocks are louder; the hardest a little under the squeaks.
+		_voice.volume_db = linear_to_db(clampf(_last_speed / 400.0, 0.2, 1.0)) - 5.0
 		_voice.play()
 	if not _has_landed:
 		_has_landed = true

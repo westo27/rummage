@@ -383,6 +383,9 @@ child up past your bedtime". So it's night.
   simulated in `VIEW_SIZE` coordinates via `size_2d_override`) with no
   shadow under it. The tag's count is drawn crisp on top of the viewport
   (`_draw_tag_text`), so it stays readable at that size.
+  Menus get it too: while any `MenuPanel` is visible, `PixelFilter` shows a
+  second copy of the filter at layer 50, above all the UI. The in-game HUD
+  stays crisp.
   `tests/shoot_pixel.tscn` renders it off and at a few sizes.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.
@@ -556,6 +559,14 @@ creature.gd). Once cowering, they roll back upright to look at you and bob
 in a happy bounce instead of the old shiver, which looked sad (Grace's
 playtest). `BOUNCE_*`, `SETTLE_RATE` and `ROLL_RADIUS` are at the top of
 creature.gd.
+
+They're 11 cm across (radius 0.054; the eyes are the old ones scaled 0.6)
+and run at `flee_speed` 2.2 m/s, so they fit in drawers. Four hide in
+drawers (`drawer_furniture` / `drawer_index` on the creature): three in the
+chest, one in the bedside table. They ride the drawer as it's pulled and pop
+out over its front once it's out `DRAWER_REVEAL_OUT` (0.2 m), heading
+straight out for 0.6 s before steering away from you. Knocks don't reveal
+them.
 
 ## The creatures' eyes
 

@@ -28,6 +28,10 @@ const MASK_CREATURES: int = 8
 const MASK_SIGHT: int = 1 | 4 | 16
 ## How far above a creature's middle its top is, for "can I see it?".
 const SIGHT_TOP: float = 0.08
+## Aim lock-on for catching: how far off the crosshair a creature can be, as an
+## angle, or as a distance from the aim line (whichever is more generous).
+const CATCH_ASSIST_DEGREES: float = 10.0
+const CATCH_ASSIST_RADIUS: float = 0.3
 
 ## Where the beam starts, relative to the camera: just below the bottom edge
 ## of the screen, a little right of centre, so the beam runs in from off the
@@ -234,33 +238,42 @@ func add_lift(kg: float) -> void:
 	lift_limit_changed.emit(lift_limit)
 
 
-## Looks for an exposed creature under the crosshair. Two rays:
-## 1. Only the creatures layer, hitting only Areas (each exposed creature's
-##    PickZone, a sphere bigger than its body, so aiming can be a bit sloppy).
-## 2. A line-of-sight check against walls and floor only. Furniture is ignored
-##    on purpose: being generous here matters more than being exact.
+## Looks for an exposed creature near the crosshair. Catching isn't an aiming
+## test, so the beam locks on: any catchable creature in reach counts if it's
+## within CATCH_ASSIST_DEGREES of the crosshair, or within CATCH_ASSIST_RADIUS
+## of the aim line (which matters up close, where a few degrees is tiny). Of
+## those, the one nearest the crosshair wins. It must also be really visible:
+## its middle or its top, past walls and furniture.
 func _find_aimed_creature() -> Creature:
 	var from: Vector3 = _camera.global_position
-	var to: Vector3 = from + _forward() * Game.tune.beam_reach
-	var query := PhysicsRayQueryParameters3D.create(from, to, MASK_CREATURES)
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
+	var forward: Vector3 = _forward()
 	var space := get_world_3d().direct_space_state
-	var hit: Dictionary = space.intersect_ray(query)
-	if hit.is_empty():
-		return null
-	# The ray hit the PickZone; its parent node is the creature.
-	var creature := (hit.collider as Node).get_parent() as Creature
-	if creature == null:
-		return null
-	# The pick zone is bigger than the creature, so the ray can find one that's
-	# tucked behind a box or a wardrobe door. Only count it if some of it can
-	# really be seen: its middle or its top, past walls and furniture.
+	var best: Creature = null
+	var best_angle: float = INF
+	for node: Node in get_tree().get_nodes_in_group("creatures"):
+		var creature := node as Creature
+		if creature == null or not creature.is_catchable():
+			continue
+		var to_creature: Vector3 = creature.global_position - from
+		var along: float = to_creature.dot(forward)
+		if along <= 0.0 or to_creature.length() > Game.tune.beam_reach + CATCH_ASSIST_RADIUS:
+			continue
+		var angle: float = forward.angle_to(to_creature)
+		var off_line: float = (to_creature - forward * along).length()
+		if angle > deg_to_rad(CATCH_ASSIST_DEGREES) and off_line > CATCH_ASSIST_RADIUS:
+			continue
+		if angle < best_angle and _can_see(creature, from, space):
+			best = creature
+			best_angle = angle
+	return best
+
+
+func _can_see(creature: Creature, from: Vector3, space: PhysicsDirectSpaceState3D) -> bool:
 	for spot: Vector3 in [creature.global_position, creature.global_position + Vector3.UP * SIGHT_TOP]:
 		var sight := PhysicsRayQueryParameters3D.create(from, spot, MASK_SIGHT, [_player.get_rid()])
 		if space.intersect_ray(sight).is_empty():
-			return creature
-	return null
+			return true
+	return false
 
 
 func _capture(creature: Creature) -> void:

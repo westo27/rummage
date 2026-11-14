@@ -582,6 +582,10 @@ func _set_catchable(on: bool) -> void:
 	_pick_zone.collision_layer = LAYER_CREATURES if on else 0
 
 
+func is_catchable() -> bool:
+	return _pick_zone.collision_layer != 0
+
+
 func _apply_random_color() -> void:
 	var body := $Visual/Body as MeshInstance3D
 	var color: Color = BODY_COLORS.pick_random()

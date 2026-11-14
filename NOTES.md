@@ -376,7 +376,8 @@ wins over the default in the `.gd` file.
 
 A few visual constants stay as `const` at the top of their scripts, because
 they're look rather than feel: the shudder amount (prop.gd), the beam ribbon
-width (beam.gd), the creature pick radius (`PickZone` in creature.tscn, 0.25 m).
+width (beam.gd), the catch lock-on (`CATCH_ASSIST_DEGREES` 10°, or within
+`CATCH_ASSIST_RADIUS` 0.3 m of the aim line, in beam.gd: nearest the crosshair wins).
 
 **You start weak: 4 kg, plus 4 kg per catch** (Grace's playtest: work up to
 it). At first only books, balls, bins, pillows and small boxes lift. 15
@@ -402,7 +403,7 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 | 1 world | 1 | walls, floors (CSG) | |
 | 2 player | 2 | the player capsule | |
 | 3 props | 4 | props over 3 kg: crates, table, bedside table, bookcase, bed, wardrobe | block the player |
-| 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | the beam's first ray hits only this layer |
+| 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | marks it catchable (the beam aims with a lock-on cone) |
 | 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and kicks them |
 | 6 rug | 32 | the rug | meets only the floor; the beam can aim at it |
 

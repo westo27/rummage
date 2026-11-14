@@ -24,6 +24,7 @@ func _run() -> void:
 
 	var creature := _main.get_node("MainRoomCreatures").get_child(0) as Creature
 	var room: Node = creature.get_parent()
+	_check_lock_on(creature)
 	var balls_before: int = _hud._bag.marble_count()
 	var hand: Vector3 = _beam._camera.to_global(Beam.BEAM_ORIGIN_LOCAL)
 	_beam._capture(creature)  # as if clicked: plays the sound too
@@ -78,6 +79,25 @@ func _run() -> void:
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
+
+
+## Aim lock-on: a creature a little off the crosshair is still the one aimed
+## at; one well off it isn't.
+func _check_lock_on(creature: Creature) -> void:
+	var home: Vector3 = creature.global_position
+	var was_catchable: bool = creature.is_catchable()
+	creature._set_catchable(true)
+	var cam: Camera3D = _beam._camera
+	var forward: Vector3 = _beam._forward()
+	var side: Vector3 = cam.global_basis.x
+	for case: Array in [[0.0, true], [7.0, true], [20.0, false]]:
+		var dir: Vector3 = forward.rotated(Vector3.UP, deg_to_rad(case[0]))
+		creature.global_position = cam.global_position + dir * 1.5
+		var found: bool = _beam._find_aimed_creature() == creature
+		_check("aimed %.0f° off: %s" % [case[0], "locks on" if case[1] else "doesn't"],
+			found == case[1], "side %.2f" % side.dot(dir))
+	creature.global_position = home
+	creature._set_catchable(was_catchable)
 
 
 ## The last point of the beam ribbon.

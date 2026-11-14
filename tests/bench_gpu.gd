@@ -1,5 +1,5 @@
 extends Node
-## Tool, not a test: times the GPU on the main room with the lamp swinging,
+## Tool, not a test: times the GPU in the bedroom with the lamps swinging,
 ## under different graphics settings, and prints a table. Needs a real window:
 ## Godot --path . --resolution 1920x1080 res://tests/bench_gpu.tscn
 ##
@@ -11,8 +11,8 @@ const MEASURE_FRAMES: int = 180
 
 var _main: Node
 var _env: Environment
-var _lamp_body: RigidBody3D
-var _lamp_lights: Array[OmniLight3D] = []
+var _lamps: Array[PendantLamp] = []
+var _moon: SpotLight3D
 var _rid: RID
 
 
@@ -32,75 +32,89 @@ func _run() -> void:
 	player.rotation.y = atan2(-dir.x, -dir.z)
 	head.rotation.x = asin(dir.y)
 	_env = (_main.get_node("WorldEnvironment") as WorldEnvironment).environment
-	_lamp_body = _main.get_node("House/LampMain/Lamp")
-	for lamp in ["House/LampMain/Lamp/Light", "House/LampSide/Lamp/Light"]:
-		_lamp_lights.append(_main.get_node(lamp) as OmniLight3D)
+	for lamp: PendantLamp in get_tree().get_nodes_in_group("lamps"):
+		_lamps.append(lamp)
+	_moon = _main.get_node("Moonlight") as SpotLight3D
 	_rid = get_viewport().get_viewport_rid()
 	RenderingServer.viewport_set_measure_render_time(_rid, true)
 	await get_tree().create_timer(1.0).timeout
 
-	var rows: Array = []
-	rows.append(["As it is now (Ultra soft shadows, big lamp light, TAA, SSAO)", await _measure({})])
-	rows.append(["Soft shadow filter: High instead of Ultra", await _measure({"filter": 4})])
-	rows.append(["Soft shadow filter: Medium", await _measure({"filter": 3})])
-	rows.append(["Soft shadow filter: Low", await _measure({"filter": 2})])
-	rows.append(["Lamp light size 0 (no distance-softened shadows)", await _measure({"light_size": 0.0})])
-	rows.append(["No TAA", await _measure({"taa": false})])
-	rows.append(["No SSAO", await _measure({"ssao": false})])
-	rows.append(["Shadow atlas 4096 instead of 8192", await _measure({"atlas": 4096})])
-	rows.append(["No bloom", await _measure({"glow": false})])
-	rows.append(["Lamps cast no shadows at all", await _measure({"lamp_shadows": false})])
-	rows.append(["'Low' bundle: filter Low, size 0, no TAA, no SSAO, atlas 4096",
-		await _measure({"filter": 2, "light_size": 0.0, "taa": false, "ssao": false, "atlas": 4096})])
-
-	# The three Graphics > Lighting levels, as players get them.
 	var saved: Settings.Lighting = Game.settings.lighting
+	var rows: Array = []
+	# The three Graphics > Lighting levels, as players get them.
 	for level in [Settings.Lighting.HIGH, Settings.Lighting.MEDIUM, Settings.Lighting.LOW]:
-		Game.settings.lighting = level
-		rows.append(["Graphics > Lighting: %s" % Settings.LIGHTING_NAMES[level], await _measure_level()])
+		rows.append(["Graphics > Lighting: %s" % Settings.LIGHTING_NAMES[level], await _measure(level, {})])
+	# High with one thing changed at a time.
+	var high := Settings.Lighting.HIGH
+	rows.append(["High, lamp softness 0.3 (Medium's)", await _measure(high, {"lamp_size": 0.3})])
+	rows.append(["High, lamp softness 0.15", await _measure(high, {"lamp_size": 0.15})])
+	rows.append(["High, shadow filter High not Ultra", await _measure(high, {"filter": RenderingServer.SHADOW_QUALITY_SOFT_HIGH})])
+	rows.append(["High, shadow atlas 4096", await _measure(high, {"atlas": 4096})])
+	rows.append(["High, moonlight hard-edged (size 0)", await _measure(high, {"moon_size": 0.0})])
+	rows.append(["High, moonlight no shadow", await _measure(high, {"moon_shadow": false})])
+	rows.append(["High, only the nearest lamp casts shadows", await _measure(high, {"nearest_only": true})])
+	rows.append(["High, lamps cast no shadows", await _measure(high, {"lamp_shadows": false})])
+	rows.append(["High, no SSAO", await _measure(high, {"ssao": false})])
+	rows.append(["High, no TAA", await _measure(high, {"taa": false})])
+	rows.append(["High, no bloom", await _measure(high, {"glow": false})])
 	Game.settings.lighting = saved
 	Game.settings.apply_lighting(_main)
 
-	print("\nGPU time per frame, %dx%d, lamp swinging:" % [get_viewport().size.x, get_viewport().size.y])
+	print("
+GPU time per frame, %dx%d, lamps swinging:" % [get_viewport().size.x, get_viewport().size.y])
 	var base: float = rows[0][1]
 	for row: Array in rows:
 		print("  %6.3f ms  %+5.0f%%   %s" % [row[1], (row[1] / base - 1.0) * 100.0, row[0]])
 	get_tree().quit()
 
 
-## Measures the current Graphics > Lighting level, applied the way the game
-## applies it.
-func _measure_level() -> float:
+## Applies a Graphics > Lighting level the way the game does, then the given
+## changes on top, and returns the average GPU time per frame (ms).
+func _measure(level: Settings.Lighting, changes: Dictionary) -> float:
+	Game.settings.lighting = level
 	_env.glow_enabled = true
-	for light in _lamp_lights:
-		light.shadow_enabled = true
+	_moon.shadow_enabled = true
+	_moon.light_size = 0.4
+	for lamp in _lamps:
+		lamp.shadows_allowed = true
 	Game.settings.apply_lighting(_main)
+	if changes.has("filter"):
+		RenderingServer.positional_soft_shadow_filter_set_quality(changes.filter)
+	if changes.has("atlas"):
+		get_viewport().positional_shadow_atlas_size = changes.atlas
+	if changes.has("taa"):
+		get_viewport().use_taa = changes.taa
+	if changes.has("ssao"):
+		_env.ssao_enabled = changes.ssao
+	if changes.has("glow"):
+		_env.glow_enabled = changes.glow
+	if changes.has("moon_size"):
+		_moon.light_size = changes.moon_size
+	if changes.has("moon_shadow"):
+		_moon.shadow_enabled = changes.moon_shadow
+	var player_at: Vector3 = (_main.get_node("Player") as Node3D).global_position
+	var nearest: PendantLamp = _lamps[0]
+	for lamp in _lamps:
+		if lamp.global_position.distance_to(player_at) < nearest.global_position.distance_to(player_at):
+			nearest = lamp
+	for lamp in _lamps:
+		if changes.has("lamp_size"):
+			lamp.light().light_size = changes.lamp_size
+		if changes.get("lamp_shadows", true) == false or (changes.get("nearest_only", false) and lamp != nearest):
+			lamp.shadows_allowed = false
 	return await _sample()
 
 
-## Applies the given changes on top of the game's own settings, keeps the lamp
-## swinging, and returns the average GPU time per frame in milliseconds.
-func _measure(changes: Dictionary) -> float:
-	RenderingServer.positional_soft_shadow_filter_set_quality(changes.get("filter", 5))
-	for light in _lamp_lights:
-		light.light_size = changes.get("light_size", 0.25)
-		light.shadow_enabled = changes.get("lamp_shadows", true)
-	get_viewport().use_taa = changes.get("taa", true)
-	_env.ssao_enabled = changes.get("ssao", true)
-	_env.glow_enabled = changes.get("glow", true)
-	get_viewport().positional_shadow_atlas_size = changes.get("atlas", 8192)
-	get_viewport().screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
-	return await _sample()
-
-
-## Keeps the lamp swinging and returns the average GPU time per frame (ms).
+## Keeps the lamps swinging and returns the average GPU time per frame (ms).
 func _sample() -> float:
 	var total: float = 0.0
 	for i in WARMUP_FRAMES + MEASURE_FRAMES:
-		# A nudge every half second keeps the lamp swinging, so its shadows
+		# A nudge every half second keeps the lamps swinging, so their shadows
 		# have to be redrawn every frame, as in play.
 		if i % 30 == 0:
-			_lamp_body.apply_central_impulse(Vector3(1.2 if (i / 30) % 2 == 0 else -1.2, 0.0, 0.6))
+			for lamp in _lamps:
+				(lamp.get_node("Lamp") as RigidBody3D).apply_central_impulse(
+					Vector3(1.2 if (i / 30) % 2 == 0 else -1.2, 0.0, 0.6))
 		await RenderingServer.frame_post_draw
 		if i >= WARMUP_FRAMES:
 			total += RenderingServer.viewport_get_measured_render_time_gpu(_rid)

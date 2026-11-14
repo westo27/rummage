@@ -331,14 +331,16 @@ child up past your bedtime". So it's night.
   no lamp light and the shadow ends in a hard line on the walls.
   How soft and how costly is the player's choice (below).
 - **Settings > Graphics > Lighting: High / Medium / Low** (`Settings.apply_lighting`).
-  The lamps' soft shadows were about half the GPU's work per frame, so this
-  is the one quality setting. Measured on an RTX 5080 at 1080p with the lamp
-  swinging (`tests/bench_gpu.tscn` re-measures):
+  The lamps' soft shadows are most of the GPU's work per frame, so this
+  is the one quality setting. Each lamp casts shadows only while the camera
+  is in its room or within 0.8 m of it (`room_half_size` on each lamp in
+  main.tscn); its light stays on. Measured on an RTX 5080 at 1080p from the
+  bedroom with the lamps swinging (`tests/bench_gpu.tscn` re-measures):
   | Level | GPU per frame | What it does |
   |---|---|---|
-  | High | 1.8 ms | lamp has a size (0.25) so shadows soften with distance; Ultra filtering; TAA; shadow atlas 8192 |
-  | Medium (default) | 0.9 ms | smaller lamp size (0.12), Medium filtering, TAA, atlas 4096. Looks almost the same as High |
-  | Low | 0.46 ms | no lamp size, a plain even shadow blur, no SSAO, FXAA instead of TAA, atlas 4096 |
+  | High | 2.3 ms | lamp size 0.45 so shadows soften with distance; Ultra filtering; TAA; shadow atlas 4096 |
+  | Medium (default) | 1.2 ms | lamp size 0.3, Medium filtering, TAA, atlas 4096 |
+  | Low | 0.56 ms | no lamp size, a plain even shadow blur, no SSAO, FXAA instead of TAA, atlas 4096 |
   It applies straight away, including from the pause menu, and is saved
   with the other settings. New players start on Medium; your own saved
   settings will also start on Medium, so switch to High if you prefer it.

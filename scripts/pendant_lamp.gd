@@ -16,6 +16,18 @@ extends Node3D
 ## The lamp's brightness and how far its light reaches, set per room.
 @export var light_energy: float = 0.55
 @export var light_range: float = 6.5
+## Half the width (x) and depth (z) of the lamp's room, measured from the
+## lamp. The lamp casts shadows only while the camera is in that room or
+## close to it; its light stays on either way. A swinging lamp's shadow is
+## redrawn in six directions every frame, which is most of the game's GPU
+## cost, and from another room it's mostly hidden by walls anyway.
+@export var room_half_size: Vector2 = Vector2(2.45, 2.2)
+## How far outside the room the camera can be and still get the shadows, so
+## they're already on as you come through a doorway.
+const SHADOW_MARGIN: float = 0.8
+
+## Switch off to stop this lamp casting shadows anywhere.
+var shadows_allowed: bool = true
 
 const LAYER_PROPS: int = 4
 const MASK_WORLD_PROPS_CLUTTER: int = 1 | 4 | 16
@@ -50,6 +62,15 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_place_cord()
+	_light.shadow_enabled = shadows_allowed and _camera_is_near()
+
+
+func _camera_is_near() -> bool:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return true
+	var offset: Vector3 = camera.global_position - global_position
+	return absf(offset.x) < room_half_size.x + SHADOW_MARGIN 		and absf(offset.z) < room_half_size.y + SHADOW_MARGIN
 
 
 ## Stretches the cord (a cylinder one metre tall) between the fixing on the

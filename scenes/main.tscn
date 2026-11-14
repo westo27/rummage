@@ -354,11 +354,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 3, 0)
 
 [node name="LampMain" parent="House" unique_id=900174218 instance=ExtResource("14_lamp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 3, -0.15)
+room_half_size = Vector2(2.45, 2.05)
 
 [node name="LampSide" parent="House" unique_id=900182137 instance=ExtResource("14_lamp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.8, 3, 0)
 light_energy = 0.4
 light_range = 4.0
+room_half_size = Vector2(1.45, 1.35)
 
 [node name="ReflectionsPlayroom" type="ReflectionProbe" parent="House" unique_id=900190056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 1.4, 0)

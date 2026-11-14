@@ -115,7 +115,7 @@ func apply_lighting(scene: Node = null) -> void:
 	var viewport: Viewport = tree.root
 	viewport.use_taa = not low
 	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if low else Viewport.SCREEN_SPACE_AA_DISABLED
-	viewport.positional_shadow_atlas_size = 8192 if high else 4096
+	viewport.positional_shadow_atlas_size = 4096
 	if scene == null:
 		return
 	for lamp: PendantLamp in tree.get_nodes_in_group("lamps"):

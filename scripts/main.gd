@@ -53,24 +53,33 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().reload_current_scene()
 
 
-## Gives every prop a glossy toy-plastic finish. Roughness is how blurry
-## reflections are (0 = mirror, 1 = chalk); clearcoat is a second, glassy
-## layer of varnish on top, which is what makes plastic look wet-shiny.
-## (Satin and matte were tried too; glossy was chosen.) Prop materials are
-## shared between copies of the same prop, so this sets the same values on
-## a material several times; that's harmless.
+## Gives every prop a finish that suits what it's made of (the same material
+## that picks its knock sound): matte painted wood, flat fabric and paper, and
+## a soft satin on plastic and rubber toys. Roughness is how blurry
+## reflections are (0 = mirror, 1 = chalk); specular is how strong they are.
+## (The earlier all-glossy clearcoat finish read as too plastic.) Prop
+## materials are shared between copies of the same prop, so this sets the
+## same values on a material several times; that's harmless.
+const FINISH: Dictionary = {
+	Tones.ImpactMaterial.WOOD: [0.72, 0.35],
+	Tones.ImpactMaterial.PAPER: [0.9, 0.25],
+	Tones.ImpactMaterial.SOFT: [0.95, 0.2],
+	Tones.ImpactMaterial.RUBBER: [0.55, 0.4],
+	Tones.ImpactMaterial.PLASTIC: [0.45, 0.45],
+}
+
+
 func _apply_prop_finish() -> void:
 	for prop: Prop in get_tree().get_nodes_in_group("props"):
+		var finish: Array = FINISH[prop.impact_material]
 		for child in prop.get_children():
 			var mesh := child as MeshInstance3D
 			if mesh == null or not (mesh.material_override is StandardMaterial3D):
 				continue
 			var material := mesh.material_override as StandardMaterial3D
-			material.roughness = 0.12
-			material.metallic_specular = 0.7
-			material.clearcoat_enabled = true
-			material.clearcoat = 0.8
-			material.clearcoat_roughness = 0.08
+			material.roughness = finish[0]
+			material.metallic_specular = finish[1]
+			material.clearcoat_enabled = false
 
 
 func _on_creature_captured(creature: Creature) -> void:

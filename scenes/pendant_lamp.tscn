@@ -4,10 +4,11 @@
 
 [sub_resource type="StandardMaterial3D" id="Mat_shade"]
 cull_mode = 2
-albedo_color = Color(1, 0.86, 0.62, 1)
+shading_mode = 0
+albedo_color = Color(0.95, 0.66, 0.4, 1)
 emission_enabled = true
 emission = Color(1, 0.58, 0.3, 1)
-emission_energy_multiplier = 0.45
+emission_energy_multiplier = 0.25
 
 [sub_resource type="StandardMaterial3D" id="Mat_bulb"]
 albedo_color = Color(1, 0.9, 0.7, 1)

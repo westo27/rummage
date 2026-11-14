@@ -31,11 +31,11 @@ func _run() -> void:
 	_check("a ball thrown at the window bounces back into the room",
 		ball.global_position.z > -2.25, "z = %.2f (wall at -2.25)" % ball.global_position.z)
 
-	# --- Props are glossy ---
+	# --- Wooden props are matte ---
 	var crate_mesh := _main.get_node("MainRoomProps/CrateA").get_child(0) as MeshInstance3D
 	var crate_material := crate_mesh.material_override as StandardMaterial3D
-	_check("props have the glossy finish",
-		is_equal_approx(crate_material.roughness, 0.12) and crate_material.clearcoat_enabled,
+	_check("wooden props have a matte finish",
+		is_equal_approx(crate_material.roughness, 0.72) and not crate_material.clearcoat_enabled,
 		"roughness %.2f, clearcoat %s" % [crate_material.roughness, crate_material.clearcoat_enabled])
 
 	# --- The bedside lamp is its own object, standing on the table ---

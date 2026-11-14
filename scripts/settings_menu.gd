@@ -46,6 +46,8 @@ func _ready() -> void:
 	column.add_child(_build_row("volume", "Volume"))
 	column.add_child(_build_section("Graphics"))
 	column.add_child(_build_row("lighting", "Lighting"))
+	column.add_child(_build_row("pixel", "Pixel filter"))
+	column.add_child(_build_row("pixel_strength", "Pixel size"))
 
 	var spacer2 := Control.new()
 	spacer2.custom_minimum_size = Vector2(0.0, 40.0)
@@ -115,6 +117,12 @@ func _adjust(key: String, by: int) -> void:
 			Game.settings.adjust_lighting(by)
 			# Straight away, so from the pause menu you see the change.
 			Game.settings.apply_lighting(get_tree().current_scene)
+		"pixel":
+			Game.settings.pixel_filter = not Game.settings.pixel_filter
+			Game.settings.apply_pixel_filter()
+		"pixel_strength":
+			Game.settings.adjust_pixel_strength(by)
+			Game.settings.apply_pixel_filter()
 	_refresh()
 
 
@@ -123,6 +131,8 @@ func _refresh() -> void:
 	(_value_labels["volume"] as Label).text = "%d%%" % Game.settings.volume_percent
 	(_value_labels["invert"] as Label).text = "On" if Game.settings.invert_look else "Off"
 	(_value_labels["lighting"] as Label).text = Settings.LIGHTING_NAMES[Game.settings.lighting]
+	(_value_labels["pixel"] as Label).text = "On" if Game.settings.pixel_filter else "Off"
+	(_value_labels["pixel_strength"] as Label).text = str(Game.settings.pixel_strength)
 
 
 func _unhandled_input(event: InputEvent) -> void:

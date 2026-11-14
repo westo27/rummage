@@ -14,6 +14,8 @@ var tune: Tunables = preload("res://config/tunables.tres")
 var settings: Settings
 ## Plays the knocks when props hit things. See scripts/impact_audio.gd.
 var impacts: ImpactAudio
+## The chunky-pixel look, switched by Graphics > Pixel filter.
+var pixel_filter: PixelFilter
 
 
 func _ready() -> void:
@@ -24,6 +26,9 @@ func _ready() -> void:
 	settings.load_from_disk()
 	settings.apply_audio()
 	settings.apply_lighting()
+	pixel_filter = PixelFilter.new()
+	add_child(pixel_filter)
+	settings.apply_pixel_filter()
 	# Swap the mouse arrow for the menus' pointing hand. See pointer_cursor.gd.
 	add_child(PointerCursor.new())
 	impacts = ImpactAudio.new()

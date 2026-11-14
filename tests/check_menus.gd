@@ -15,7 +15,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	_saved = [Game.settings.sensitivity_step, Game.settings.volume_percent, Game.settings.invert_look,
-		Game.settings.lighting]
+		Game.settings.lighting, Game.settings.pixel_filter, Game.settings.pixel_strength]
 
 	# --- Title screen ---
 	var title: Control = (load("res://scenes/title.tscn") as PackedScene).instantiate()
@@ -47,7 +47,7 @@ func _run() -> void:
 	var settings_menu: SettingsMenu = _settings_under(title)
 	_check("Settings opens the settings page", settings_menu != null, "")
 	var steppers: Array[MenuPanel] = _panels_under(settings_menu)
-	_check("settings page has 4 rows of steppers plus Back", steppers.size() == 9,
+	_check("settings page has 6 rows of steppers plus Back", steppers.size() == 13,
 		"%d panels" % steppers.size())
 	var section_titles: Array[String] = []
 	for label in settings_menu.find_children("*", "Label", true, false):
@@ -100,6 +100,30 @@ func _run() -> void:
 	_check("Low switches TAA off and FXAA on",
 		not get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_FXAA, "")
 
+	# --- Graphics > Pixel filter ---
+	Game.settings.pixel_filter = false
+	Game.settings.pixel_strength = 3
+	steppers[9].pressed.emit()  # the "+" of the Pixel filter row (a toggle)
+	await _wait(0.05)
+	_check("Pixel filter toggles on and shows",
+		Game.settings.pixel_filter and Game.pixel_filter.visible, "")
+	steppers[11].pressed.emit()  # the "+" of the Pixel size row
+	await _wait(0.05)
+	_check("Pixel size + makes the pixels bigger (fewer rows)",
+		Game.settings.pixel_strength == 4 and Game.settings.pixel_rows() < 1080.0 / 4.0,
+		"%d" % Game.settings.pixel_strength)
+	for i in 20:
+		steppers[10].pressed.emit()
+	await _wait(0.05)
+	_check("Pixel size stops at its minimum",
+		Game.settings.pixel_strength == Settings.PIXEL_STRENGTH_MIN, "%d" % Game.settings.pixel_strength)
+	_check("the Pixel size row shows its value",
+		(settings_menu._value_labels["pixel_strength"] as Label).text == str(Settings.PIXEL_STRENGTH_MIN), "")
+	steppers[8].pressed.emit()
+	await _wait(0.05)
+	_check("Pixel filter toggles off and hides",
+		not Game.settings.pixel_filter and not Game.pixel_filter.visible, "")
+
 	# Clamping at the ends.
 	for i in 40:
 		Game.settings.adjust_volume(-1)
@@ -112,7 +136,7 @@ func _run() -> void:
 		Game.settings.sensitivity_step == Settings.SENSITIVITY_MAX, "%d" % Game.settings.sensitivity_step)
 
 	# --- Back closes it and writes the file ---
-	steppers[8].pressed.emit()  # Back
+	steppers[12].pressed.emit()  # Back
 	await _wait(0.2)
 	_check("Back closes the settings page", _settings_under(title) == null, "")
 	_check("the title panels come back", _panels_under(title).size() == 3, "")
@@ -122,7 +146,8 @@ func _run() -> void:
 	_check("settings survive a reload from disk",
 		reloaded.sensitivity_step == Game.settings.sensitivity_step \
 		and reloaded.volume_percent == Game.settings.volume_percent \
-		and reloaded.invert_look == Game.settings.invert_look 		and reloaded.lighting == Game.settings.lighting,
+		and reloaded.invert_look == Game.settings.invert_look 		and reloaded.lighting == Game.settings.lighting \
+		and reloaded.pixel_strength == Game.settings.pixel_strength,
 		"%d/%d/%s/%d" % [reloaded.sensitivity_step, reloaded.volume_percent, reloaded.invert_look, reloaded.lighting])
 
 	title.queue_free()
@@ -198,6 +223,9 @@ func _run() -> void:
 	Game.settings.volume_percent = _saved[1]
 	Game.settings.invert_look = _saved[2]
 	Game.settings.lighting = _saved[3]
+	Game.settings.pixel_filter = _saved[4]
+	Game.settings.pixel_strength = _saved[5]
+	Game.settings.apply_pixel_filter()
 	Game.settings.save()
 	Game.settings.apply_lighting()
 

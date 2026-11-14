@@ -29,6 +29,10 @@ const VOLUME_STEP: int = 5
 ##           (SSAO), FXAA instead of TAA: about a quarter of High's cost
 enum Lighting { LOW, MEDIUM, HIGH }
 const LIGHTING_NAMES: Array[String] = ["Low", "Medium", "High"]
+## Pixel filter strength. Step n makes the screen 1080 / (n + 1) chunky pixels
+## tall: 1 is 540 rows (subtle), 3 is 270, 8 is 120 (very chunky).
+const PIXEL_STRENGTH_MIN: int = 1
+const PIXEL_STRENGTH_MAX: int = 8
 
 var sensitivity_step: int = 8
 var volume_percent: int = 80
@@ -36,6 +40,10 @@ var volume_percent: int = 80
 var invert_look: bool = false
 ## Medium by default, so the game runs well on most machines out of the box.
 var lighting: Lighting = Lighting.MEDIUM
+## Graphics > Pixel filter: the chunky low-resolution look (see pixel_filter.gd).
+## Off by default; strength is how big the pixels are.
+var pixel_filter: bool = false
+var pixel_strength: int = 3
 
 var _loaded_from_disk: bool = false
 
@@ -62,6 +70,9 @@ func load_from_disk() -> void:
 	invert_look = bool(cfg.get_value("look", "invert", invert_look))
 	volume_percent = clampi(int(cfg.get_value("audio", "volume_percent", volume_percent)), 0, 100)
 	lighting = clampi(int(cfg.get_value("graphics", "lighting", lighting)), 0, 2) as Lighting
+	pixel_filter = bool(cfg.get_value("graphics", "pixel_filter", pixel_filter))
+	pixel_strength = clampi(int(cfg.get_value("graphics", "pixel_strength", pixel_strength)),
+		PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
 	_loaded_from_disk = true
 
 
@@ -71,6 +82,8 @@ func save() -> void:
 	cfg.set_value("look", "invert", invert_look)
 	cfg.set_value("audio", "volume_percent", volume_percent)
 	cfg.set_value("graphics", "lighting", lighting)
+	cfg.set_value("graphics", "pixel_filter", pixel_filter)
+	cfg.set_value("graphics", "pixel_strength", pixel_strength)
 	cfg.save(PATH)
 
 
@@ -98,6 +111,20 @@ func adjust_volume(by: int) -> void:
 
 func adjust_lighting(by: int) -> void:
 	lighting = clampi(lighting + by, 0, 2) as Lighting
+
+
+func adjust_pixel_strength(by: int) -> void:
+	pixel_strength = clampi(pixel_strength + by, PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
+
+
+## How many chunky pixels tall the screen is at the current strength.
+func pixel_rows() -> float:
+	return 1080.0 / (pixel_strength + 1)
+
+
+func apply_pixel_filter() -> void:
+	Game.pixel_filter.visible = pixel_filter
+	Game.pixel_filter.set_rows(pixel_rows())
 
 
 ## Puts the lighting setting into effect. The renderer-wide parts (shadow

@@ -360,6 +360,14 @@ child up past your bedtime". So it's night.
   settings will also start on Medium, so switch to High if you prefer it.
   `tests/shoot_lamp.tscn` renders the ceiling
   around the lamp, still and mid-swing, for checking.
+- **Settings > Graphics > Pixel filter (On/Off) and Pixel size (1–8)**: the
+  chunky low-res look. `scripts/pixel_filter.gd` is a CanvasLayer at layer
+  −100 under the Game autoload; its shader (`shaders/pixel_filter.gdshader`)
+  point-samples the screen in whole-pixel blocks, so only the 3D is
+  pixelated and the HUD and menus stay crisp. Size n makes the screen
+  1080/(n+1) blocks tall (default 3 = 270). Off by default. It's a look, not
+  a saving: the 3D still renders at full resolution.
+  `tests/shoot_pixel.tscn` renders it off and at a few sizes.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.
 - **Readability**: a darker room makes props and creatures harder to spot,
@@ -448,7 +456,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
-| check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; pause/resume, restart, quit to title |
+| check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |

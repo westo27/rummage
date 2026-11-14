@@ -31,8 +31,8 @@ Run only the suites the change touches; the full set once before committing.
 - In tests, wait two `process_frame`s before reading anything drawn per frame.
 
 ## Visual checks (need a real window, not --headless)
-- `tests/shoot.tscn` (all screens), `tests/shoot_lamp.tscn` (lamp) and
-  `tests/shoot_rooms.tscn` (each room), PNGs
+- `tests/shoot.tscn` (all screens), `tests/shoot_lamp.tscn` (lamp),
+  `tests/shoot_rooms.tscn` (each room) and `tests/shoot_pixel.tscn` (pixel filter), PNGs
   in `%APPDATA%/Godot/app_userdata/rummage_prototype/shots`.
 - Render at `--resolution 960x540` and look only when the look is the point.
 - `tests/bench_gpu.tscn` measures GPU cost per graphics setting.

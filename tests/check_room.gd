@@ -149,7 +149,7 @@ func _run() -> void:
 	_check("pictures stay up on the wall", absf(picture.global_position.y - 1.45) < 0.005
 		and absf(_main.get_node("MainRoomProps/PictureNorth").global_position.y - 1.55) < 0.005, "")
 	_check("the creature waits in the hole behind it", behind.state == Creature.State.HIDDEN
-		and absf(behind.global_position.y - 1.422) < 0.01, "y=%.3f" % behind.global_position.y)
+		and absf(behind.global_position.y - 1.386) < 0.01, "y=%.3f" % behind.global_position.y)
 	_check("toy blocks sit in the other hole", block_in_cubby.global_position.y > 1.3, "y=%.3f" % block_in_cubby.global_position.y)
 	player.global_position = Vector3(-3.55, 0.05, 1.5)
 	player.reset_physics_interpolation()

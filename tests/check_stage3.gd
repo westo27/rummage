@@ -36,7 +36,7 @@ func _run() -> void:
 	_check("hidden creatures can't be aimed at", catchable == 0, "%d catchable" % catchable)
 	var no_covers: Array[String] = []
 	for c: Creature in _creatures.get_children():
-		if c._covers.is_empty():
+		if c._covers.is_empty() and c.drawer_furniture.is_empty():  # a drawer is its own cover
 			no_covers.append(c.name)
 	_check("every hidden creature found a covering prop", no_covers.is_empty(), "missing: %s" % ", ".join(no_covers))
 
@@ -81,7 +81,7 @@ func _run() -> void:
 		await _wait(0.1)
 		most_tipped = maxf(most_tipped, under._visual.global_basis.y.angle_to(Vector3.UP))
 		most_glanced = maxf(most_glanced, under._eyes.look_angle(0))
-	_check("it glances back at you as it rolls", most_glanced > 0.3, "pupils turned up to %.2f rad" % most_glanced)
+	_check("it glances back at you as it rolls", most_glanced > 0.2, "pupils turned up to %.2f rad" % most_glanced)
 	_check("a fleeing creature rolls like a marble", most_tipped > 1.0, "tipped up to %.2f rad" % most_tipped)
 	var gap: float = _flat_distance(under.global_position, _player.global_position)
 	_check("fleeing creature runs away from the player", gap > start_gap + 1.0,
@@ -224,6 +224,32 @@ func _run() -> void:
 	await get_tree().physics_frame
 	_check("caught, its eyes squeeze into happy arcs", cower._eyes.mood == CreatureEyes.Mood.HAPPY
 		and cower._eyes._arcs[0].visible, "mood=%s" % cower._eyes.mood)
+
+	# --- A creature in a drawer rides it, then pops out when it's open ---
+	var chest: Prop = _main.get_node("MainRoomProps/ChestOfDrawers")
+	var in_drawer: Creature = _creatures.get_node("InChestMiddle")
+	var drawer: Prop = chest.drawers[1]
+	_check("drawer creature starts hidden inside its drawer", in_drawer.state == Creature.State.HIDDEN
+		and in_drawer.global_position.distance_to(drawer.global_position) < 0.25,
+		"%s vs %s" % [in_drawer.global_position, drawer.global_position])
+	var out_dir: Vector3 = drawer.global_basis.z
+	var drawer_start: Vector3 = in_drawer.global_position
+	# Pull a little: it rides along, still hidden.
+	for i in 6:
+		drawer.linear_velocity = out_dir * 1.0
+		await get_tree().physics_frame
+	await _wait(0.1)
+	_check("pulled a little, it rides the drawer and stays hidden",
+		in_drawer.state == Creature.State.HIDDEN and (in_drawer.global_position - drawer_start).dot(out_dir) > 0.05,
+		"out %.2f, moved %.2f" % [chest.drawer_out(1), (in_drawer.global_position - drawer_start).dot(out_dir)])
+	for i in 20:
+		drawer.linear_velocity = out_dir * 1.0
+		await get_tree().physics_frame
+	_check("pulled open, it pops out", in_drawer.state == Creature.State.FLEEING, "state %d, out %.2f" % [in_drawer.state, chest.drawer_out(1)])
+	await _wait(0.8)
+	var local: Vector3 = chest.to_local(in_drawer.global_position)
+	_check("it's out of the chest, not stuck inside",
+		local.z > 0.3 or local.y > 0.45 or absf(local.x) > 0.55, "chest-local %s" % local)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

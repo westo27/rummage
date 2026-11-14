@@ -64,14 +64,14 @@ extends Resource
 
 @export_group("Creatures")
 ## Running speed while fleeing, m/s.
-@export var flee_speed: float = 3.2
+@export var flee_speed: float = 2.2
 ## A revealed creature runs away for a random time in this range, in seconds…
 @export var flee_time_min: float = 2.0
 @export var flee_time_max: float = 3.5
 ## …then spends up to this long running to a nearby object to cower beside.
 @export var seek_time: float = 2.5
 ## Upward speed of the startled hop when a creature is uncovered.
-@export var pop_speed: float = 3.5
+@export var pop_speed: float = 3.0
 ## A cowering creature bolts again if the player gets this close (metres).
 @export var startle_distance: float = 1.3
 ## A hidden creature gives itself away (squeak + rattle/glow/hop) at random

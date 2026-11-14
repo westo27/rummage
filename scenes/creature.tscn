@@ -4,14 +4,14 @@
 [ext_resource type="Script" path="res://scripts/creature_eyes.gd" id="2_eyes"]
 
 [sub_resource type="SphereShape3D" id="Shape_body"]
-radius = 0.09
+radius = 0.054
 
 [sub_resource type="SphereShape3D" id="Shape_pick"]
 radius = 0.25
 
 [sub_resource type="SphereMesh" id="Mesh_body"]
-radius = 0.09
-height = 0.18
+radius = 0.054
+height = 0.108
 
 [sub_resource type="StandardMaterial3D" id="Mat_body"]
 albedo_color = Color(0.45, 0.95, 0.4, 1)
@@ -48,6 +48,7 @@ mesh = SubResource("Mesh_body")
 material_override = SubResource("Mat_body")
 
 [node name="Eyes" type="Node3D" parent="Visual"]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0, 0)
 script = ExtResource("2_eyes")
 
 [node name="EyeL" type="Node3D" parent="Visual/Eyes"]

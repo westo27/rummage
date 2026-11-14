@@ -18,6 +18,12 @@ signal captured(creature: Creature)
 
 enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 
+## Hiding in a drawer: the furniture (a Drawers prop) and which of its
+## drawers. The creature sits near the drawer's front, rides along as it's
+## pulled, and pops out once it's open far enough. Nothing else reveals it.
+@export var drawer_furniture: NodePath
+@export var drawer_index: int = 0
+
 ## When false, only moving the covering object reveals this creature; flying
 ## objects bouncing nearby don't. Used under the bed so its gate can't be
 ## skipped by throwing things at it.
@@ -43,11 +49,11 @@ const HIDE_GAP: float = 0.12
 ## What blocks the player's view: walls, props and clutter.
 const MASK_SIGHT: int = 1 | 4 | 16
 ## How tall the creature is above its centre, for "can the player see my top?".
-const TOP_OFFSET: float = 0.08
+const TOP_OFFSET: float = 0.048
 ## The ball's radius, for rolling: it turns one radian per this many metres.
-const ROLL_RADIUS: float = 0.09
+const ROLL_RADIUS: float = 0.054
 ## Cowering creatures bob up and down happily: this high (m), this often (Hz).
-const BOUNCE_HEIGHT: float = 0.035
+const BOUNCE_HEIGHT: float = 0.021
 const BOUNCE_RATE: float = 1.8
 ## How quickly a stopped creature rolls back upright to look at you (per s).
 const SETTLE_RATE: float = 6.0
@@ -63,6 +69,11 @@ const ESCAPE_SECONDS: float = 1.0
 ## When found: eyes wide with surprise, then a cheeky squint as it bolts.
 const STARTLED_SECONDS: float = 0.35
 const CHEEKY_SECONDS: float = 0.6
+## How far a drawer must be pulled out (m) before a creature in it pops out:
+## far enough that it's clear of the furniture above.
+const DRAWER_REVEAL_OUT: float = 0.2
+## How far from the drawer's centre toward its front the creature sits (m).
+const DRAWER_FRONT_OFFSET: float = 0.09
 const BODY_COLORS: Array[Color] = [
 	Color(0.45, 0.95, 0.4), Color(1.0, 0.55, 0.75), Color(1.0, 0.85, 0.25),
 	Color(0.45, 0.8, 1.0), Color(0.85, 0.55, 1.0), Color(1.0, 0.6, 0.3),
@@ -90,6 +101,14 @@ var _bounce_time: float = 0.0
 var _peek_next: float = 0.0
 var _peek_left: float = 0.0
 var _wink_next: float = 0.0
+## Set when hiding in a drawer (see drawer_furniture).
+var _furniture: Prop = null
+var _drawer: Prop = null
+## Where the creature sits, in the drawer's own coordinates.
+var _drawer_spot: Transform3D
+## Seconds left heading straight out of the drawer before it starts steering
+## away from the player (which could mean back through the furniture).
+var _escape_left: float = 0.0
 
 @onready var _visual: Node3D = $Visual
 @onready var _eyes: CreatureEyes = $Visual/Eyes
@@ -107,6 +126,26 @@ func _ready() -> void:
 	_apply_random_color()
 	_peek_next = randf_range(PEEK_GAP_MIN, PEEK_GAP_MAX)
 	_wink_next = randf_range(WINK_GAP_MIN, WINK_GAP_MAX)
+	if not drawer_furniture.is_empty():
+		# Deferred so the furniture has found its drawers (its own _ready).
+		_settle_in_drawer.call_deferred()
+
+
+## Moves into the drawer: sitting on its floor, toward the front.
+func _settle_in_drawer() -> void:
+	# get_node_or_null: tests load the creatures without the furniture. Then
+	# it's just an ordinary hidden creature.
+	_furniture = get_node_or_null(drawer_furniture) as Prop
+	if _furniture == null:
+		return
+	_drawer = _furniture.drawers[drawer_index]
+	var floor_shape := _drawer.get_node("FloorShape") as CollisionShape3D
+	var floor_top: float = floor_shape.position.y + (floor_shape.shape as BoxShape3D).size.y * 0.5
+	var radius: float = ((get_node("CollisionShape3D") as CollisionShape3D).shape as SphereShape3D).radius
+	var spot := Vector3(0.0, floor_top + radius + 0.003, DRAWER_FRONT_OFFSET)
+	_drawer_spot = Transform3D(Basis.IDENTITY, spot)
+	global_transform = _drawer.global_transform * _drawer_spot
+	reset_physics_interpolation()
 
 
 func _physics_process(delta: float) -> void:
@@ -156,6 +195,9 @@ func _update_eyes(delta: float) -> void:
 
 
 func _update_hidden(delta: float) -> void:
+	if _drawer != null:
+		_update_in_drawer(delta)
+		return
 	_check_left -= delta
 	if _check_left <= 0.0:
 		_check_left = CHECK_INTERVAL
@@ -172,8 +214,46 @@ func _update_hidden(delta: float) -> void:
 		_give_tell()
 
 
+## Rides the drawer, and pops out when it's pulled open. Knocks and nearby
+## props don't count: it's shut in, and would be stuck if it bolted.
+func _update_in_drawer(delta: float) -> void:
+	global_transform = _drawer.global_transform * _drawer_spot
+	if _furniture.drawer_out(drawer_index) > DRAWER_REVEAL_OUT:
+		_pop_out_of_drawer()
+		return
+	_tell_left -= delta
+	if _tell_left <= 0.0:
+		_tell_left = randf_range(Game.tune.tell_interval_min, Game.tune.tell_interval_max)
+		# Only tells that fit in a drawer: no hop, no shuffling a cover.
+		squeak(1.0)
+		_eyes.glint()
+		flash()
+
+
+func _pop_out_of_drawer() -> void:
+	# Through the drawer and the furniture for a moment, so the front panel
+	# doesn't catch it on the way up and out.
+	for body: Prop in [_drawer, _furniture]:
+		add_collision_exception_with(body)
+		get_tree().create_timer(ESCAPE_SECONDS, false, true).timeout.connect(
+			func() -> void:
+				if is_instance_valid(body) and is_inside_tree():
+					remove_collision_exception_with(body))
+	var out_dir: Vector3 = _flat(_drawer.global_basis.z)
+	_drawer = null
+	_reveal()
+	# Out over the front of the drawer, higher than a normal startled hop.
+	_flee_dir = out_dir
+	velocity = out_dir * Game.tune.flee_speed + Vector3.UP * Game.tune.pop_speed * 1.2
+	_escape_left = 0.6
+
+
 func _update_fleeing(delta: float) -> void:
 	_state_left -= delta
+	if _escape_left > 0.0:
+		_escape_left -= delta
+		_move(_flee_dir, Game.tune.flee_speed, delta)
+		return
 	# Turn gradually toward "away from the player", so it curves rather than snaps.
 	var away: Vector3 = _away_from_player()
 	if _flee_dir.dot(away) < -0.9:

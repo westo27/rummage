@@ -263,7 +263,7 @@ each room (needs a window).
 - The "main room" layout files hold the playroom and bedroom together; the
   "side room" ones are the box room.
 - New props: `desk.tscn` (10 kg), `chair.tscn` (3 kg), `chest_of_drawers.tscn`
-  (20 kg, drawers are painted on), `beanbag.tscn` (2 kg).
+  (20 kg, three sliding drawers), `beanbag.tscn` (2 kg).
 
 ## The room's look: cosy, up past bedtime
 
@@ -278,9 +278,15 @@ child up past your bedtime". So it's night.
   1 kg prop of its own on a `Generic6DOFJoint3D` (DrawerRunner) that only
   lets it slide 0.26 m in and out, so it moves by physics: a sudden stop or
   a forward tip slides it out, the reverse slides it home, and the beam can
-  pull it by its front. Runner friction is a zero-speed joint motor
-  (`RUNNER_FRICTION`, 2.5 N, in `scripts/bedside_table.gd`). Four toy blocks
-  (`toy_block.tscn`, 0.1 kg) sit inside and can fall out.
+  pull it by its front. Runner friction is a zero-speed joint motor. Four
+  toy blocks (`toy_block.tscn`, 0.1 kg) sit inside and can fall out.
+- **Drawers** (`scripts/drawers.gd`) are shared by the bedside table and the
+  chest of drawers: every child Prop named "Drawer..." slides on a joint
+  named after it plus "Runner". `drawer_travel` and `runner_friction` are
+  exports: table 0.26 m / 2.5 N, chest 0.34 m / 5 N. The chest is hollow
+  with three 2 kg drawers; pull one with the beam and the others stay shut.
+  Shoved hard, the 20 kg chest tips forward a little and its bottom drawer
+  can catch on the floor.
 
 - **Light** (main.tscn): the pendant lamps are turned down to a warm orange
   glow (their shades block light upward, which is the darker band at the

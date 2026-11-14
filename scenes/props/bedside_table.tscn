@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/bedside_table.gd" id="1_table"]
+[ext_resource type="Script" path="res://scripts/drawers.gd" id="1_table"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="2_prop"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_wood"]

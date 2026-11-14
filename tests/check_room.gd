@@ -1,7 +1,7 @@
 extends Node
 ## Headless check for the room's new parts: the window holds things in, the
 ## props are glossy, the bedside lamp stands on its table, and the table's
-## drawer slides out and back by physics, the wardrobe doors swing open, and
+## drawer and the chest's drawers slide out and back by physics, the wardrobe doors swing open, and
 ## pictures come off the wall to show what's behind, and the rug drags away
 ## to show a trapdoor. (How the room looks can only be judged in
 ## tests/shoot.tscn's pictures.) Not part of the game.
@@ -189,6 +189,39 @@ func _run() -> void:
 		"moved %.3f m" % table_on_rug.global_position.distance_to(table_at))
 	_check("the rug lands back on the floor", absf(rug.centre().y) < 0.1, "y=%.3f" % rug.centre().y)
 	_check("let go, it lets go of the cloth", rug._pinned.is_empty() and rug.grip.freeze, "pins %d, frozen %s, held %s" % [rug._pinned.size(), rug.grip.freeze, beam.held])
+
+	# --- The chest of drawers: three drawers on the same runners ---
+	var chest: Node = _main.get_node("MainRoomProps/ChestOfDrawers")
+	_check("the chest has three drawers", chest.drawers.size() == 3, "%d" % chest.drawers.size())
+	var all_shut: bool = true
+	for i in chest.drawers.size():
+		all_shut = all_shut and absf(chest.drawer_out(i)) < 0.005
+	_check("its drawers rest shut", all_shut, "")
+	# Pull the top drawer open with the beam, as a player would.
+	var front: Vector3 = (chest as Node3D).global_basis.z
+	var chest_at: Vector3 = (chest as Node3D).global_position
+	var pull_from: Vector3 = chest_at + front * 1.6
+	player.global_position = Vector3(pull_from.x, 0.05, pull_from.z)
+	player.reset_physics_interpolation()
+	var knob: Vector3 = (chest as Node3D).to_global(Vector3(0.0, 0.2733, 0.25))
+	look = (knob - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	beam._grab_armed = true
+	beam._grab(chest.drawers[0], knob)
+	for i in 20:  # step back, pulling it out
+		player.global_position += front * 0.025
+		await get_tree().physics_frame
+	await _wait(0.3)
+	beam._grab_armed = false
+	beam._release()
+	await _wait(0.3)
+	_check("pulling a drawer with the beam slides it open", chest.drawer_out(0) > 0.2, "%.3f m out" % chest.drawer_out(0))
+	_check("the other drawers stay shut", absf(chest.drawer_out(1)) < 0.02 and absf(chest.drawer_out(2)) < 0.02,
+		"%.3f, %.3f m out" % [chest.drawer_out(1), chest.drawer_out(2)])
+	_check("and the chest stays where it is", (chest as Node3D).global_position.distance_to(chest_at) < 0.1,
+		"moved %.3f m" % (chest as Node3D).global_position.distance_to(chest_at))
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

@@ -38,7 +38,8 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 ```
 
 - Each prop type is its own scene in `scenes/props/` (book, crate, bin, small_box,
-  pillow, ball, bookcase, table, bed, bedside_table, bedside_lamp, toy_block, wardrobe): a `RigidBody3D` with
+  pillow, ball, bookcase, table, bed, bedside_table, bedside_lamp, toy_block, wardrobe,
+  and the small household things listed under "The house"): a `RigidBody3D` with
   `scripts/prop.gd` and box/sphere meshes plus matching collision shapes.
 - Each creature is an instance of `scenes/creature.tscn` (`scripts/creature.gd`).
 - The `*_props.tscn` / `*_creatures.tscn` layout files are ordinary scenes: open
@@ -264,6 +265,13 @@ each room (needs a window).
   "side room" ones are the box room.
 - New props: `desk.tscn` (10 kg), `chair.tscn` (3 kg), `chest_of_drawers.tscn`
   (20 kg, three sliding drawers), `beanbag.tscn` (2 kg).
+- Small household things, all clutter (0.15–1.8 kg, liftable from the start).
+  Playroom: teddy bear, toy car, stacking rings (table), toy drum, floor
+  cushion, shape sorter, toy dinosaur. Bedroom: alarm clock (bedside table),
+  globe, pencil pot and mug (desk), two slippers by the bed, school bag, two
+  stacked shoe boxes, folded jumpers and a piggy bank (chest). Their meshes
+  are only partly matched by collision shapes (fine detail like wheels and
+  pencils is visual only). `check_room` checks they settle where they're put.
 
 ## The room's look: cosy, up past bedtime
 

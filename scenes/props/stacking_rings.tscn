@@ -1,0 +1,107 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
+albedo_color = Color(0.78, 0.6, 0.38, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_red"]
+albedo_color = Color(0.88, 0.22, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_orange"]
+albedo_color = Color(0.95, 0.55, 0.15, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_yellow"]
+albedo_color = Color(0.97, 0.85, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_green"]
+albedo_color = Color(0.35, 0.75, 0.35, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_blue"]
+albedo_color = Color(0.25, 0.5, 0.9, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_Base"]
+top_radius = 0.072
+bottom_radius = 0.075
+height = 0.025
+
+[sub_resource type="CylinderMesh" id="Mesh_Peg"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 0.17
+
+[sub_resource type="CylinderMesh" id="Mesh_Ring1"]
+top_radius = 0.06
+bottom_radius = 0.066
+height = 0.036
+
+[sub_resource type="CylinderMesh" id="Mesh_Ring2"]
+top_radius = 0.05
+bottom_radius = 0.056
+height = 0.034
+
+[sub_resource type="CylinderMesh" id="Mesh_Ring3"]
+top_radius = 0.04
+bottom_radius = 0.046
+height = 0.032
+
+[sub_resource type="CylinderMesh" id="Mesh_Ring4"]
+top_radius = 0.031
+bottom_radius = 0.036
+height = 0.03
+
+[sub_resource type="SphereMesh" id="Mesh_Knob"]
+radius = 0.026
+height = 0.052
+
+[sub_resource type="CylinderShape3D" id="Shape_Stack"]
+radius = 0.075
+height = 0.2
+
+[node name="StackingRings" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.4
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.1
+impact_material = 4
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.09, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_Base")
+
+[node name="Peg" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("Mesh_Peg")
+
+[node name="Ring1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.059, 0)
+material_override = SubResource("Mat_red")
+mesh = SubResource("Mesh_Ring1")
+
+[node name="Ring2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.024, 0)
+material_override = SubResource("Mat_orange")
+mesh = SubResource("Mesh_Ring2")
+
+[node name="Ring3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.009, 0)
+material_override = SubResource("Mat_yellow")
+mesh = SubResource("Mesh_Ring3")
+
+[node name="Ring4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+material_override = SubResource("Mat_green")
+mesh = SubResource("Mesh_Ring4")
+
+[node name="Knob" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+material_override = SubResource("Mat_blue")
+mesh = SubResource("Mesh_Knob")
+
+[node name="StackShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0025, 0)
+shape = SubResource("Shape_Stack")

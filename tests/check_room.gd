@@ -7,6 +7,13 @@ extends Node
 ## tests/shoot.tscn's pictures.) Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_room.tscn
 
+## Props placed on floors, tables, the desk and the chest. Each must come to
+## rest where it was put, not slide off, roll away or fall over.
+const SMALL_THINGS: Array[String] = ["Teddy", "ToyCar", "StackingRings", "ToyDrum",
+	"FloorCushion", "ShapeSorter", "ToyDinosaur", "AlarmClock", "DeskGlobe", "PencilPot",
+	"Mug", "SlipperL", "SlipperR", "SchoolBag", "ShoeBoxLow", "ShoeBoxHigh",
+	"FoldedJumpers", "PiggyBank"]
+
 var _failures: int = 0
 var _main: Node
 
@@ -19,7 +26,20 @@ func _run() -> void:
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(_main)
 	get_tree().current_scene = _main
+	var placed: Dictionary = {}
+	for prop_name in SMALL_THINGS:
+		placed[prop_name] = (_main.get_node("MainRoomProps/" + prop_name) as Node3D).global_position
 	await _wait(1.0)
+
+	# --- The small household things settle where they were put ---
+	var drifted: Array[String] = []
+	for prop_name: String in placed:
+		var prop := _main.get_node("MainRoomProps/" + prop_name) as Node3D
+		var upright: float = prop.global_basis.y.normalized().dot(Vector3.UP)
+		if prop.global_position.distance_to(placed[prop_name]) > 0.03 or upright < 0.97:
+			drifted.append("%s moved %.3f m, upright %.2f" % [prop_name,
+				prop.global_position.distance_to(placed[prop_name]), upright])
+	_check("the small household things stay where they were put", drifted.is_empty(), ", ".join(drifted))
 
 	# --- A ball flung at the window stays in the room ---
 	var ball: Prop = _main.get_node("MainRoomProps/BallFloor")

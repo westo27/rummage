@@ -19,6 +19,22 @@
 [ext_resource type="PackedScene" path="res://scenes/props/chair.tscn" id="chair"]
 [ext_resource type="PackedScene" path="res://scenes/props/chest_of_drawers.tscn" id="chest_of_drawers"]
 [ext_resource type="PackedScene" path="res://scenes/props/beanbag.tscn" id="beanbag"]
+[ext_resource type="PackedScene" path="res://scenes/props/alarm_clock.tscn" id="alarm_clock"]
+[ext_resource type="PackedScene" path="res://scenes/props/desk_globe.tscn" id="desk_globe"]
+[ext_resource type="PackedScene" path="res://scenes/props/floor_cushion.tscn" id="floor_cushion"]
+[ext_resource type="PackedScene" path="res://scenes/props/folded_jumpers.tscn" id="folded_jumpers"]
+[ext_resource type="PackedScene" path="res://scenes/props/mug.tscn" id="mug"]
+[ext_resource type="PackedScene" path="res://scenes/props/pencil_pot.tscn" id="pencil_pot"]
+[ext_resource type="PackedScene" path="res://scenes/props/piggy_bank.tscn" id="piggy_bank"]
+[ext_resource type="PackedScene" path="res://scenes/props/school_bag.tscn" id="school_bag"]
+[ext_resource type="PackedScene" path="res://scenes/props/shape_sorter.tscn" id="shape_sorter"]
+[ext_resource type="PackedScene" path="res://scenes/props/shoe_box.tscn" id="shoe_box"]
+[ext_resource type="PackedScene" path="res://scenes/props/slipper.tscn" id="slipper"]
+[ext_resource type="PackedScene" path="res://scenes/props/stacking_rings.tscn" id="stacking_rings"]
+[ext_resource type="PackedScene" path="res://scenes/props/teddy_bear.tscn" id="teddy_bear"]
+[ext_resource type="PackedScene" path="res://scenes/props/toy_car.tscn" id="toy_car"]
+[ext_resource type="PackedScene" path="res://scenes/props/toy_dinosaur.tscn" id="toy_dinosaur"]
+[ext_resource type="PackedScene" path="res://scenes/props/toy_drum.tscn" id="toy_drum"]
 
 [node name="MainRoomProps" type="Node3D"]
 
@@ -290,3 +306,57 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35, 0.03, -0.8)
 
 [node name="FloorBlock3" parent="." instance=ExtResource("toy_block")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.03, -1.15)
+
+[node name="Teddy" parent="." instance=ExtResource("teddy_bear")]
+transform = Transform3D(0.9659, 0, 0.2588, 0, 1, 0, -0.2588, 0, 0.9659, -2.1, 0.152, -1.95)
+
+[node name="ToyCar" parent="." instance=ExtResource("toy_car")]
+transform = Transform3D(0.9063, 0, 0.4226, 0, 1, 0, -0.4226, 0, 0.9063, -3.6, 0.062, 0.5)
+
+[node name="StackingRings" parent="." instance=ExtResource("stacking_rings")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.8815, -0.25)
+
+[node name="ToyDrum" parent="." instance=ExtResource("toy_drum")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.95, 0.062, -0.35)
+
+[node name="FloorCushion" parent="." instance=ExtResource("floor_cushion")]
+transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, -3.55, 0.052, 1.95)
+
+[node name="ShapeSorter" parent="." instance=ExtResource("shape_sorter")]
+transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -0.55, 0.092, -1.7)
+
+[node name="ToyDinosaur" parent="." instance=ExtResource("toy_dinosaur")]
+transform = Transform3D(-0.766, 0, 0.6428, 0, 1, 0, -0.6428, 0, -0.766, -0.9, 0.097, -0.95)
+
+[node name="AlarmClock" parent="." instance=ExtResource("alarm_clock")]
+transform = Transform3D(0.9659, 0, -0.2588, 0, 1, 0, 0.2588, 0, 0.9659, 1.17, 0.572, -1.85)
+
+[node name="DeskGlobe" parent="." instance=ExtResource("desk_globe")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 0.917, 1.72)
+
+[node name="PencilPot" parent="." instance=ExtResource("pencil_pot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.807, 1.75)
+
+[node name="Mug" parent="." instance=ExtResource("mug")]
+transform = Transform3D(-0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, -0.9397, 1.22, 0.8045, 1.5)
+
+[node name="SlipperL" parent="." instance=ExtResource("slipper")]
+transform = Transform3D(0.9848, 0, 0.1736, 0, 1, 0, -0.1736, 0, 0.9848, 2, 0.037, -1.05)
+
+[node name="SlipperR" parent="." instance=ExtResource("slipper")]
+transform = Transform3D(0.9945, 0, -0.1045, 0, 1, 0, 0.1045, 0, 0.9945, 2.16, 0.037, -1.02)
+
+[node name="SchoolBag" parent="." instance=ExtResource("school_bag")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.4, 0.192, 1.8)
+
+[node name="ShoeBoxLow" parent="." instance=ExtResource("shoe_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.067, 1.78)
+
+[node name="ShoeBoxHigh" parent="." instance=ExtResource("shoe_box")]
+transform = Transform3D(0.9945, 0, 0.1045, 0, 1, 0, -0.1045, 0, 0.9945, 3.77, 0.197, 1.76)
+
+[node name="FoldedJumpers" parent="." instance=ExtResource("folded_jumpers")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 4.8, 0.927, -1.75)
+
+[node name="PiggyBank" parent="." instance=ExtResource("piggy_bank")]
+transform = Transform3D(-0.342, 0, -0.9397, 0, 1, 0, 0.9397, 0, -0.342, 4.85, 0.942, -1.3)

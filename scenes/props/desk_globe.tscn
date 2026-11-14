@@ -1,0 +1,122 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_sea"]
+albedo_color = Color(0.25, 0.5, 0.85, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_land"]
+albedo_color = Color(0.45, 0.72, 0.35, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_stand"]
+albedo_color = Color(0.3, 0.2, 0.14, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_brass"]
+albedo_color = Color(0.85, 0.7, 0.35, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_Base"]
+top_radius = 0.055
+bottom_radius = 0.065
+height = 0.02
+
+[sub_resource type="CylinderShape3D" id="Shape_Base"]
+radius = 0.065
+height = 0.02
+
+[sub_resource type="CylinderMesh" id="Mesh_Stem"]
+top_radius = 0.01
+bottom_radius = 0.012
+height = 0.05
+
+[sub_resource type="CylinderShape3D" id="Shape_Stem"]
+radius = 0.012
+height = 0.05
+
+[sub_resource type="SphereMesh" id="Mesh_Globe"]
+radius = 0.1
+height = 0.2
+
+[sub_resource type="SphereShape3D" id="Shape_Globe"]
+radius = 0.1
+
+[sub_resource type="CylinderMesh" id="Mesh_Axle"]
+top_radius = 0.004
+bottom_radius = 0.004
+height = 0.23
+
+[sub_resource type="SphereMesh" id="Mesh_LandA"]
+radius = 0.045
+height = 0.06
+
+[sub_resource type="SphereMesh" id="Mesh_LandB"]
+radius = 0.04
+height = 0.05
+
+[sub_resource type="SphereMesh" id="Mesh_LandC"]
+radius = 0.035
+height = 0.05
+
+[sub_resource type="SphereMesh" id="Mesh_LandD"]
+radius = 0.04
+height = 0.05
+
+[node name="DeskGlobe" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 1
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.13
+impact_material = 4
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
+material_override = SubResource("Mat_stand")
+mesh = SubResource("Mesh_Base")
+
+[node name="BaseShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
+shape = SubResource("Shape_Base")
+
+[node name="Stem" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.115, 0)
+material_override = SubResource("Mat_stand")
+mesh = SubResource("Mesh_Stem")
+
+[node name="StemShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.115, 0)
+shape = SubResource("Shape_Stem")
+
+[node name="Globe" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("Mat_sea")
+mesh = SubResource("Mesh_Globe")
+
+[node name="GlobeShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("Shape_Globe")
+
+[node name="Axle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9205, -0.3907, 0, 0.3907, 0.9205, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("Mat_brass")
+mesh = SubResource("Mesh_Axle")
+
+[node name="LandA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, 0.045, 0.045)
+material_override = SubResource("Mat_land")
+mesh = SubResource("Mesh_LandA")
+
+[node name="LandB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, -0.02, 0.07)
+material_override = SubResource("Mat_land")
+mesh = SubResource("Mesh_LandB")
+
+[node name="LandC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, 0.06, -0.06)
+material_override = SubResource("Mat_land")
+mesh = SubResource("Mesh_LandC")
+
+[node name="LandD" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, -0.055)
+material_override = SubResource("Mat_land")
+mesh = SubResource("Mesh_LandD")

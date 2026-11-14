@@ -1,0 +1,120 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_case"]
+albedo_color = Color(0.3, 0.7, 0.72, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_face"]
+albedo_color = Color(0.95, 0.9, 0.78, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_hand"]
+albedo_color = Color(0.08, 0.07, 0.07, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_bell"]
+albedo_color = Color(0.9, 0.82, 0.55, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_Case"]
+top_radius = 0.06
+bottom_radius = 0.06
+height = 0.045
+
+[sub_resource type="CylinderShape3D" id="Shape_Case"]
+radius = 0.06
+height = 0.045
+
+[sub_resource type="CylinderMesh" id="Mesh_Face"]
+top_radius = 0.052
+bottom_radius = 0.052
+height = 0.004
+
+[sub_resource type="BoxMesh" id="Mesh_HourHand"]
+size = Vector3(0.006, 0.028, 0.003)
+
+[sub_resource type="BoxMesh" id="Mesh_MinuteHand"]
+size = Vector3(0.038, 0.005, 0.003)
+
+[sub_resource type="SphereMesh" id="Mesh_BellL"]
+radius = 0.024
+height = 0.024
+
+[sub_resource type="SphereMesh" id="Mesh_BellR"]
+radius = 0.024
+height = 0.024
+
+[sub_resource type="BoxMesh" id="Mesh_Hammer"]
+size = Vector3(0.006, 0.02, 0.006)
+
+[sub_resource type="SphereMesh" id="Mesh_FootL"]
+radius = 0.01
+height = 0.02
+
+[sub_resource type="SphereMesh" id="Mesh_FootR"]
+radius = 0.01
+height = 0.02
+
+[sub_resource type="BoxShape3D" id="Shape_Feet"]
+size = Vector3(0.08, 0.012, 0.03)
+
+[node name="AlarmClock" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.35
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.1
+impact_material = 4
+tint_variation = 0.4
+
+[node name="Case" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+material_override = SubResource("Mat_case")
+mesh = SubResource("Mesh_Case")
+
+[node name="CaseShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+shape = SubResource("Shape_Case")
+
+[node name="Face" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0.023)
+material_override = SubResource("Mat_face")
+mesh = SubResource("Mesh_Face")
+
+[node name="HourHand" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, 0.026)
+material_override = SubResource("Mat_hand")
+mesh = SubResource("Mesh_HourHand")
+
+[node name="MinuteHand" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.017, 0, 0.026)
+material_override = SubResource("Mat_hand")
+mesh = SubResource("Mesh_MinuteHand")
+
+[node name="BellL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -0.038, 0.058, 0)
+material_override = SubResource("Mat_bell")
+mesh = SubResource("Mesh_BellL")
+
+[node name="BellR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 0.038, 0.058, 0)
+material_override = SubResource("Mat_bell")
+mesh = SubResource("Mesh_BellR")
+
+[node name="Hammer" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.068, 0)
+material_override = SubResource("Mat_bell")
+mesh = SubResource("Mesh_Hammer")
+
+[node name="FootL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.035, -0.058, 0)
+material_override = SubResource("Mat_hand")
+mesh = SubResource("Mesh_FootL")
+
+[node name="FootR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.035, -0.058, 0)
+material_override = SubResource("Mat_hand")
+mesh = SubResource("Mesh_FootR")
+
+[node name="FeetShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.06, 0)
+shape = SubResource("Shape_Feet")

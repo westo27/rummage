@@ -1,0 +1,53 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_card"]
+albedo_color = Color(0.8, 0.5, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_lid"]
+albedo_color = Color(0.9, 0.62, 0.32, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_label"]
+albedo_color = Color(0.95, 0.9, 0.78, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Base"]
+size = Vector3(0.32, 0.11, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_Lid"]
+size = Vector3(0.33, 0.035, 0.21)
+
+[sub_resource type="BoxMesh" id="Mesh_Label"]
+size = Vector3(0.1, 0.035, 0.002)
+
+[sub_resource type="BoxShape3D" id="Shape_Whole"]
+size = Vector3(0.33, 0.13, 0.21)
+
+[node name="ShoeBox" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.4
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.2
+impact_material = 1
+tint_variation = 0.4
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+material_override = SubResource("Mat_card")
+mesh = SubResource("Mesh_Base")
+
+[node name="Lid" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0475, 0)
+material_override = SubResource("Mat_lid")
+mesh = SubResource("Mesh_Lid")
+
+[node name="Label" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, -0.015, 0.101)
+material_override = SubResource("Mat_label")
+mesh = SubResource("Mesh_Label")
+
+[node name="WholeShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("Shape_Whole")

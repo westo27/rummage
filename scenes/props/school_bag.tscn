@@ -1,0 +1,105 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_canvas"]
+albedo_color = Color(0.22, 0.3, 0.55, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_pocket"]
+albedo_color = Color(0.32, 0.45, 0.72, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_strap"]
+albedo_color = Color(0.15, 0.15, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_zip"]
+albedo_color = Color(0.95, 0.75, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Main"]
+size = Vector3(0.3, 0.36, 0.14)
+
+[sub_resource type="BoxShape3D" id="Shape_Main"]
+size = Vector3(0.3, 0.36, 0.14)
+
+[sub_resource type="CapsuleMesh" id="Mesh_Top"]
+radius = 0.07
+height = 0.3
+
+[sub_resource type="BoxMesh" id="Mesh_Pocket"]
+size = Vector3(0.22, 0.16, 0.05)
+
+[sub_resource type="BoxShape3D" id="Shape_Pocket"]
+size = Vector3(0.22, 0.16, 0.05)
+
+[sub_resource type="BoxMesh" id="Mesh_Zip"]
+size = Vector3(0.18, 0.008, 0.008)
+
+[sub_resource type="CapsuleMesh" id="Mesh_Handle"]
+radius = 0.012
+height = 0.1
+
+[sub_resource type="BoxMesh" id="Mesh_StrapL"]
+size = Vector3(0.04, 0.32, 0.015)
+
+[sub_resource type="BoxMesh" id="Mesh_StrapR"]
+size = Vector3(0.04, 0.32, 0.015)
+
+[sub_resource type="CapsuleShape3D" id="Shape_TopShape"]
+radius = 0.07
+height = 0.3
+
+[node name="SchoolBag" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 1.8
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.22
+impact_material = 2
+tint_variation = 0.5
+
+[node name="Main" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+material_override = SubResource("Mat_canvas")
+mesh = SubResource("Mesh_Main")
+
+[node name="MainShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+shape = SubResource("Shape_Main")
+
+[node name="Top" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.17, 0)
+material_override = SubResource("Mat_canvas")
+mesh = SubResource("Mesh_Top")
+
+[node name="Pocket" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.09, 0.09)
+material_override = SubResource("Mat_pocket")
+mesh = SubResource("Mesh_Pocket")
+
+[node name="PocketShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.09, 0.09)
+shape = SubResource("Shape_Pocket")
+
+[node name="Zip" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0.116)
+material_override = SubResource("Mat_zip")
+mesh = SubResource("Mesh_Zip")
+
+[node name="Handle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.245, 0)
+material_override = SubResource("Mat_strap")
+mesh = SubResource("Mesh_Handle")
+
+[node name="StrapL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, 0, -0.077)
+material_override = SubResource("Mat_strap")
+mesh = SubResource("Mesh_StrapL")
+
+[node name="StrapR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08, 0, -0.077)
+material_override = SubResource("Mat_strap")
+mesh = SubResource("Mesh_StrapR")
+
+[node name="TopShapeShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.17, 0)
+shape = SubResource("Shape_TopShape")

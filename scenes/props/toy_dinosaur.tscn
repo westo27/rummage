@@ -1,0 +1,180 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_skin"]
+albedo_color = Color(0.4, 0.72, 0.35, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_belly"]
+albedo_color = Color(0.85, 0.88, 0.55, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_eye"]
+albedo_color = Color(0.08, 0.07, 0.07, 1)
+
+[sub_resource type="CapsuleMesh" id="Mesh_Body"]
+radius = 0.06
+height = 0.2
+
+[sub_resource type="CapsuleShape3D" id="Shape_Body"]
+radius = 0.06
+height = 0.2
+
+[sub_resource type="CapsuleMesh" id="Mesh_Belly"]
+radius = 0.045
+height = 0.15
+
+[sub_resource type="CylinderMesh" id="Mesh_Neck"]
+top_radius = 0.028
+bottom_radius = 0.038
+height = 0.1
+
+[sub_resource type="CapsuleMesh" id="Mesh_Head"]
+radius = 0.038
+height = 0.1
+
+[sub_resource type="CapsuleShape3D" id="Shape_Head"]
+radius = 0.038
+height = 0.1
+
+[sub_resource type="SphereMesh" id="Mesh_EyeL"]
+radius = 0.008
+height = 0.016
+
+[sub_resource type="SphereMesh" id="Mesh_EyeR"]
+radius = 0.008
+height = 0.016
+
+[sub_resource type="CylinderMesh" id="Mesh_Tail"]
+top_radius = 0.006
+bottom_radius = 0.045
+height = 0.17
+
+[sub_resource type="CylinderMesh" id="Mesh_LegFL"]
+top_radius = 0.022
+bottom_radius = 0.022
+height = 0.06
+
+[sub_resource type="CylinderMesh" id="Mesh_LegFR"]
+top_radius = 0.022
+bottom_radius = 0.022
+height = 0.06
+
+[sub_resource type="CylinderMesh" id="Mesh_LegBL"]
+top_radius = 0.024
+bottom_radius = 0.024
+height = 0.06
+
+[sub_resource type="CylinderMesh" id="Mesh_LegBR"]
+top_radius = 0.024
+bottom_radius = 0.024
+height = 0.06
+
+[sub_resource type="CylinderMesh" id="Mesh_Spike1"]
+top_radius = 0
+bottom_radius = 0.016
+height = 0.03
+
+[sub_resource type="CylinderMesh" id="Mesh_Spike2"]
+top_radius = 0
+bottom_radius = 0.018
+height = 0.034
+
+[sub_resource type="CylinderMesh" id="Mesh_Spike3"]
+top_radius = 0
+bottom_radius = 0.016
+height = 0.03
+
+[sub_resource type="BoxShape3D" id="Shape_Legs"]
+size = Vector3(0.14, 0.03, 0.09)
+
+[node name="ToyDinosaur" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.4
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.18
+impact_material = 4
+tint_variation = 0.4
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_Body")
+
+[node name="BodyShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("Shape_Body")
+
+[node name="Belly" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.018, 0)
+material_override = SubResource("Mat_belly")
+mesh = SubResource("Mesh_Belly")
+
+[node name="Neck" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.7071, 0.7071, 0, -0.7071, 0.7071, 0, 0, 0, 1, 0.1, 0.06, 0)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_Neck")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.155, 0.11, 0)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_Head")
+
+[node name="HeadShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.155, 0.11, 0)
+shape = SubResource("Shape_Head")
+
+[node name="EyeL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17, 0.13, 0.032)
+material_override = SubResource("Mat_eye")
+mesh = SubResource("Mesh_EyeL")
+
+[node name="EyeR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17, 0.13, -0.032)
+material_override = SubResource("Mat_eye")
+mesh = SubResource("Mesh_EyeR")
+
+[node name="Tail" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.1736, -0.9848, 0, 0.9848, 0.1736, 0, 0, 0, 1, -0.16, 0.005, 0)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_Tail")
+
+[node name="LegFL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.065, 0.035)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_LegFL")
+
+[node name="LegFR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.065, -0.035)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_LegFR")
+
+[node name="LegBL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, -0.065, 0.035)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_LegBL")
+
+[node name="LegBR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, -0.065, -0.035)
+material_override = SubResource("Mat_skin")
+mesh = SubResource("Mesh_LegBR")
+
+[node name="Spike1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.062, 0)
+material_override = SubResource("Mat_belly")
+mesh = SubResource("Mesh_Spike1")
+
+[node name="Spike2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.066, 0)
+material_override = SubResource("Mat_belly")
+mesh = SubResource("Mesh_Spike2")
+
+[node name="Spike3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.062, 0)
+material_override = SubResource("Mat_belly")
+mesh = SubResource("Mesh_Spike3")
+
+[node name="LegsShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0)
+shape = SubResource("Shape_Legs")

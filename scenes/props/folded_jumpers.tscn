@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_a"]
+albedo_color = Color(0.75, 0.3, 0.35, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_b"]
+albedo_color = Color(0.95, 0.85, 0.55, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_c"]
+albedo_color = Color(0.3, 0.55, 0.6, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_JumperA"]
+size = Vector3(0.3, 0.05, 0.24)
+
+[sub_resource type="BoxMesh" id="Mesh_JumperB"]
+size = Vector3(0.29, 0.05, 0.23)
+
+[sub_resource type="BoxMesh" id="Mesh_JumperC"]
+size = Vector3(0.28, 0.05, 0.22)
+
+[sub_resource type="BoxShape3D" id="Shape_Stack"]
+size = Vector3(0.3, 0.15, 0.24)
+
+[node name="FoldedJumpers" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.6
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.18
+impact_material = 2
+
+[node name="JumperA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+material_override = SubResource("Mat_a")
+mesh = SubResource("Mesh_JumperA")
+
+[node name="JumperB" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9986, 0, 0.0523, 0, 1, 0, -0.0523, 0, 0.9986, 0.006, 0, -0.004)
+material_override = SubResource("Mat_b")
+mesh = SubResource("Mesh_JumperB")
+
+[node name="JumperC" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9976, 0, -0.0698, 0, 1, 0, 0.0698, 0, 0.9976, -0.005, 0.05, 0.004)
+material_override = SubResource("Mat_c")
+mesh = SubResource("Mesh_JumperC")
+
+[node name="StackShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("Shape_Stack")

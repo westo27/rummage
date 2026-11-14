@@ -1,0 +1,119 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_paint"]
+albedo_color = Color(0.85, 0.2, 0.15, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_glass"]
+albedo_color = Color(0.55, 0.75, 0.9, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_tyre"]
+albedo_color = Color(0.08, 0.07, 0.07, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_hub"]
+albedo_color = Color(0.95, 0.9, 0.78, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Body"]
+size = Vector3(0.22, 0.055, 0.11)
+
+[sub_resource type="BoxMesh" id="Mesh_Cabin"]
+size = Vector3(0.11, 0.05, 0.095)
+
+[sub_resource type="BoxMesh" id="Mesh_Roof"]
+size = Vector3(0.115, 0.012, 0.1)
+
+[sub_resource type="CylinderMesh" id="Mesh_WheelFL"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 0.022
+
+[sub_resource type="CylinderMesh" id="Mesh_WheelFR"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 0.022
+
+[sub_resource type="CylinderMesh" id="Mesh_WheelBL"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 0.022
+
+[sub_resource type="CylinderMesh" id="Mesh_WheelBR"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 0.022
+
+[sub_resource type="BoxMesh" id="Mesh_LampL"]
+size = Vector3(0.006, 0.014, 0.022)
+
+[sub_resource type="BoxMesh" id="Mesh_LampR"]
+size = Vector3(0.006, 0.014, 0.022)
+
+[sub_resource type="BoxShape3D" id="Shape_Hull"]
+size = Vector3(0.22, 0.09, 0.12)
+
+[sub_resource type="BoxShape3D" id="Shape_Top"]
+size = Vector3(0.115, 0.06, 0.1)
+
+[node name="ToyCar" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.35
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.13
+impact_material = 4
+tint_variation = 0.5
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.005, 0)
+material_override = SubResource("Mat_paint")
+mesh = SubResource("Mesh_Body")
+
+[node name="Cabin" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0.045, 0)
+material_override = SubResource("Mat_glass")
+mesh = SubResource("Mesh_Cabin")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0.075, 0)
+material_override = SubResource("Mat_paint")
+mesh = SubResource("Mesh_Roof")
+
+[node name="WheelFL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.065, -0.03, 0.05)
+material_override = SubResource("Mat_tyre")
+mesh = SubResource("Mesh_WheelFL")
+
+[node name="WheelFR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.065, -0.03, -0.05)
+material_override = SubResource("Mat_tyre")
+mesh = SubResource("Mesh_WheelFR")
+
+[node name="WheelBL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.065, -0.03, 0.05)
+material_override = SubResource("Mat_tyre")
+mesh = SubResource("Mesh_WheelBL")
+
+[node name="WheelBR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.065, -0.03, -0.05)
+material_override = SubResource("Mat_tyre")
+mesh = SubResource("Mesh_WheelBR")
+
+[node name="LampL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.111, 0, 0.032)
+material_override = SubResource("Mat_hub")
+mesh = SubResource("Mesh_LampL")
+
+[node name="LampR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.111, 0, -0.032)
+material_override = SubResource("Mat_hub")
+mesh = SubResource("Mesh_LampR")
+
+[node name="HullShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.015, 0)
+shape = SubResource("Shape_Hull")
+
+[node name="TopShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0.05, 0)
+shape = SubResource("Shape_Top")

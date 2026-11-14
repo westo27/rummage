@@ -45,7 +45,7 @@ func _run() -> void:
 
 	# The lamp, swinging after a book is thrown at it.
 	var book := main.get_node("MainRoomProps/ShelfBook02") as Prop
-	book.global_position = Vector3(0.0, 2.27, 1.5)
+	book.global_position = Vector3(2.6, 2.27, 1.35)
 	book.linear_velocity = Vector3(1.0, 0.0, -12.0)
 	book.sleeping = false
 	book.reset_physics_interpolation()
@@ -87,13 +87,15 @@ func _run() -> void:
 	var beam := main.get_node("Player/Head/Camera3D/Beam") as Beam
 	var head := player.get_node("Head") as Node3D
 	var crate := main.get_node("MainRoomProps/CrateA") as Prop
-	player.global_position = Vector3(2.5, 0.05, 0.9)
+	crate.global_position = Vector3(3.0, 0.3, -0.6)  # out on the open bedroom floor
+	await get_tree().create_timer(0.4).timeout
+	player.global_position = Vector3(3.0, 0.05, 1.5)
 	player.reset_physics_interpolation()
 	_look(player, head, crate.global_position + Vector3(0.0, 0.3, 0.0))
 	await _frames(3)
 	beam._grab_armed = true
 	beam._grab(crate, crate.global_position + Vector3(0.0, 0.3, 0.0))
-	_look(player, head, Vector3(2.3, 1.0, -1.0))
+	_look(player, head, Vector3(2.8, 1.0, -0.1))
 	await get_tree().create_timer(0.8).timeout
 	_shoot("beam_hold")
 	if beam.held != null:
@@ -102,7 +104,7 @@ func _run() -> void:
 	# (a pillow) on the way to the bed.
 	beam._grab_armed = false
 	var bed := main.get_node("MainRoomProps/Bed") as Prop
-	player.global_position = Vector3(0.3, 0.05, -2.0)
+	player.global_position = Vector3(2.85, 0.05, 0.75)
 	player.reset_physics_interpolation()
 	_look(player, head, bed.global_position + Vector3(0.3, 0.2, 0.0))
 	await _frames(3)

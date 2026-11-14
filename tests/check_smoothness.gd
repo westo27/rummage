@@ -30,8 +30,13 @@ func _ready() -> void:
 
 func _run() -> void:
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	# An empty bedroom with one crate in it: room to strafe across.
 	_main.get_node("MainRoomCreatures").free()
+	_main.get_node("MainRoomProps").free()
 	get_tree().root.add_child(_main)
+	var crate := (load("res://scenes/props/crate.tscn") as PackedScene).instantiate() as Prop
+	_main.add_child(crate)
+	crate.global_position = Vector3(4.6, 0.3, -0.9)
 	_player = _main.get_node("Player")
 	_camera = _main.get_node("Player/Head/Camera3D")
 	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
@@ -39,8 +44,7 @@ func _run() -> void:
 	await _wait_physics(0.5)
 
 	# Grab a crate so we can watch a held object too.
-	var crate: Prop = _main.get_node("MainRoomProps/CrateF")  # (3.8, 0.3, 0.8)
-	_player.global_position = Vector3(3.8, 0.05, 3.0)
+	_player.global_position = Vector3(4.6, 0.05, 1.3)
 	_player.rotation.y = 0.0
 	(_player.get_node("Head") as Node3D).rotation.x = -0.45
 	await _wait_physics(0.1)
@@ -51,11 +55,11 @@ func _run() -> void:
 
 	# Walk sideways (strafe) while recording every rendered frame.
 	Input.action_press("move_left")
-	await _wait_physics(0.3)
+	await _wait_physics(0.2)
 	_cam_last = _rendered_camera_pos()
 	_obj_last = _rendered_object_pos()
 	_recording = true
-	await _wait_physics(1.0)
+	await _wait_physics(0.6)
 	_recording = false
 	Input.action_release("move_left")
 

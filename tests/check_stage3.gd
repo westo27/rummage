@@ -52,9 +52,18 @@ func _run() -> void:
 	_check("its eyes glint as it gives itself away", shy._eyes.is_glinting(), "")
 
 	# --- Lifting a crate reveals what's under it; it flees away from the player ---
-	var crate: Prop = _props.get_node("CrateA")  # (2.5, 0.3, -1.5)
+	# The creature will run west into the playroom; park the play table in the
+	# box room so it doesn't run under it and out of sight.
+	var table := _props.get_node("Table") as RigidBody3D
+	table.global_position = Vector3(6.8, 0.39, 0.0)
+	# Crate and creature move together to the bedroom floor, lined up with the
+	# doorway so the creature has a long run west into the playroom.
+	var crate: Prop = _props.get_node("CrateA")
 	var under: Creature = _creatures.get_node("UnderCrateA")
-	_player.global_position = Vector3(2.5, 0.05, 0.5)
+	crate.global_position = Vector3(2.0, 0.3, -0.3)
+	under.global_position = Vector3(2.0, 0.09, -0.3)
+	under._covers = {crate: crate.global_transform}
+	_player.global_position = Vector3(3.9, 0.05, -0.3)
 	_aim_at(crate.global_position)
 	await _wait(0.1)
 	var start_gap: float = _flat_distance(under.global_position, _player.global_position)
@@ -64,7 +73,7 @@ func _run() -> void:
 	_check("found, its eyes go wide (or already squint cheekily)",
 		under._eyes.mood in [CreatureEyes.Mood.WIDE, CreatureEyes.Mood.SQUINT], "mood=%s" % under._eyes.mood)
 	_check("revealed creature can be aimed at", under._pick_zone.collision_layer == 8, "")
-	_aim_at(Vector3(2.5, 2.0, -1.5))  # lift the crate up out of the way
+	_aim_at(Vector3(2.0, 2.0, -0.3))  # lift the crate up out of the way
 	# Watch its "up" while it runs: rolling like a marble tips it right over.
 	var most_tipped: float = 0.0
 	var most_glanced: float = 0.0
@@ -105,10 +114,13 @@ func _run() -> void:
 	_check("capture didn't grab the crate behind it", _beam.held == null, "held=%s" % _beam.held)
 
 	# --- Chaos reveals: a thrown book hitting a crate scares out its creature ---
-	var crate_b: Prop = _props.get_node("CrateB")  # (-3.0, 0.3, 2.5)
-	var under_b: Creature = _creatures.get_node("UnderCrateB")
-	var book: Prop = _props.get_node("FloorPileB_4")  # top of pile at (-3.8, ~0.16, 3.8)
-	book.global_position = Vector3(-3.0, 0.4, 3.6)
+	var crate_b: Prop = _props.get_node("CrateD")  # bottom of the stack in the playroom's corner
+	var under_b: Creature = _creatures.get_node("UnderCrateD")
+	var book: Prop = _props.get_node("FloorPileB_4")
+	# Take the top crate off the stack first, so the knock isn't damped by its weight.
+	_props.get_node("CrateE").global_position = Vector3(3.0, 0.3, 0.6)
+	await _wait(0.2)
+	book.global_position = crate_b.global_position + Vector3(0, 0.1, 0.85)
 	book.linear_velocity = Vector3(0, 0, -8.0)
 	await _wait(0.6)
 	_check("thrown book knocking a crate reveals its creature", under_b.state != Creature.State.HIDDEN,
@@ -122,7 +134,7 @@ func _run() -> void:
 	await _wait(Game.tune.flee_time_max + Game.tune.seek_time + 0.5)
 	_check("fled creature ends up cowering", under_b.state == Creature.State.COWERING, "state=%s" % under_b.state)
 	var p: Vector3 = under_b.global_position
-	_check("cowering creature is inside the room", absf(p.x) < 6.0 and absf(p.z) < 5.0 and p.y > -0.05,
+	_check("cowering creature is inside the playroom", p.x > -5.1 and p.x < -0.1 and absf(p.z) < 2.25 and p.y > -0.05,
 		"pos=%s" % p)
 	_check("cowering creature is still catchable", under_b._pick_zone.collision_layer == 8, "")
 
@@ -130,7 +142,7 @@ func _run() -> void:
 	_player.global_position = p + _flat_dir(p) * 0.9
 	await _wait(0.3)
 	_check("approaching a cowering creature makes it bolt", under_b.state == Creature.State.FLEEING, "state=%s" % under_b.state)
-	_player.global_position = Vector3(0, 0.05, 3.5)
+	_player.global_position = Vector3(-2.6, 0.05, 1.5)
 
 	# --- Pulling a book off the shelf reveals the creature behind it ---
 	var shelf_creature: Creature = _creatures.get_node("BehindBooks3")  # shelf at 0.64, first cluster
@@ -146,12 +158,12 @@ func _run() -> void:
 	# --- Bed creatures ignore knocks; only moving the bed reveals them ---
 	var bed: Prop = _props.get_node("Bed")
 	var bed_creature: Creature = _creatures.get_node("UnderBed2")
-	var crate_f: Prop = _props.get_node("CrateF")
-	crate_f.global_position = Vector3(-0.23, 0.35, -3.2)
+	var crate_f: Prop = _props.get_node("CrateE")
+	crate_f.global_position = Vector3(2.32, 0.35, -0.45)
 	crate_f.linear_velocity = Vector3(0, 0, -7.0)
 	await _wait(0.8)
 	_check("a crate thrown at the bed doesn't reveal bed creatures", _count_under_bed_hidden() == 4,
-		"%d of 4 still hidden; bed moved %.3f m" % [_count_under_bed_hidden(), bed.global_position.distance_to(Vector3(0, 0.302, -4.5))])
+		"%d of 4 still hidden; bed moved %.3f m" % [_count_under_bed_hidden(), bed.global_position.distance_to(Vector3(2.55, 0.302, -1.75))])
 
 	# --- Aim priority: creature at the bed's edge, crosshair on the bed ---
 	var edge: Creature = _creatures.get_node("UnderBin01")
@@ -159,9 +171,9 @@ func _run() -> void:
 	await get_tree().physics_frame
 	edge.state = Creature.State.COWERING  # hold it still for the test
 	edge.velocity = Vector3.ZERO
-	edge.global_position = Vector3(1.5, 0.09, -3.95)  # just in front of the bed's front face (z=-4.02)
-	_player.global_position = Vector3(1.5, 0.05, -1.5)
-	_aim_at(Vector3(1.5, 0.3, -4.06))  # a spot on the bed itself
+	edge.global_position = Vector3(4.05, 0.09, -1.2)  # just in front of the bed's front face (z=-1.27)
+	_player.global_position = Vector3(4.05, 0.05, 1.25)
+	_aim_at(Vector3(4.05, 0.3, -1.31))  # a spot on the bed itself
 	await _wait(0.05)
 	_check("creature beside the bed wins the aim over the bed", _beam._state == Beam.AimState.CREATURE,
 		"state=%s" % _beam._state)
@@ -169,14 +181,14 @@ func _run() -> void:
 	# --- Gate arithmetic from the tunables ---
 	var start: float = Game.tune.start_lift_limit
 	var per: float = Game.tune.lift_per_capture
-	_check("bed (60 kg) needs 14 of 21 caught", start + per * 13 < 60.0 and start + per * 14 >= 60.0,
+	_check("bed (60 kg) needs 14 caught", start + per * 13 < 60.0 and start + per * 14 >= 60.0,
 		"13 -> %.0f kg, 14 -> %.0f kg" % [start + per * 13, start + per * 14])
-	_check("wardrobe (80 kg) needs 19 of 21 caught", start + per * 18 < 80.0 and start + per * 19 >= 80.0,
+	_check("wardrobe (80 kg) needs 19 caught", start + per * 18 < 80.0 and start + per * 19 >= 80.0,
 		"18 -> %.0f kg, 19 -> %.0f kg" % [start + per * 18, start + per * 19])
 
 	# --- Cowering: a happy bounce, not a shiver, and it rolls upright to look at you ---
-	var cower: Creature = _creatures.get_node("UnderBin09")
-	_player.global_position = cower.global_position + Vector3(0, 0, 3.0)
+	var cower: Creature = _creatures.get_node("UnderBin03")
+	_player.global_position = cower.global_position + Vector3(-2.0, 0, 0)
 	_player.reset_physics_interpolation()
 	cower._visual.basis = Basis(Vector3.RIGHT, 2.0)  # as if it stopped mid-roll
 	cower._start_cowering()
@@ -237,9 +249,9 @@ func _flat_distance(a: Vector3, b: Vector3) -> float:
 	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
-## Unit direction from p toward the room centre, flattened.
+## Unit direction from p toward the playroom's centre, flattened.
 func _flat_dir(p: Vector3) -> Vector3:
-	var d := Vector3(-p.x, 0, -p.z)
+	var d := Vector3(-2.6 - p.x, 0, -p.z)
 	return d.normalized() if d.length() > 0.01 else Vector3.FORWARD
 
 

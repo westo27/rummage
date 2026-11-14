@@ -15,20 +15,21 @@ restarts at any time.
 Title  scenes/title.tscn (scripts/title_screen.gd: Play, Settings, Quit)
 
 Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
-├─ WorldEnvironment, LightMain, LightSide
-├─ House
-│  ├─ Walls        CSGCombiner3D: both rooms' walls/ceiling and the doorway hole
-│  ├─ FloorMain    CSGBox3D
-│  └─ FloorSide    CSGBox3D
+├─ WorldEnvironment, Moonlight
+├─ House           three rooms in a row, west to east (see "The house")
+│  ├─ Walls        CSGCombiner3D: walls/ceiling, both doorways, window, cubbies
+│  ├─ FloorPlayroom, FloorBedroom, FloorBoxRoom   CSGBox3D
+│  ├─ LandingDoor  a closed door (meshes only) behind where you start
+│  └─ LampPlayroom, LampMain (bedroom), LampSide (box room), a ReflectionProbe each
 ├─ Player          scenes/player.tscn  (scripts/player.gd: move, look, kick clutter)
 │  ├─ CollisionShape3D  capsule
 │  └─ Head              pitch (up/down); the body itself does yaw (left/right)
 │     └─ Camera3D       top_level, placed by player.gd every frame (see "Smoothness")
 │        └─ Beam        scripts/beam.gd: aim, grab, hold, throw, lift limit, catch
 │           └─ BeamMesh the curved beam ribbon, rebuilt each frame
-├─ MainRoomProps        scenes/main_room_props.tscn: positions of every prop
-├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures
-├─ SideRoomProps        scenes/side_room_props.tscn
+├─ MainRoomProps        scenes/main_room_props.tscn: playroom and bedroom props
+├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (13 playroom, 8 bedroom)
+├─ SideRoomProps        scenes/side_room_props.tscn: the box room
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
 ├─ HUD                  scenes/hud.tscn (scripts/hud.gd, scripts/crosshair.gd)
@@ -246,13 +247,31 @@ its light onto the room, and a cosy bloom over everything.
   Intensity 0.8 to 0.5, Glow > Bloom (a haze over everything) 0.08 to 0,
   and the beam, its contact glow and its lights to about two thirds.
 
+## The house
+
+Three real-size rooms (the old 12 × 10 m room didn't read
+as a real room). Ceilings stay 3 m. Plan: `tests/shoot_rooms.tscn` renders
+each room (needs a window).
+- **Playroom** (x -5.1..-0.1, 5 × 4.5 m), where you start, in front of the
+  closed landing door: toy-box crates (a stacked pair in the north-west
+  corner), the bookcase on the west wall, a beanbag, the play table on the
+  rug over the trapdoor, a small box stack, two bins. Planks.
+- **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a doorway at z=0: the bed
+  under the window, bedside table, chest of drawers, the wardrobe in front
+  of the box-room door, a desk and chair, a laundry bin. Teal carpet.
+- **Box room** (x 5.3..8.3, 3 × 2.8 m) behind the wardrobe.
+- The "main room" layout files hold the playroom and bedroom together; the
+  "side room" ones are the box room.
+- New props: `desk.tscn` (10 kg), `chair.tscn` (3 kg), `chest_of_drawers.tscn`
+  (20 kg, drawers are painted on), `beanbag.tscn` (2 kg).
+
 ## The room's look: cosy, up past bedtime
 
 Your direction: the bright colours and bloom of mid-2000s console games,
 warm cream and citrus, lamp light, and above all cosy, "as if you're a
 child up past your bedtime". So it's night.
 
-- **The main room is a child's bedroom.** The bed under the window took the
+- **The bedroom.** The bed under the window took the
   sofa's place and its job (60 kg gate, four creatures underneath), with
   two pillows and a bedside table. The table's lamp is its own 1.2 kg
   prop (`bedside_lamp.tscn`, a shadowless glow). The table's drawer is a
@@ -339,8 +358,8 @@ they're look rather than feel: the shudder amount (prop.gd), the beam ribbon
 width (beam.gd), the creature pick radius (`PickZone` in creature.tscn, 0.25 m).
 
 **You start weak: 4 kg, plus 4 kg per catch** (Grace's playtest: work up to
-it). At first only books, balls, bins, pillows and small boxes lift. With 21
-creatures in the main room:
+it). At first only books, balls, bins, pillows and small boxes lift. 15
+creatures are catchable before the bed, 19 before the wardrobe:
 - crates, the table and the bedside table unlock at **1** catch (8 kg), the
   bookcase at **2** (12 kg)
 - the 60 kg **bed** unlocks at **14** catches (exactly 60 kg)
@@ -459,7 +478,7 @@ can't drag it off the doorway before its gate.
 ## Pictures
 
 Three framed pictures (`picture.tscn`, `shaders/picture.gdshader`, `art`
-0-2) hang frozen on the main room's walls until the beam takes them down.
+0-2) hang frozen on the walls (playroom west and north, bedroom south) until the beam takes them down.
 Two cover cubby holes cut in the wall (CubbyWest / CubbySouth, CSG
 subtractions in main.tscn): one hides a creature (BehindPicture, moved from
 under a bin, so the count is unchanged), the other two toy blocks. A hidden
@@ -541,4 +560,4 @@ the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
   can't be skipped by pelting the bed), but a book slid *under* the bed can
   still startle them.
 - The bed and wardrobe can't tip over until they've been lifted once.
-- If a creature falls out of the world it reappears in the middle of the main room.
+- If a creature falls out of the world it reappears in the playroom–bedroom doorway.

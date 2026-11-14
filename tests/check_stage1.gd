@@ -36,36 +36,45 @@ func _run() -> void:
 		"vy=%.2f expected about %.2f" % [ball.linear_velocity.y, expected])
 	ball.queue_free()
 
-	var start_z: float = player.global_position.z
+	# Speed runs go east along the playroom's long side, from its west wall.
+	player.global_position = Vector3(-4.6, 0.05, 0.0)
+	player.rotation.y = -PI / 2.0  # face +X
+	await _wait(0.2)
+	var start_x: float = player.global_position.x
 	Input.action_press("move_forward")
 	await _wait(0.5)
 	Input.action_release("move_forward")
-	var walked: float = start_z - player.global_position.z
+	var walked: float = player.global_position.x - start_x
 	_check("walks forward at about 4.5 m/s", absf(walked - 2.25) < 0.3, "moved %.2f m in 0.5 s" % walked)
 
-	start_z = player.global_position.z
+	player.global_position = Vector3(-4.6, 0.05, 0.0)
+	await _wait(0.2)
+	start_x = player.global_position.x
 	Input.action_press("move_forward")
 	Input.action_press("run")
 	await _wait(0.5)
 	Input.action_release("move_forward")
 	Input.action_release("run")
-	walked = start_z - player.global_position.z
+	walked = player.global_position.x - start_x
 	_check("runs at about 7.5 m/s", absf(walked - 3.75) < 0.3, "moved %.2f m in 0.5 s" % walked)
 
+	player.global_position = Vector3(-2.6, 0.05, 1.5)
+	player.rotation.y = 0.0  # face -Z (north)
+	await _wait(0.2)
 	Input.action_press("move_forward")
 	await _wait(2.0)
 	Input.action_release("move_forward")
-	_check("north wall stops the player", player.global_position.z > -5.0,
-		"z=%.2f (wall inner face at -5)" % player.global_position.z)
+	_check("north wall stops the player", player.global_position.z > -2.25,
+		"z=%.2f (wall inner face at -2.25)" % player.global_position.z)
 
-	# Walk east through the doorway into the side room (doorway is at z=0, x=6).
-	player.global_position = Vector3(4.5, 0.05, 0.0)
+	# Walk east through both doorways (both at z=0): playroom, bedroom, box room.
+	player.global_position = Vector3(-1.0, 0.05, 0.0)
 	player.rotation.y = -PI / 2.0  # face +X
 	await _wait(0.2)
 	Input.action_press("move_forward")
-	await _wait(1.5)
+	await _wait(2.0)
 	Input.action_release("move_forward")
-	_check("doorway leads into side room", player.global_position.x > 7.0,
+	_check("doorways lead through to the box room", player.global_position.x > 5.5,
 		"x=%.2f" % player.global_position.x)
 
 	player.global_position = Vector3(0, -20, 0)

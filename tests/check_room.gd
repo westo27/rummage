@@ -23,13 +23,13 @@ func _run() -> void:
 
 	# --- A ball flung at the window stays in the room ---
 	var ball: Prop = _main.get_node("MainRoomProps/BallFloor")
-	ball.global_position = Vector3(0.0, 1.75, -3.5)
+	ball.global_position = Vector3(2.6, 1.75, -1.2)  # above the bed, in front of the window
 	ball.linear_velocity = Vector3(0.0, 0.0, -15.0)  # straight at the window, hard
 	ball.sleeping = false
 	ball.reset_physics_interpolation()
 	await _wait(1.5)
 	_check("a ball thrown at the window bounces back into the room",
-		ball.global_position.z > -5.0, "z = %.2f (wall at -5)" % ball.global_position.z)
+		ball.global_position.z > -2.25, "z = %.2f (wall at -2.25)" % ball.global_position.z)
 
 	# --- Props are glossy ---
 	var crate_mesh := _main.get_node("MainRoomProps/CrateA").get_child(0) as MeshInstance3D
@@ -83,7 +83,7 @@ func _run() -> void:
 	_check("the wardrobe doors start shut", wardrobe.door_angle("DoorA") < 0.05 and wardrobe.door_angle("DoorB") < 0.05,
 		"%.2f, %.2f rad" % [wardrobe.door_angle("DoorA"), wardrobe.door_angle("DoorB")])
 	_check("a creature hides inside", hidden_inside.state == Creature.State.HIDDEN, "")
-	player.global_position = Vector3(4.4, 0.05, -0.5)
+	player.global_position = Vector3(3.5, 0.05, -0.5)
 	player.reset_physics_interpolation()
 	var handle: Vector3 = door.global_position + Vector3(0, 0, 0.3)  # near its free edge
 	var head := player.get_node("Head") as Node3D
@@ -110,7 +110,7 @@ func _run() -> void:
 	# --- You can't catch a creature you can't see: the shut door hides it ---
 	var behind_door := _main.get_node("MainRoomCreatures/InWardrobe2") as Creature
 	behind_door._set_catchable(true)  # as if it had been uncovered and hid in there
-	player.global_position = Vector3(4.4, 0.05, 0.45)
+	player.global_position = Vector3(3.5, 0.05, 0.45)
 	player.reset_physics_interpolation()
 	look = (behind_door.global_position - head.global_position).normalized()
 	player.rotation.y = atan2(-look.x, -look.z)
@@ -131,7 +131,7 @@ func _run() -> void:
 	_check("the creature waits in the hole behind it", behind.state == Creature.State.HIDDEN
 		and absf(behind.global_position.y - 1.422) < 0.01, "y=%.3f" % behind.global_position.y)
 	_check("toy blocks sit in the other hole", block_in_cubby.global_position.y > 1.3, "y=%.3f" % block_in_cubby.global_position.y)
-	player.global_position = Vector3(-4.6, 0.05, 2.0)
+	player.global_position = Vector3(-3.55, 0.05, 1.5)
 	player.reset_physics_interpolation()
 	look = (picture.global_position - head.global_position).normalized()
 	player.rotation.y = atan2(-look.x, -look.z)
@@ -143,7 +143,7 @@ func _run() -> void:
 		player.global_position.x += 0.03
 		await get_tree().physics_frame
 	await _wait(0.3)
-	_check("the beam takes the picture down", beam.held == picture and picture.global_position.x > -5.8,
+	_check("the beam takes the picture down", beam.held == picture and picture.global_position.x > -4.9,
 		"x=%.2f" % picture.global_position.x)
 	_check("which reveals the creature behind it", behind.state != Creature.State.HIDDEN, "state=%s" % behind.state)
 	beam._release()
@@ -157,9 +157,10 @@ func _run() -> void:
 	_check("the table stands on the rug", Vector2(table_at.x - rug.centre().x, table_at.z - rug.centre().z).length() < 0.1, "")
 	_check("the trapdoor is under the rug", absf(trapdoor.global_position.x - rug.centre().x) < 1.5
 		and absf(trapdoor.global_position.z - rug.centre().z) < 1.0, "")
-	player.global_position = Vector3(3.4, 0.05, 1.3)
+	# From the doorway to the bedroom, looking at the rug's east edge.
+	player.global_position = Vector3(0.1, 0.05, -0.05)
 	player.reset_physics_interpolation()
-	var rug_edge: Vector3 = Vector3(1.7, 0.006, 1.3)
+	var rug_edge: Vector3 = Vector3(-1.6, 0.006, -0.05)
 	look = (rug_edge - head.global_position).normalized()
 	player.rotation.y = atan2(-look.x, -look.z)
 	head.rotation.x = asin(look.y)
@@ -168,7 +169,7 @@ func _run() -> void:
 	_check("aiming at the cloth offers its grip", beam._find_aimed_prop() == rug.grip, "got %s" % beam._find_aimed_prop())
 	_check("but not while the table stands on it", not beam._can_lift(rug.grip)
 		and beam._refusal(rug.grip) == "SOMETHING'S ON IT", beam._refusal(rug.grip))
-	table_on_rug.global_position += Vector3(-2.0, 0, 0)  # lift the table off, out of the way
+	table_on_rug.global_position += Vector3(0, 0, 1.35)  # lift the table off, out of the way
 	(table_on_rug as RigidBody3D).sleeping = false
 	await _wait(0.5)
 	table_at = table_on_rug.global_position

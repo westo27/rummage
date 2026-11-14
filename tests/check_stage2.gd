@@ -47,8 +47,10 @@ func _run() -> void:
 		"%d of %d asleep" % [asleep, start_positions.size()])
 
 	# --- Grab a crate ---
-	var crate: Prop = props.get_node("CrateA")  # at (2.5, 0.3, -1.5)
-	_player.global_position = Vector3(2.5, 0.05, 1.0)
+	# The beam checks use the open floor in the middle of the bedroom.
+	var crate: Prop = props.get_node("CrateA")
+	await _place(crate, Vector3(3.0, 0.3, -0.75))
+	_player.global_position = Vector3(3.0, 0.05, 1.45)
 	_aim_at(crate.global_position)
 	await _wait(0.1)
 	_check("aiming at crate shows CAN_GRAB", _beam._state == Beam.AimState.CAN_GRAB, "state=%s" % _beam._state)
@@ -70,7 +72,7 @@ func _run() -> void:
 	_check("beam arc is nearly straight when object keeps up", steady_bend < 0.06, "bend %.3f m" % steady_bend)
 
 	# --- Throw: speed = 16 / (1 + 7/6) = 7.38 m/s ---
-	_aim_at(Vector3(2.5, 1.5, -4.0))
+	_aim_at(Vector3(3.0, 1.5, -3.0))
 	await _wait(0.5)
 	_press("throw")
 	await _wait(0.02)
@@ -80,21 +82,23 @@ func _run() -> void:
 	_check("still holding grab button does not re-grab thrown crate", _beam.held == null, "held=%s" % _beam.held)
 	_release("grab")
 	await _wait(1.5)
-	_check("thrown crate stays inside the room", absf(crate.global_position.z) < 5.0 and crate.global_position.y > -0.1,
+	var cp: Vector3 = crate.global_position
+	_check("thrown crate stays inside the bedroom", cp.x > 0.1 and cp.x < 5.1 and cp.z > -2.25 and cp.z < 1.95 and cp.y > -0.1,
 		"pos=%s" % crate.global_position)
 
 	# --- Walls stop held objects: hold a crate far beyond the north wall ---
-	var crate2: Prop = props.get_node("CrateF")  # at (3.8, 0.3, 0.8)
-	_player.global_position = Vector3(3.8, 0.05, 2.8)
+	var crate2: Prop = props.get_node("CrateE")
+	await _place(crate2, Vector3(4.05, 0.3, 0.0))
+	_player.global_position = Vector3(4.05, 0.05, 1.5)
 	_aim_at(crate2.global_position)
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.1)
 	_check("grab second crate", _beam.held == crate2, "held=%s" % _beam.held)
-	# Walk (not teleport, which would snap the beam) to x=4.8, z=-2 facing north.
-	# x=4.8 is a clear lane between the box pyramid and the wardrobe.
+	# Walk (not teleport, which would snap the beam) to z=-0.6 facing north.
+	# x=4.05 is a clear lane between the bed and the chest of drawers.
 	var from: Vector3 = _player.global_position
-	var to := Vector3(4.8, 0.05, -2.0)
+	var to := Vector3(4.05, 0.05, -0.6)
 	_player.rotation.y = 0.0
 	(_player.get_node("Head") as Node3D).rotation.x = -0.15
 	for i in 80:
@@ -105,8 +109,8 @@ func _run() -> void:
 	_beam._hold_distance = 4.5  # hold point now ~1.4 m beyond the north wall
 	await _wait(1.5)
 	var cz: float = crate2.global_position.z
-	_check("held crate is pushed up to the wall but not through it", cz > -5.0 and cz < -4.6,
-		"z=%.2f (wall face at -5, crate half-width 0.3)" % cz)
+	_check("held crate is pushed up to the wall but not through it", cz > -2.25 and cz < -1.85,
+		"z=%.2f (wall face at -2.25, crate half-width 0.3)" % cz)
 	_check("beam keeps hold while pressing into the wall", _beam.held == crate2, "held=%s" % _beam.held)
 	_beam._hold_distance = 7.0  # now > 3 m (beam_break_distance) from the stuck crate
 	await _wait(0.1)
@@ -115,14 +119,9 @@ func _run() -> void:
 	await _wait(0.3)
 
 	# --- Swing and release flings a book ---
-	var book: Prop = props.get_node("FloorPileA_5")  # top of pile at (2.0, ~0.2, 1.5)
-	# The table stands just beside this pile; move it clear so the swung book
-	# doesn't clip it and lose speed.
-	var table := props.get_node("Table") as RigidBody3D
-	table.global_position += Vector3(0, 0, 3.0)
-	table.sleeping = false
-	await _wait(0.3)
-	_player.global_position = Vector3(2.0, 0.05, 3.3)
+	var book: Prop = props.get_node("FloorPileA_5")
+	await _place(book, Vector3(2.4, 0.1, -0.6))
+	_player.global_position = Vector3(2.4, 0.05, 1.2)
 	_aim_at(book.global_position)
 	await _wait(0.1)
 	_press("grab")
@@ -144,7 +143,7 @@ func _run() -> void:
 	# --- Too heavy: the bed (60 kg) against a 10 kg limit ---
 	var bed: Prop = props.get_node("Bed")
 	var bed_start: Vector3 = bed.global_position
-	_player.global_position = Vector3(0, 0.05, -2.0)
+	_player.global_position = Vector3(2.55, 0.05, 0.6)
 	_aim_at(bed.global_position)
 	await _wait(0.1)
 	_check("aiming at bed shows TOO_HEAVY", _beam._state == Beam.AimState.TOO_HEAVY, "detail='%s'" % _beam._detail)
@@ -180,17 +179,26 @@ func _run() -> void:
 	_release("grab")
 	await _wait(0.5)
 
-	# --- The wardrobe physically blocks the doorway to the side room ---
-	_player.global_position = Vector3(4.5, 0.05, 0.0)
+	# --- The wardrobe physically blocks the doorway to the box room ---
+	_player.global_position = Vector3(3.8, 0.05, 0.0)
 	_player.rotation.y = -PI / 2.0  # face +X
 	Input.action_press("move_forward")
 	await _wait(1.5)
 	Input.action_release("move_forward")
-	_check("wardrobe blocks the doorway", _player.global_position.x < 5.4,
-		"x=%.2f (wardrobe front at 5.38)" % _player.global_position.x)
+	_check("wardrobe blocks the doorway", _player.global_position.x < 4.5,
+		"x=%.2f (wardrobe front at 4.48)" % _player.global_position.x)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
+
+
+## Moves a prop to a spot for a check and lets it settle there.
+func _place(prop: Prop, at: Vector3) -> void:
+	prop.global_position = at
+	prop.linear_velocity = Vector3.ZERO
+	prop.angular_velocity = Vector3.ZERO
+	prop.sleeping = false
+	await _wait(0.4)
 
 
 func _camera_pos() -> Vector3:

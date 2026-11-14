@@ -128,80 +128,144 @@ shader_parameter/moon_radius = 0.035
 shader_parameter/moon_colour = Color(1, 0.96, 0.85, 1)
 shader_parameter/drift = 0.003
 
+[sub_resource type="BoxMesh" id="Mesh_door_panel"]
+size = Vector3(0.9, 2.0, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="Mat_door"]
+albedo_color = Color(0.82, 0.58, 0.34, 1)
+roughness = 0.5
+
+[sub_resource type="BoxMesh" id="Mesh_door_jamb"]
+size = Vector3(0.08, 2.06, 0.06)
+
+[sub_resource type="BoxMesh" id="Mesh_door_head"]
+size = Vector3(1.06, 0.08, 0.06)
+
+[sub_resource type="SphereMesh" id="Mesh_knob"]
+radius = 0.035
+height = 0.07
+
+[sub_resource type="StandardMaterial3D" id="Mat_brass"]
+albedo_color = Color(0.86, 0.68, 0.32, 1)
+metallic = 0.7
+roughness = 0.3
+
 [node name="Main" type="Node3D" unique_id=467943378]
 script = ExtResource("1_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1357483862]
 environment = SubResource("Environment_main")
 
-[node name="House" type="Node3D" parent="." unique_id=1233747681]
+[node name="House" type="Node3D" parent="." unique_id=900007919]
 
-[node name="Walls" type="CSGCombiner3D" parent="House" unique_id=1273875573]
+[node name="Walls" type="CSGCombiner3D" parent="House" unique_id=900015838]
 use_collision = true
 collision_mask = 0
 
-[node name="MainOuter" type="CSGBox3D" parent="House/Walls" unique_id=2033055321]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
-size = Vector3(12.8, 3.4, 10.8)
+[node name="Outer" type="CSGBox3D" parent="House/Walls" unique_id=900023757]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 1.5, 0)
+size = Vector3(14.2, 3.4, 5.3)
 material = SubResource("Mat_wall")
 
-[node name="SideOuter" type="CSGBox3D" parent="House/Walls" unique_id=425652361]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 1.5, 0)
-size = Vector3(5.8, 3.4, 5.8)
-material = SubResource("Mat_wall")
-
-[node name="MainInner" type="CSGBox3D" parent="House/Walls" unique_id=1096790886]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+[node name="PlayroomInner" type="CSGBox3D" parent="House/Walls" unique_id=900031676]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 1.25, 0)
 operation = 2
-size = Vector3(12, 3.5, 10)
+size = Vector3(5, 3.5, 4.5)
 material = SubResource("Mat_wall")
 
-[node name="SideInner" type="CSGBox3D" parent="House/Walls" unique_id=149734929]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 1.25, 0)
+[node name="BedroomInner" type="CSGBox3D" parent="House/Walls" unique_id=900039595]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 1.25, -0.15)
 operation = 2
-size = Vector3(5, 3.5, 5)
+size = Vector3(5, 3.5, 4.2)
 material = SubResource("Mat_wall")
 
-[node name="Doorway" type="CSGBox3D" parent="House/Walls" unique_id=1214729767]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 1.1, 0)
+[node name="BoxRoomInner" type="CSGBox3D" parent="House/Walls" unique_id=900047514]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.8, 1.25, 0)
 operation = 2
-size = Vector3(0.8, 2.2, 1.4)
+size = Vector3(3, 3.5, 2.8)
 material = SubResource("Mat_wall")
 
-[node name="CubbyWest" type="CSGBox3D" parent="House/Walls" unique_id=536241925]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.11, 1.45, 2)
+[node name="DoorPlayroom" type="CSGBox3D" parent="House/Walls" unique_id=900055433]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
+operation = 2
+size = Vector3(0.6, 2.1, 1)
+material = SubResource("Mat_wall")
+
+[node name="DoorBoxRoom" type="CSGBox3D" parent="House/Walls" unique_id=900063352]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 1.05, 0)
+operation = 2
+size = Vector3(0.6, 2.1, 1)
+material = SubResource("Mat_wall")
+
+[node name="CubbyWest" type="CSGBox3D" parent="House/Walls" unique_id=900071271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.21, 1.45, 1.5)
 operation = 2
 size = Vector3(0.26, 0.24, 0.3)
 material = SubResource("Mat_wall")
 
-[node name="CubbySouth" type="CSGBox3D" parent="House/Walls" unique_id=471300178]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.45, 5.11)
+[node name="CubbySouth" type="CSGBox3D" parent="House/Walls" unique_id=900079190]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, 1.45, 2.06)
 operation = 2
 size = Vector3(0.3, 0.24, 0.26)
 material = SubResource("Mat_wall")
 
-[node name="WindowHole" type="CSGBox3D" parent="House/Walls" unique_id=2131496135]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -5.2)
+[node name="WindowHole" type="CSGBox3D" parent="House/Walls" unique_id=900087109]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 1.75, -2.45)
 operation = 2
 size = Vector3(2.2, 1.1, 1)
 material = SubResource("Mat_wall")
 
-[node name="FloorMain" type="CSGBox3D" parent="House" unique_id=542267513]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
+[node name="FloorPlayroom" type="CSGBox3D" parent="House" unique_id=900095028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.75, -0.15, 0)
 use_collision = true
 collision_mask = 0
-size = Vector3(12.8, 0.3, 10.8)
+size = Vector3(5.5, 0.3, 5.3)
 material = SubResource("Mat_floor_main")
 
-[node name="FloorSide" type="CSGBox3D" parent="House" unique_id=1019375681]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, -0.15, 0)
+[node name="FloorBedroom" type="CSGBox3D" parent="House" unique_id=900102947]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, -0.15, 0)
 use_collision = true
 collision_mask = 0
-size = Vector3(5.8, 0.3, 5.8)
+size = Vector3(5.2, 0.3, 5.3)
 material = SubResource("Mat_floor_side")
 
+[node name="FloorBoxRoom" type="CSGBox3D" parent="House" unique_id=900110866]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.95, -0.15, 0)
+use_collision = true
+collision_mask = 0
+size = Vector3(3.5, 0.3, 5.3)
+material = SubResource("Mat_floor_main")
+
+[node name="LandingDoor" type="Node3D" parent="House" unique_id=900118785]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 0, 2.25)
+
+[node name="Panel" type="MeshInstance3D" parent="House/LandingDoor" unique_id=900126704]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -0.025)
+mesh = SubResource("Mesh_door_panel")
+surface_material_override/0 = SubResource("Mat_door")
+
+[node name="FrameL" type="MeshInstance3D" parent="House/LandingDoor" unique_id=900134623]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.49, 1.03, -0.02)
+mesh = SubResource("Mesh_door_jamb")
+surface_material_override/0 = SubResource("Mat_frame")
+
+[node name="FrameR" type="MeshInstance3D" parent="House/LandingDoor" unique_id=900142542]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.49, 1.03, -0.02)
+mesh = SubResource("Mesh_door_jamb")
+surface_material_override/0 = SubResource("Mat_frame")
+
+[node name="FrameTop" type="MeshInstance3D" parent="House/LandingDoor" unique_id=900150461]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.04, -0.02)
+mesh = SubResource("Mesh_door_head")
+surface_material_override/0 = SubResource("Mat_frame")
+
+[node name="Knob" type="MeshInstance3D" parent="House/LandingDoor" unique_id=900158380]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 1, -0.07)
+mesh = SubResource("Mesh_knob")
+surface_material_override/0 = SubResource("Mat_brass")
+
 [node name="Trapdoor" type="Node3D" parent="House" unique_id=883748040]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0, 1.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 0, -0.05)
 
 [node name="Gap" type="MeshInstance3D" parent="House/Trapdoor" unique_id=1666491799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
@@ -229,7 +293,7 @@ material_override = SubResource("Mat_trap_iron")
 mesh = SubResource("Mesh_trap_ring")
 
 [node name="Window" type="Node3D" parent="House" unique_id=1894942518]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -5.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 1.75, -2.45)
 
 [node name="FrameTop" type="MeshInstance3D" parent="House/Window" unique_id=1741082039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52, 0)
@@ -276,33 +340,42 @@ collision_mask = 0
 shape = SubResource("Shape_window")
 
 [node name="Sky" type="MeshInstance3D" parent="House" unique_id=354459404]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -7.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 2.2, -4.75)
 cast_shadow = 0
 mesh = SubResource("Mesh_sky")
 surface_material_override/0 = SubResource("Mat_sky")
 
-[node name="LampMain" parent="House" unique_id=752221543 instance=ExtResource("14_lamp")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+[node name="LampPlayroom" parent="House" unique_id=900166299 instance=ExtResource("14_lamp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 3, 0)
 
-[node name="LampSide" parent="House" unique_id=1317748337 instance=ExtResource("14_lamp")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 3, 0)
-light_energy = 0.8
-light_range = 5.5
+[node name="LampMain" parent="House" unique_id=900174218 instance=ExtResource("14_lamp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 3, -0.15)
 
-[node name="ReflectionsMain" type="ReflectionProbe" parent="House" unique_id=1423689574]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
-size = Vector3(11.9, 2.9, 9.9)
+[node name="LampSide" parent="House" unique_id=900182137 instance=ExtResource("14_lamp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.8, 3, 0)
+light_energy = 0.7
+light_range = 4.5
+
+[node name="ReflectionsPlayroom" type="ReflectionProbe" parent="House" unique_id=900190056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 1.4, 0)
+size = Vector3(4.9, 2.9, 4.4)
 box_projection = true
 interior = true
 
-[node name="ReflectionsSide" type="ReflectionProbe" parent="House" unique_id=813263880]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.9, 1.4, 0)
-size = Vector3(4.9, 2.9, 4.9)
+[node name="ReflectionsMain" type="ReflectionProbe" parent="House" unique_id=900197975]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 1.4, -0.15)
+size = Vector3(4.9, 2.9, 4.1)
+box_projection = true
+interior = true
+
+[node name="ReflectionsSide" type="ReflectionProbe" parent="House" unique_id=900205894]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.8, 1.4, 0)
+size = Vector3(2.9, 2.9, 2.7)
 box_projection = true
 interior = true
 
 [node name="Moonlight" type="SpotLight3D" parent="." unique_id=140432628]
-transform = Transform3D(-1, 0, 0, 0, 0.822, 0.569, 0, 0.569, -0.822, 0.3, 3.6, -7.4)
+transform = Transform3D(-1, 0, 0, 0, 0.822, 0.569, 0, 0.569, -0.822, 2.9, 3.6, -4.65)
 light_color = Color(0.58, 0.68, 1, 1)
 light_energy = 4.0
 shadow_enabled = true
@@ -312,7 +385,7 @@ spot_attenuation = 0.6
 spot_angle = 22.0
 
 [node name="Player" parent="." unique_id=936560623 instance=ExtResource("2_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 0.05, 1.5)
 
 [node name="MainRoomProps" parent="." unique_id=820907010 instance=ExtResource("4_props")]
 

@@ -5,13 +5,13 @@
 [node name="SideRoomCreatures" type="Node3D"]
 
 [node name="UnderSideCrateNE" parent="." instance=ExtResource("creature")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.092, -1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.75, 0.09, -0.85)
 
 [node name="UnderSideCrateSW" parent="." instance=ExtResource("creature")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 0.092, 1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.95, 0.09, 0.85)
 
 [node name="UnderSideBinSE" parent="." instance=ExtResource("creature")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.092, 1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.85, 0.09, 0.95)
 
 [node name="BehindSideBoxes" parent="." instance=ExtResource("creature")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.15, 0.092, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 0.09, 0)

@@ -41,7 +41,7 @@ func _run() -> void:
 	get_tree().quit(_failures)
 
 
-## Player walks north (−Z) along x=-2 from z=3 for 2 s; obstacle sits at z=1.5.
+## Player walks north (−Z) along x=-2 (the playroom, emptied) from z=1.9 for 2 s; obstacle sits at z=0.4.
 func _try_case(label: String, scene: PackedScene, basis: Basis, must_pass: bool) -> void:
 	var spawned: Array[Node3D] = []
 	if scene == null:  # pile
@@ -49,17 +49,17 @@ func _try_case(label: String, scene: PackedScene, basis: Basis, must_pass: bool)
 		for i in 5:
 			var p := b.instantiate() as Node3D
 			_main.add_child(p)
-			p.global_transform = Transform3D(basis, Vector3(-2.0, 0.022 + i * 0.041, 1.5))
+			p.global_transform = Transform3D(basis, Vector3(-2.0, 0.022 + i * 0.041, 0.4))
 			spawned.append(p)
 	else:
 		var p := scene.instantiate() as Node3D
 		_main.add_child(p)
-		p.global_transform = Transform3D(basis, Vector3(-2.0, 0.3, 1.5))
+		p.global_transform = Transform3D(basis, Vector3(-2.0, 0.3, 0.4))
 		spawned.append(p)
 	await _wait(1.0)  # let it drop and settle
 	var settled_at: Vector3 = spawned[0].global_position
 
-	_player.global_position = Vector3(-2.0, 0.05, 3.0)
+	_player.global_position = Vector3(-2.0, 0.05, 1.9)
 	_player.rotation.y = 0.0
 	_player.velocity = Vector3.ZERO
 	await _wait(0.1)
@@ -67,7 +67,7 @@ func _try_case(label: String, scene: PackedScene, basis: Basis, must_pass: bool)
 	await _wait(2.0)
 	Input.action_release("move_forward")
 	var z: float = _player.global_position.z
-	var got_past: bool = z < 0.9
+	var got_past: bool = z < -0.2
 	var kicked: float = spawned[0].global_position.distance_to(settled_at)
 	# Clutter must be both passable and visibly kicked (not ghosted through).
 	var ok: bool = (got_past and kicked > 0.3) if must_pass else not got_past

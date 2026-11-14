@@ -25,7 +25,7 @@ func _run() -> void:
 	# --- A book thrown at the shade ---
 	var light_before: Vector3 = lamp.light_position()
 	var book: Prop = _main.get_node("MainRoomProps/ShelfBook01")
-	book.global_position = Vector3(0.0, 2.27, 1.5)
+	book.global_position = Vector3(lamp.global_position.x, 2.27, lamp.global_position.z + 1.5)
 	book.linear_velocity = Vector3(0.0, 0.0, -12.0)
 	book.angular_velocity = Vector3.ZERO
 	book.sleeping = false
@@ -49,7 +49,7 @@ func _run() -> void:
 	# --- The beam can't grab it ---
 	var player: CharacterBody3D = _main.get_node("Player")
 	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
-	player.global_position = Vector3(0.0, 0.05, 2.5)
+	player.global_position = Vector3(lamp.global_position.x, 0.05, lamp.global_position.z + 1.45)
 	var head := player.get_node("Head") as Node3D
 	var dir: Vector3 = (lamp._lamp.global_position - head.global_position).normalized()
 	player.rotation.y = atan2(-dir.x, -dir.z)

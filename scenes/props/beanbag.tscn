@@ -1,0 +1,29 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat"]
+albedo_color = Color(0.95, 0.45, 0.55, 1)
+
+[sub_resource type="SphereMesh" id="Mesh_0"]
+radius = 0.42
+height = 0.5
+
+[sub_resource type="CylinderShape3D" id="Shape_0"]
+height = 0.46
+radius = 0.38
+
+[node name="Beanbag" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 2.0
+script = ExtResource("1_prop")
+hold_radius = 0.4
+impact_material = 2
+
+[node name="Mesh0" type="MeshInstance3D" parent="."]
+mesh = SubResource("Mesh_0")
+material_override = SubResource("Mat")
+
+[node name="Shape0" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_0")

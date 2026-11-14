@@ -9,37 +9,37 @@
 [node name="SideRoomProps" type="Node3D"]
 
 [node name="SideCrateNE" parent="." instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.302, -1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.75, 0.3, -0.85)
 
 [node name="SideCrateSW" parent="." instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 0.302, 1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.95, 0.3, 0.85)
 
 [node name="SideBinSE" parent="." instance=ExtResource("bin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 0.177, 1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.85, 0.18, 0.95)
 
 [node name="SideBinNW" parent="." instance=ExtResource("bin")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.177, -1.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.8, 0.18, -0.95)
 
 [node name="SideBoxA" parent="." instance=ExtResource("small_box")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 0.202, -0.23)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 0.2, -0.23)
 
 [node name="SideBoxB" parent="." instance=ExtResource("small_box")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 0.202, 0.23)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 0.2, 0.23)
 
 [node name="SideBoxTop" parent="." instance=ExtResource("small_box")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.75, 0.604, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 0.6, 0)
 
 [node name="SideBook1" parent="." instance=ExtResource("book")]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 9, 0.022, 0.6)
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 6.9, 0.022, 0.45)
 mass = 0.6
 
 [node name="SideBook2" parent="." instance=ExtResource("book")]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 9, 0.063, 0.6)
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 6.9, 0.063, 0.45)
 mass = 0.7
 
 [node name="SideBook3" parent="." instance=ExtResource("book")]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 9, 0.104, 0.6)
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 6.9, 0.104, 0.45)
 mass = 0.8
 
 [node name="SideBall" parent="." instance=ExtResource("ball")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.122, -0.8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.12, -0.6)

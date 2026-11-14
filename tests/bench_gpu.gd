@@ -27,8 +27,8 @@ func _run() -> void:
 	_main.get_node("Player").set_process_unhandled_input(false)
 	var player := _main.get_node("Player") as Node3D
 	var head := player.get_node("Head") as Node3D
-	player.global_position = Vector3(0.0, 0.05, 3.2)
-	var dir: Vector3 = (Vector3(0.0, 1.6, -2.0) - head.global_position).normalized()
+	player.global_position = Vector3(2.6, 0.05, 1.55)
+	var dir: Vector3 = (Vector3(2.6, 1.6, -2.15) - head.global_position).normalized()
 	player.rotation.y = atan2(-dir.x, -dir.z)
 	head.rotation.x = asin(dir.y)
 	_env = (_main.get_node("WorldEnvironment") as WorldEnvironment).environment

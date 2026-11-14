@@ -19,9 +19,9 @@ func _run() -> void:
 	main.get_node("Player").set_process_unhandled_input(false)
 	var player := main.get_node("Player") as Node3D
 	var head := player.get_node("Head") as Node3D
-	player.global_position = Vector3(0.0, 0.05, 3.2)
+	player.global_position = Vector3(2.6, 0.05, 1.55)
 	player.reset_physics_interpolation()
-	_look(player, head, Vector3(0.0, 2.6, -0.5))
+	_look(player, head, Vector3(2.6, 2.6, -0.65))
 	await get_tree().create_timer(1.5).timeout
 	_shoot("lamp_still")
 	# The same view at each Graphics > Lighting level.
@@ -35,7 +35,7 @@ func _run() -> void:
 	Game.settings.apply_lighting(main)
 
 	var book := main.get_node("MainRoomProps/ShelfBook02") as Prop
-	book.global_position = Vector3(-1.4, 2.27, 0.0)
+	book.global_position = Vector3(1.2, 2.27, -0.15)
 	book.linear_velocity = Vector3(12.0, 0.0, 0.0)  # side-on, across the view
 	book.sleeping = false
 	book.reset_physics_interpolation()

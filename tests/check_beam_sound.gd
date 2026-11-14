@@ -32,7 +32,10 @@ func _run() -> void:
 
 	# --- Grab a crate: the whirr fades in ---
 	var crate: Prop = _main.get_node("MainRoomProps/CrateA")
-	_player.global_position = Vector3(2.5, 0.05, 0.9)
+	crate.global_position = Vector3(3.0, 0.3, -0.6)  # out on the open bedroom floor
+	crate.sleeping = false
+	await _wait(0.4)
+	_player.global_position = Vector3(3.0, 0.05, 1.5)
 	_aim_at(crate.global_position + Vector3(0.0, 0.3, 0.0))
 	await _wait(0.1)
 	_press("grab")
@@ -51,7 +54,7 @@ func _run() -> void:
 	var loudest: float = -80.0
 	for i in 40:
 		var side: float = 1.0 if (i / 10) % 2 == 0 else -1.0
-		_aim_at(Vector3(2.5 + side * 2.5, 1.2, -1.5))
+		_aim_at(Vector3(3.0 + side * 2.5, 1.2, -0.6))
 		await get_tree().physics_frame
 		await get_tree().process_frame
 		highest = maxf(highest, _beam._hum.pitch_scale)
@@ -63,7 +66,7 @@ func _run() -> void:
 		"%.1f dB vs squeak %.1f dB" % [loudest, Game.tune.squeak_volume_db])
 
 	# --- Hold still again: it settles ---
-	_aim_at(Vector3(2.5, 1.0, -1.5))
+	_aim_at(Vector3(3.0, 1.0, -0.6))
 	await _wait(1.5)
 	_check("held still again, it settles back down", _beam._hum.pitch_scale < 1.1,
 		"pitch %.2f" % _beam._hum.pitch_scale)
@@ -75,7 +78,7 @@ func _run() -> void:
 
 	# --- Strain against the bed: crackle, and only then ---
 	var bed: Prop = _main.get_node("MainRoomProps/Bed")
-	_player.global_position = Vector3(0.3, 0.05, -2.2)
+	_player.global_position = Vector3(2.85, 0.05, 0.55)
 	_aim_at(bed.global_position + Vector3(0.0, 0.35, 0.3))
 	await _wait(0.1)
 	_press("grab")

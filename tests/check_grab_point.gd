@@ -16,16 +16,18 @@ func _ready() -> void:
 func _run() -> void:
 	# --- A crate grabbed at the middle of its top lifts level ---
 	await _load()
-	var crate: Prop = _main.get_node("MainRoomProps/CrateA")  # 0.6 m box at (2.5, 0.3, -1.5)
-	_player.global_position = Vector3(2.5, 0.05, -0.6)
-	_aim_at(Vector3(2.5, 0.6, -1.5))
+	# The crate is moved out to the open bedroom floor, clear of walls.
+	var c := Vector3(3.0, 0.3, -0.4)
+	var crate: Prop = await _crate_at(c)
+	_player.global_position = Vector3(c.x, 0.05, c.z + 0.85)
+	_aim_at(Vector3(c.x, 0.6, c.z))
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.1)
 	_check("grabbed the crate on its top", _beam.held == crate and _beam._grab_local.y > 0.25,
 		"held=%s local=%s" % [_beam.held, _beam._grab_local])
 	var start_y: float = crate.global_position.y
-	_aim_at(Vector3(2.5, 1.6, -1.5))
+	_aim_at(Vector3(c.x, 1.6, c.z))
 	await _wait(1.5)
 	_check("lifted by its middle, it rises", crate.global_position.y > start_y + 0.4,
 		"%.2f -> %.2f" % [start_y, crate.global_position.y])
@@ -35,16 +37,16 @@ func _run() -> void:
 
 	# --- The same crate grabbed by a top corner hangs from that corner ---
 	await _load()
-	crate = _main.get_node("MainRoomProps/CrateA")
-	_player.global_position = Vector3(2.5, 0.05, -0.6)
-	_aim_at(Vector3(2.5 + 0.26, 0.6, -1.5 + 0.26))
+	crate = await _crate_at(c)
+	_player.global_position = Vector3(c.x, 0.05, c.z + 0.85)
+	_aim_at(Vector3(c.x + 0.26, 0.6, c.z + 0.26))
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.1)
 	_check("grabbed the crate near a corner",
 		_beam.held == crate and absf(_beam._grab_local.x) > 0.2 and absf(_beam._grab_local.z) > 0.2,
 		"local=%s" % _beam._grab_local)
-	_aim_at(Vector3(2.5, 1.6, -1.5))
+	_aim_at(Vector3(c.x, 1.6, c.z))
 	await _wait(2.5)
 	_check("lifted by a corner, it hangs tilted", crate.global_basis.y.dot(Vector3.UP) < 0.8,
 		"up·Y %.2f" % crate.global_basis.y.dot(Vector3.UP))
@@ -53,8 +55,8 @@ func _run() -> void:
 	# --- Grab the bookcase near its top and pull down: it topples ---
 	await _load()
 	var bookcase: Prop = _main.get_node("MainRoomProps/Bookcase")  # against the west wall
-	_player.global_position = Vector3(-3.6, 0.05, -1.5)
-	_aim_at(Vector3(-5.6, 1.78, -1.5))
+	_player.global_position = Vector3(-3.5, 0.05, 0.15)
+	_aim_at(Vector3(-4.7, 1.78, 0.15))
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.1)
@@ -63,7 +65,7 @@ func _run() -> void:
 	_check("the beam ends at the grab point, not the middle",
 		_beam_end().distance_to(_beam.grab_point()) < 0.05,
 		"%.3f m away" % _beam_end().distance_to(_beam.grab_point()))
-	_aim_at(Vector3(-4.2, 0.0, -1.5))  # pull the top down towards the floor
+	_aim_at(Vector3(-4.1, 0.0, 0.15))  # pull the top down towards the floor
 	await _wait(2.5)
 	_release("grab")
 	await _wait(1.0)
@@ -73,6 +75,14 @@ func _run() -> void:
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
+
+
+func _crate_at(at: Vector3) -> Prop:
+	var crate: Prop = _main.get_node("MainRoomProps/CrateA")
+	crate.global_position = at
+	crate.sleeping = false
+	await _wait(0.4)
+	return crate
 
 
 ## A fresh copy of the main scene each time, so each part starts clean.

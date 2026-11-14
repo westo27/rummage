@@ -8,6 +8,10 @@ extends RefCounted
 ##
 ## Held by the Game autoload as `Game.settings`, so it survives scene reloads.
 
+## Fired by apply_pixel_filter, for parts of the UI drawn in the same style
+## (the marble bag).
+signal pixel_filter_changed
+
 const PATH: String = "user://settings.cfg"
 
 ## Look sensitivity as a whole number of steps, which is what the menu shows.
@@ -122,9 +126,25 @@ func pixel_rows() -> float:
 	return 1080.0 / (pixel_strength + 1)
 
 
+## Texels per metre on the room's surfaces (wallpaper, floor, rug, pictures)
+## while the filter is on, so their patterns read as pixel art too.
+const PIXEL_TEXELS_PER_METRE: float = 32.0
+
+
 func apply_pixel_filter() -> void:
 	Game.pixel_filter.visible = pixel_filter
 	Game.pixel_filter.set_rows(pixel_rows())
+	RenderingServer.global_shader_parameter_set("pixel_texels",
+		PIXEL_TEXELS_PER_METRE if pixel_filter else 0.0)
+	pixel_filter_changed.emit()
+
+
+## How many UI design units (Project Settings > Display > Window size) make
+## one chunky pixel, so UI drawn in the style matches the 3D's pixels:
+## design height / rows. 1 when off.
+func pixel_ui_size() -> int:
+	var design_height: float = ProjectSettings.get_setting("display/window/size/viewport_height")
+	return maxi(1, roundi(design_height / pixel_rows())) if pixel_filter else 1
 
 
 ## Puts the lighting setting into effect. The renderer-wide parts (shadow

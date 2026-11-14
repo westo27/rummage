@@ -1,9 +1,15 @@
 extends Node
-## Renders one bedroom view with the pixel filter off and at a few strengths.
+## Renders two views with the pixel filter off and at a few strengths.
 ## Needs a real window (no --headless). Doesn't save the settings file.
 ## Run: Godot --path . --resolution 960x540 res://tests/shoot_pixel.tscn
 
 const OUT: String = "user://shots"
+
+# name, where the player stands, what they look at
+const VIEWS: Array = [
+	["bedroom", Vector3(4.2, 0.05, 1.3), Vector3(1.0, 0.7, -1.8)],
+	["playroom", Vector3(-4.3, 0.05, 0.6), Vector3(-0.5, 0.5, -1.2)],
+]
 
 
 func _ready() -> void:
@@ -19,21 +25,24 @@ func _run() -> void:
 	var player := main.get_node("Player") as CharacterBody3D
 	var head := player.get_node("Head") as Node3D
 	player.set_process_unhandled_input(false)
-	player.global_position = Vector3(4.2, 0.05, 1.3)
-	player.reset_physics_interpolation()
-	var dir: Vector3 = (Vector3(1.0, 0.7, -1.8) - head.global_position).normalized()
-	player.rotation.y = atan2(-dir.x, -dir.z)
-	head.rotation.x = asin(dir.y)
 	await _frames(30)
-	for strength: int in [0, 1, 3, 5, 8]:
-		Game.settings.pixel_filter = strength > 0
-		Game.settings.pixel_strength = maxi(strength, 1)
-		Game.settings.apply_pixel_filter()
-		await _frames(10)
-		var image: Image = get_viewport().get_texture().get_image()
-		image.save_png("%s/pixel_%d.png" % [OUT, strength])
+	for view: Array in VIEWS:
+		player.global_position = view[1]
+		player.reset_physics_interpolation()
+		var dir: Vector3 = (view[2] - head.global_position).normalized()
+		player.rotation.y = atan2(-dir.x, -dir.z)
+		head.rotation.x = asin(dir.y)
+		await _frames(20)
+		for strength: int in [0, 1, 3, 8]:
+			Game.settings.pixel_filter = strength > 0
+			Game.settings.pixel_strength = maxi(strength, 1)
+			Game.settings.apply_pixel_filter()
+			await _frames(10)
+			var image: Image = get_viewport().get_texture().get_image()
+			image.save_png("%s/pixel_%s_%d.png" % [OUT, view[0], strength])
 	Game.settings.pixel_filter = saved[0]
 	Game.settings.pixel_strength = saved[1]
+	Game.settings.apply_pixel_filter()
 	print("Wrote PNGs to %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 

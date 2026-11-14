@@ -16,20 +16,19 @@ signal closed
 const ROW_WIDTH: float = 620.0 + 110.0 + 240.0 + 110.0 + 26.0 * 3
 
 var _value_labels: Dictionary = {}
+var _column: VBoxContainer
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	var centre := CenterContainer.new()
-	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(centre)
-
+	# Placed and scaled by _fit rather than a CenterContainer, because
+	# containers reset their children's scale.
 	var column := VBoxContainer.new()
+	_column = column
 	column.add_theme_constant_override("separation", 20)
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	centre.add_child(column)
+	add_child(column)
 
 	var heading := UiStyle.label("Settings", 96, UiStyle.CREAM)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -61,6 +60,21 @@ func _ready() -> void:
 	column.add_child(back_row)
 
 	_refresh()
+	resized.connect(_fit)
+	_column.resized.connect(_fit)
+	_fit.call_deferred()
+
+
+## Centres the page, shrinking it to fit when the screen is shorter than it
+## (a smaller design size, or a wide window with "expand"). scale draws it
+## smaller without changing its layout.
+func _fit() -> void:
+	var needed: Vector2 = _column.get_combined_minimum_size()
+	_column.size = needed
+	var room: Vector2 = size * 0.94
+	var s: float = minf(1.0, minf(room.x / needed.x, room.y / needed.y))
+	_column.scale = Vector2.ONE * s
+	_column.position = (size - needed * s) * 0.5
 
 
 ## A small heading over a group of rows, lined up with their left edge.

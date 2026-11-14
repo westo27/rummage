@@ -103,7 +103,8 @@ a root node and a script.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu, in three sections: Controls, Sound and Graphics. Each
   setting is a −/+ stepper rather than a slider, so
-  every control is the same panel and nothing needs dragging.
+  every control is the same panel and nothing needs dragging. The page
+  shrinks to fit a shorter screen (`SettingsMenu._fit`).
 - `scripts/pause_menu.gd` owns the Esc key: it pauses the tree, frees the
   cursor and hides the HUD. Its node's process mode is Always, so it keeps
   running while everything else is frozen.
@@ -367,6 +368,21 @@ child up past your bedtime". So it's night.
   pixelated and the HUD and menus stay crisp. Size n makes the screen
   1080/(n+1) blocks tall (default 3 = 270). On by default. It's a look, not
   a saving: the 3D still renders at full resolution.
+  It also limits colours to 16 shades per channel with a 4x4 Bayer dither
+  per block (`levels`, `spread` in the shader: lower spread = flatter bands).
+  While it's on, the wallpaper, floor, rug and pictures snap to a texel grid
+  (`Settings.PIXEL_TEXELS_PER_METRE`, 32; the wallpaper uses twice that) via
+  the `pixel_texels` shader global (Project Settings > Shader Globals) and
+  `shaders/pixel_art.gdshaderinc`.
+  The marble bag follows it (`MarbleBag._apply_pixel_style`, on
+  `Settings.pixel_filter_changed`): its SubViewport renders at 1/n size
+  (`stretch_shrink` plus `size_2d_override`, or only its corner draws) and
+  `shaders/pixel_bag.gdshader` gives the same dither, with dithered on/off
+  alpha. The dither itself is shared in `shaders/dither.gdshaderinc`.
+  The bag is shown at half size (`MarbleBag.DISPLAY_SIZE`; drawn and
+  simulated in `VIEW_SIZE` coordinates via `size_2d_override`) with no
+  shadow under it. The tag's count is drawn crisp on top of the viewport
+  (`_draw_tag_text`), so it stays readable at that size.
   `tests/shoot_pixel.tscn` renders it off and at a few sizes.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.

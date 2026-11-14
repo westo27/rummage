@@ -17,6 +17,12 @@ func _run() -> void:
 	_saved = [Game.settings.sensitivity_step, Game.settings.volume_percent, Game.settings.invert_look,
 		Game.settings.lighting, Game.settings.pixel_filter, Game.settings.pixel_strength]
 
+	# The UI is sized for a large design space; if the setting is lost, Godot's
+	# 1152x648 default makes everything about twice too big.
+	var design := Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
+		ProjectSettings.get_setting("display/window/size/viewport_height"))
+	_check("the design space is set (not Godot's default)", design.y >= 1080, "%s" % design)
+
 	# --- Title screen ---
 	var title: Control = (load("res://scenes/title.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(title)

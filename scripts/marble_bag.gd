@@ -19,6 +19,9 @@ extends SubViewportContainer
 ## the walls the marbles collide with, so the two can't disagree.
 
 const VIEW_SIZE := Vector2(360.0, 470.0)
+## How big it's shown on screen. The bag is drawn (and its physics runs) in
+## VIEW_SIZE coordinates and scaled down to this.
+const DISPLAY_SIZE := VIEW_SIZE * 0.5
 const CENTRE_X: float = 180.0
 ## Where the neck (the drawstring) sits, and how tall the body below it is.
 const NECK_Y: float = 158.0
@@ -53,6 +56,7 @@ var _viewport: SubViewport
 var _back: Node2D
 var _marbles: Node2D
 var _front: Node2D
+var _text: Control
 
 ## 0 = tied shut, 1 = loosened. Eased toward its target every frame.
 var _open: float = 0.0
@@ -78,14 +82,17 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# stretch: the SubViewport is resized to fill this container.
 	stretch = true
-	custom_minimum_size = VIEW_SIZE
+	custom_minimum_size = DISPLAY_SIZE
 	# Squash from the bottom middle, so it sits down rather than shrinking.
-	pivot_offset = Vector2(VIEW_SIZE.x * 0.5, VIEW_SIZE.y)
+	pivot_offset = Vector2(DISPLAY_SIZE.x * 0.5, DISPLAY_SIZE.y)
 
 	_viewport = SubViewport.new()
 	_viewport.transparent_bg = true
 	_viewport.disable_3d = true
-	_viewport.size = Vector2i(VIEW_SIZE)
+	_viewport.size = Vector2i(DISPLAY_SIZE)
+	# Draws the whole VIEW_SIZE world into the smaller render.
+	_viewport.size_2d_override = Vector2i(VIEW_SIZE)
+	_viewport.size_2d_override_stretch = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	add_child(_viewport)
 
@@ -100,7 +107,37 @@ func _ready() -> void:
 	_front.draw.connect(_draw_front)
 	_viewport.add_child(_front)
 
+	# The tag's count, on top of the viewport's picture rather than in it.
+	# Its own filter and no material, so the pixel style doesn't reach it.
+	_text = Control.new()
+	_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_text.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_text.draw.connect(_draw_tag_text)
+	add_child(_text)
+	# Whenever the bag redraws (the tag swings, the count changes), so does it.
+	_front.draw.connect(_text.queue_redraw)
+
 	_build_walls()
+
+	Game.settings.pixel_filter_changed.connect(_apply_pixel_style)
+	_apply_pixel_style()
+
+
+## Matches the pixel filter: stretch_shrink renders the SubViewport at a
+## fraction of its size and scales it back up, keeping the drawing and the
+## physics in the same coordinates. Nearest filtering keeps the texels square;
+## the shader limits and dithers the colours like the 3D.
+func _apply_pixel_style() -> void:
+	var size: int = Game.settings.pixel_ui_size()
+	stretch_shrink = size
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if size > 1 else CanvasItem.TEXTURE_FILTER_PARENT_NODE
+	if size > 1:
+		if material == null:
+			var shader_material := ShaderMaterial.new()
+			shader_material.shader = preload("res://shaders/pixel_bag.gdshader")
+			material = shader_material
+	else:
+		material = null
 
 
 ## Queues a ball of this colour to drop into the bag.
@@ -249,14 +286,6 @@ func _mouth() -> Array:
 
 
 func _draw_back() -> void:
-	# A soft shadow under the bag, so it sits on the screen instead of
-	# floating, and stands out from the brown floor behind it.
-	for i in 4:
-		var spread: float = 1.0 - i * 0.18
-		_back.draw_colored_polygon(_ellipse(
-			Vector2(CENTRE_X, NECK_Y + BODY_HEIGHT - 4.0),
-			Vector2(BODY_HALF_WIDTH * 0.95 * spread, 18.0 * spread), 0.0, TAU),
-			Color(0.0, 0.0, 0.0, 0.14))
 	var outline: PackedVector2Array = _outline(_open)
 	# The inside of the bag, seen through the net.
 	_back.draw_polygon(outline, UiStyle.vertical_ramp(outline,
@@ -382,13 +411,25 @@ func _draw_tag(knot: Vector2) -> void:
 	_front.draw_circle(hole, 4.5, INSIDE)
 	_front.draw_arc(hole + Vector2(0.0, -2.0), 6.0, PI * 0.1, PI * 0.9, 10, STITCH, 2.5, true)
 
+	_front.draw_set_transform(Vector2.ZERO, 0.0)
+
+
+## The count on the tag. Drawn by _text, outside the SubViewport, so it stays
+## crisp at full screen resolution when the bag is shrunk or pixelated. Uses
+## the same frame as _draw_tag, scaled from bag coordinates to on-screen ones.
+func _draw_tag_text() -> void:
+	var k: float = DISPLAY_SIZE.x / VIEW_SIZE.x
+	var neck: float = lerpf(NECK_CLOSED, NECK_OPEN, _open)
+	var knot := Vector2(CENTRE_X + neck * 0.35, NECK_Y)
+	var hop: float = sin(_tag_hop * PI)
+	_text.draw_set_transform((knot + Vector2(0.0, -10.0 * hop)) * k, TAG_REST_ANGLE + _tag_swing,
+		Vector2.ONE * (1.0 + 0.3 * hop))
 	var text: String = tag_text()
 	var font: Font = UiStyle.font(700)
-	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_FONT_SIZE).x
-	_front.draw_string(font, Vector2(-width * 0.5, top + TAG_SIZE.y - 13.0), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, TAG_FONT_SIZE, UiStyle.INK)
-
-	_front.draw_set_transform(Vector2.ZERO, 0.0)
+	var size: int = roundi(TAG_FONT_SIZE * k)
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	_text.draw_string(font, Vector2(-width * 0.5, (TAG_STRING + TAG_SIZE.y - 13.0) * k), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, size, UiStyle.INK)
 
 
 ## The drawstring: a cord across the neck tied in a bow, which droops a little

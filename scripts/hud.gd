@@ -68,8 +68,8 @@ func _build_bag() -> void:
 	_bag.anchor_top = 1.0
 	_bag.anchor_right = 1.0
 	_bag.anchor_bottom = 1.0
-	_bag.offset_left = -BAG_MARGIN.x - MarbleBag.VIEW_SIZE.x
-	_bag.offset_top = -BAG_MARGIN.y - MarbleBag.VIEW_SIZE.y
+	_bag.offset_left = -BAG_MARGIN.x - MarbleBag.DISPLAY_SIZE.x
+	_bag.offset_top = -BAG_MARGIN.y - MarbleBag.DISPLAY_SIZE.y
 	_bag.offset_right = -BAG_MARGIN.x
 	_bag.offset_bottom = -BAG_MARGIN.y
 	add_child(_bag)
@@ -113,7 +113,7 @@ func _build_win_screen() -> void:
 	# Empty until show_win moves the bag in from the corner.
 	_win_bag_slot = CenterContainer.new()
 	_win_bag_slot.name = "BagSlot"
-	_win_bag_slot.custom_minimum_size = MarbleBag.VIEW_SIZE
+	_win_bag_slot.custom_minimum_size = MarbleBag.DISPLAY_SIZE
 	content.add_child(_win_bag_slot)
 
 	var column := VBoxContainer.new()

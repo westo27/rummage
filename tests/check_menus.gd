@@ -168,7 +168,7 @@ func _run() -> void:
 	pause_steppers[7].pressed.emit()  # Lighting +, to Medium
 	await _wait(0.05)
 	_check("Lighting changed in the pause menu applies to the lamps at once",
-		is_equal_approx(lamp.light().light_size, 0.12), "%.2f" % lamp.light().light_size)
+		is_equal_approx(lamp.light().light_size, 0.3), "%.2f" % lamp.light().light_size)
 	_check("and to the room's corner shading",
 		(main.get_node("WorldEnvironment") as WorldEnvironment).environment.ssao_enabled, "")
 	_press("ui_cancel")

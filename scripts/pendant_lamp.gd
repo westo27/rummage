@@ -14,8 +14,8 @@ extends Node3D
 ## Prop, so the beam can't grab it (and can't yank it off the ceiling).
 
 ## The lamp's brightness and how far its light reaches, set per room.
-@export var light_energy: float = 1.3
-@export var light_range: float = 8.0
+@export var light_energy: float = 0.55
+@export var light_range: float = 6.5
 
 const LAYER_PROPS: int = 4
 const MASK_WORLD_PROPS_CLUTTER: int = 1 | 4 | 16

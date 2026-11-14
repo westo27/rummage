@@ -288,8 +288,12 @@ child up past your bedtime". So it's night.
   spotlight outside the window (Moonlight), shining down through it; the
   wall's shadow limits it to the window's shape, so the frame's cross shows
   on the floor. The rest of the room is lit only by a dim, cool blue fill
-  (the environment's ambient light, 0.2), which is what reads as night. Soft
+  (the environment's ambient light, 0.08), which is what reads as night. Soft
   shadowing in corners and under furniture comes from SSAO.
+  Darker, moodier pass: lamps 0.55 with steeper falloff (attenuation 1.7) so
+  they make pools of light, dimmer shade and bulb glow, moonlight 1.8 with
+  blurred edges, exposure 0.85, wider shadow softness (light size 0.3, 0.45
+  on High), saturation back to 1.0.
 - **Bloom** catches only things brighter than white: the lamp bulbs and
   shades, the moon, the creatures (whose glow was raised to 0.8 so they're
   little lights in the dark), the beam and the sparkles.

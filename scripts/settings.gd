@@ -41,8 +41,8 @@ var invert_look: bool = false
 ## Medium by default, so the game runs well on most machines out of the box.
 var lighting: Lighting = Lighting.MEDIUM
 ## Graphics > Pixel filter: the chunky low-resolution look (see pixel_filter.gd).
-## Off by default; strength is how big the pixels are.
-var pixel_filter: bool = false
+## On by default; strength is how big the pixels are.
+var pixel_filter: bool = true
 var pixel_strength: int = 3
 
 var _loaded_from_disk: bool = false

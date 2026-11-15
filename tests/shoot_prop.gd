@@ -1,7 +1,7 @@
 extends Node
 ## Close-up of one prop, for checking rounded edges. Needs a real window.
 ## Run: Godot --path . --resolution 960x540 res://tests/shoot_prop.tscn -- <scene name> [tag]
-## e.g. -- chest_of_drawers round. Writes <name>_<tag>_<off|360p>.png to user://shots.
+## e.g. -- chest_of_drawers round. Writes <name>_<tag>_<off|off_round|360p_round>.png to user://shots.
 
 const OUT: String = "user://shots"
 
@@ -39,8 +39,10 @@ func _run() -> void:
 	player.rotation.y = atan2(-dir.x, -dir.z)
 	head.rotation.x = asin(dir.y)
 	Game.looks.set_wii_finish(true)
-	for v: Array in [["off", false, 3], ["360p", true, 2]]:
+	# name, pixel filter, strength, edge rounding
+	for v: Array in [["off", false, 3, false], ["off_round", false, 3, true], ["360p_round", true, 2, true]]:
 		Game.looks.set_look("", v[1], v[2])
+		Game.looks.set_edge_round(v[3])
 		await _frames(20)
 		get_viewport().get_texture().get_image().save_png("%s/%s_%s_%s.png" % [OUT, prop_name, tag, v[0]])
 	print("Wrote PNGs to %s" % ProjectSettings.globalize_path(OUT))

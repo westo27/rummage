@@ -7,7 +7,8 @@ extends CanvasLayer
 ##   2 = smooth pixels at 270p (no dither, no texel snap)
 ##   3 = smooth pixels at 360p
 ##   4 = rim light and gloss on/off (on top of any of the above)
-## Starts on 3 with 4 on, reapplied each time a scene loads (this overrides
+##   5 = edge rounding filter on/off (edge_round.gd)
+## Starts on 3 with 4 and 5 on, reapplied each time a scene loads (this overrides
 ## the saved Graphics > Pixel filter while the tool exists).
 
 var _label: Label
@@ -16,6 +17,7 @@ var _hide_at: float = 0.0
 ## so key 4 can put it back.
 var _originals: Dictionary = {}
 var wii_finish: bool = false
+var edge_round: bool = true
 
 
 func _init() -> void:
@@ -36,6 +38,7 @@ func _ready() -> void:
 func _apply_defaults() -> void:
 	set_look("", true, 2)
 	set_wii_finish(true)
+	set_edge_round(edge_round)
 	_label.visible = false
 
 
@@ -48,6 +51,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_2: set_look("2: smooth 270p", true, 3)
 		KEY_3: set_look("3: smooth 360p", true, 2)
 		KEY_4: set_wii_finish(not wii_finish)
+		KEY_5: set_edge_round(not edge_round)
 
 
 func set_look(title: String, filter: bool, strength: int) -> void:
@@ -71,6 +75,21 @@ func set_wii_finish(on: bool) -> void:
 			for mat in _materials(node as MeshInstance3D):
 				_apply_finish(mat)
 	_show("4: rim + gloss " + ("ON" if on else "off"))
+
+
+## Adds the filter to the current camera if it hasn't got one, and shows or
+## hides it.
+func set_edge_round(on: bool) -> void:
+	edge_round = on
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		var quad: Node = cam.get_node_or_null("EdgeRound")
+		if quad == null:
+			quad = EdgeRound.new()
+			quad.name = "EdgeRound"
+			cam.add_child(quad)
+		quad.visible = on
+	_show("5: edge rounding " + ("ON" if on else "off"))
 
 
 func _materials(mesh: MeshInstance3D) -> Array[StandardMaterial3D]:

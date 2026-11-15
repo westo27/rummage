@@ -66,20 +66,13 @@ static var _gradient: GradientTexture2D = null
 static var _vignette: GradientTexture2D = null
 
 
-## A system font at the given weight (700 = bold). SystemFont asks the OS for a
-## font by family name instead of shipping a font file, so the project still
-## has no imported assets. If none of the names exist, Godot falls back to its
-## own built-in font.
-static func font(weight: int = 700) -> Font:
-	if _fonts.has(weight):
-		return _fonts[weight]
-	var f := SystemFont.new()
-	f.font_names = PackedStringArray([
-		"Segoe UI Variable Display", "Segoe UI", "Inter", "Helvetica Neue",
-		"DejaVu Sans", "Arial",
-	])
-	f.font_weight = weight
-	_fonts[weight] = f
+## Coiny (fonts/, SIL Open Font License). It has a single heavy weight, so
+## `weight` is kept for callers but no longer changes anything.
+static func font(_weight: int = 700) -> Font:
+	if _fonts.has("coiny"):
+		return _fonts["coiny"]
+	var f: Font = load("res://fonts/Coiny-Regular.ttf")
+	_fonts["coiny"] = f
 	return f
 
 

@@ -59,7 +59,8 @@ a root node and a script.
 - `scripts/ui_style.gd` is the whole look in one place: the palette, the fonts,
   the panel shapes and the icons. Change a colour here and every menu and the
   crosshair follow. Icons are drawn from circles, rectangles and triangles in
-  code, so like the rooms the menus use no imported assets.
+  code. The one imported asset is the font, Coiny (`fonts/`, OFL), which has a
+  single weight.
 - **The glossy finish** (mid-2000s style) is `UiStyle.draw_glossy_panel`. It
   draws five passes: a drop shadow, a body shaded from light at the top to
   blue-grey at the bottom, a thin band of reflected light along the bottom, a

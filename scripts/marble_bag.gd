@@ -274,6 +274,21 @@ func _build_walls() -> void:
 	walls.add_child(collision)
 	_viewport.add_child(walls)
 
+	# A lid across the neck, on its own collision layer (2). A ball dropping
+	# in doesn't see it; once a ball is in, _physics_process adds layer 2 to
+	# its mask, so a hard bounce can't send it back out of the top.
+	var lid_shape := SegmentShape2D.new()
+	lid_shape.a = Vector2(CENTRE_X - NECK_OPEN - 10.0, NECK_Y)
+	lid_shape.b = Vector2(CENTRE_X + NECK_OPEN + 10.0, NECK_Y)
+	var lid_collision := CollisionShape2D.new()
+	lid_collision.shape = lid_shape
+	var lid := StaticBody2D.new()
+	lid.collision_layer = 2
+	lid.collision_mask = 0
+	lid.physics_material_override = material
+	lid.add_child(lid_collision)
+	_viewport.add_child(lid)
+
 
 # ---------------------------------------------------------------- swaying
 
@@ -299,17 +314,22 @@ func _physics_process(delta: float) -> void:
 	push.y = maxf(push.y, -SLOSH_UP_MAX)
 	var moving: bool = push.length() > 4.0 or absf(_swing_speed) > 0.05
 	for marble: BagMarble in _marbles.get_children():
+		var is_in: bool = marble.get_collision_mask_value(2)
+		# Fully below the neck: from now on the lid holds it in.
+		if not is_in and marble.position.y > NECK_Y + BagMarble.RADIUS + 2.0:
+			marble.set_collision_mask_value(2, true)
+			is_in = true
 		# One still dropping in, above the neck, falls straight so it can't
 		# miss the opening.
-		if marble.position.y < NECK_Y:
+		if not is_in:
 			continue
-		# A safety net: a marble that somehow squeezes out through a wall
-		# (the physics can slip under a lot of shaking) is put back in. A
-		# rigid body is moved through the physics server, or the physics
-		# would just put it back where it was.
+		# A safety net: a marble that somehow squeezes out through a wall or
+		# the lid (the physics can slip under a lot of shaking) is put back
+		# in. A rigid body is moved through the physics server, or the
+		# physics would just put it back where it was.
 		if not Geometry2D.is_point_in_polygon(marble.position, _walls_outline):
 			PhysicsServer2D.body_set_state(marble.get_rid(), PhysicsServer2D.BODY_STATE_TRANSFORM,
-				Transform2D(0.0, Vector2(CENTRE_X, NECK_Y + 20.0)))
+				Transform2D(0.0, Vector2(CENTRE_X, NECK_Y + BagMarble.RADIUS + 20.0)))
 			marble.linear_velocity = Vector2.ZERO
 			continue
 		if moving:

@@ -23,9 +23,12 @@ func _ready() -> void:
 
 func _build() -> void:
 	var centre := CenterContainer.new()
-	# The left part of the screen only, so the room shows on the right.
+	# The left part of the screen only, so the room shows on the right, set in
+	# from the edge so the title has room to breathe.
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	centre.anchor_right = 0.42
+	centre.anchor_left = 0.07
+	centre.offset_left = 0.0
+	centre.anchor_right = 0.5
 	centre.offset_right = 0.0
 	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(centre)

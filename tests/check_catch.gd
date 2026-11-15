@@ -63,14 +63,14 @@ func _run() -> void:
 	_check("the beam goes once it's caught", not _beam._beam_mesh.visible, "")
 	await get_tree().physics_frame
 
-	# Listen for the ball clacking as it lands in the bag.
-	var clacked: bool = false
+	# The ball lands in the bag silently.
 	for i in 120:
 		await get_tree().physics_frame
-		for marble in _hud._bag._marbles.get_children():
-			if (marble as BagMarble)._voice.playing:
-				clacked = true
-	_check("the ball clacks like a marble as it lands in the bag", clacked, "")
+	var silent: bool = true
+	for marble in _hud._bag._marbles.get_children():
+		if not marble.find_children("*", "AudioStreamPlayer", true, false).is_empty():
+			silent = false
+	_check("balls in the bag make no sound", silent, "")
 	_check("one ball ends up in the bag", _hud._bag.marble_count() == balls_before + 1,
 		"%d -> %d" % [balls_before, _hud._bag.marble_count()])
 	_check("the sparkles clean themselves up",

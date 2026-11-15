@@ -17,10 +17,6 @@ signal landed(speed: float)
 ## Sized so all 25 fill a little over half the bag: it looks properly full by
 ## the end without spilling out of the neck.
 const RADIUS: float = 21.0
-## Slower bumps than this (px/s) are settling, not impacts, and make no sound.
-const CLACK_SPEED: float = 70.0
-## How far below full volume the hardest clack plays (dB).
-const CLACK_QUIETER_DB: float = 20.0
 
 var color: Color = Color.WHITE
 
@@ -30,7 +26,6 @@ var _has_landed: bool = false
 ## Speed on the previous physics tick. By the time body_entered fires the
 ## collision has already slowed it, so the speed just before is the useful one.
 var _last_speed: float = 0.0
-var _voice: AudioStreamPlayer
 var _glass: Node2D
 var _face: Node2D
 var _glass_material: ShaderMaterial
@@ -68,10 +63,6 @@ func _ready() -> void:
 	_face.draw.connect(_draw_face)
 	add_child(_face)
 
-	_voice = AudioStreamPlayer.new()
-	_voice.stream = Tones.clack(0)
-	add_child(_voice)
-
 
 func _physics_process(_delta: float) -> void:
 	_last_speed = linear_velocity.length()
@@ -87,17 +78,9 @@ func _process(_delta: float) -> void:
 
 func _on_body_entered(_body: Node) -> void:
 	# The bag moving onto the win screen takes every ball out of the scene
-	# for a moment, and a bump during that can't play a sound.
+	# for a moment; a bump during that isn't a landing.
 	if not is_inside_tree():
 		return
-	if _last_speed > CLACK_SPEED:
-		# One of three takes, a little higher or lower each time, so a pile of
-		# balls settling sounds like a handful of marbles, not one sound repeated.
-		_voice.stream = Tones.clack(randi() % 3)
-		_voice.pitch_scale = randf_range(0.88, 1.08)
-		# Harder knocks are louder; the hardest well under the squeaks.
-		_voice.volume_db = linear_to_db(clampf(_last_speed / 400.0, 0.2, 1.0)) - CLACK_QUIETER_DB
-		_voice.play()
 	if not _has_landed:
 		_has_landed = true
 		landed.emit(_last_speed)

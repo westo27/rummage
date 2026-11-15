@@ -61,6 +61,8 @@ const MID_LIGHT_ENERGY: float = 0.45
 const CONTACT_GLOW_SIZE: float = 0.28
 
 var lift_limit: float = 0.0
+## The furniture held fixed while you pull one of its parts (see Prop.plant).
+var _planted: Prop = null
 var held: Prop = null
 
 ## How far in front of the camera the grab point is held.
@@ -317,6 +319,11 @@ func _grab(prop: Prop, point: Vector3) -> void:
 	var distance: float = _camera.global_position.distance_to(point)
 	_hold_distance = clampf(distance, _min_hold_distance(prop), Game.tune.beam_reach)
 	prop.start_hold(_player)
+	# Pulling a drawer or door: furniture heavier than you can lift stays put.
+	_planted = null
+	if prop.part_of != null and not _can_lift(prop.part_of):
+		_planted = prop.part_of
+		_planted.plant()
 	# A sleeping body ignores velocity changes, so make sure it's awake.
 	prop.sleeping = false
 	_last_point = point  # so the first tick doesn't read as a jump
@@ -387,6 +394,9 @@ func _push_point_to_velocity(point: Vector3, wanted: Vector3) -> void:
 func _release() -> void:
 	held.end_hold()
 	held = null
+	if _planted != null:
+		_planted.unplant()
+		_planted = null
 
 
 func _throw() -> void:

@@ -299,6 +299,10 @@ child up past your bedtime". So it's night.
   with three 2 kg drawers; pull one with the beam and the others stay shut.
   Shoved hard, the 20 kg chest tips forward a little and its bottom drawer
   can catch on the floor.
+- **Parts can't lift their furniture.** Drawers and wardrobe doors know their
+  furniture (`Prop.part_of`). While the beam holds one and the furniture is
+  over the lift limit, the furniture is frozen in place (`Prop.plant()`), so
+  you can pull a drawer open but not drag, tip or lift the table by it.
 
 - **Light** (main.tscn): the pendant lamps are turned down to a warm orange
   glow (their shades block light upward, which is the darker band at the

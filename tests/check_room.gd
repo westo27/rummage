@@ -94,6 +94,24 @@ func _run() -> void:
 	await _wait(0.2)
 	_check("the beam can grab the drawer", beam.held == drawer, "held=%s" % beam.held)
 	beam._release()
+	await _wait(0.5)
+
+	# --- Lifting by the drawer: a table too heavy for you stays planted ---
+	var table_body := table as Prop
+	var saved_limit: float = beam.lift_limit
+	beam.lift_limit = 4.0  # enough for the 1 kg drawer, not the 8 kg table
+	var moved: float = await _yank_drawer(beam, player, table_body, drawer)
+	_check("a table too heavy to lift stays put when its drawer is yanked up", moved < 0.01,
+		"moved %.3f m" % moved)
+	_check("and isn't left frozen afterwards", not table_body.freeze, "freeze=%s" % table_body.freeze)
+	beam.lift_limit = 20.0  # strong enough now: the drawer drags the table along
+	moved = await _yank_drawer(beam, player, table_body, drawer)
+	_check("a table you could lift does come up with its drawer", moved > 0.05, "moved %.3f m" % moved)
+	beam.lift_limit = saved_limit
+	# Put the table back on its feet for what follows.
+	table_body.linear_velocity = Vector3.ZERO
+	table_body.angular_velocity = Vector3.ZERO
+	await _wait(1.0)
 
 	# --- Wardrobe doors swing on hinges; the wardrobe itself stays put ---
 	var wardrobe: Node = _main.get_node("MainRoomProps/Wardrobe")
@@ -245,6 +263,26 @@ func _run() -> void:
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
+
+
+## Grabs the drawer and rises 0.6 m, pulling it up. Returns how far the
+## table moved meanwhile.
+func _yank_drawer(beam: Beam, player: Node3D, table: Prop, drawer: Prop) -> float:
+	var start: Vector3 = table.global_position
+	beam._grab_armed = true
+	beam._grab(drawer, drawer.global_position)
+	var moved: float = 0.0
+	for i in 30:
+		player.global_position.y += 0.02
+		await get_tree().physics_frame
+		moved = maxf(moved, table.global_position.distance_to(start))
+	beam._grab_armed = false
+	if beam.held != null:
+		beam._release()
+	player.global_position.y -= 0.6
+	player.reset_physics_interpolation()
+	await _wait(0.5)
+	return moved
 
 
 func _wait(seconds: float) -> void:

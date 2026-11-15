@@ -42,6 +42,12 @@ const KNOCK_COOLDOWN: float = 0.07
 const QUIET_AFTER_LOAD: float = 1.2
 
 var is_held: bool = false
+## For a moving part (a drawer, a door): the furniture it's jointed to.
+var part_of: Prop = null
+## How many held parts are pinning this furniture down (see plant()), and
+## whether it was already frozen before the first one did.
+var _plant_count: int = 0
+var _was_frozen: bool = false
 
 ## How hard the contacts were pushing last physics tick. A knock is a sudden
 ## jump above this, so steady pushes (resting on the floor, being dragged
@@ -169,6 +175,26 @@ func _detach_part(part: Node3D) -> void:
 	part.top_level = true
 	part.global_transform = placed
 	part.reset_physics_interpolation()
+	if part is Prop:
+		(part as Prop).part_of = self
+
+
+## Holds this furniture fixed (a static body) while the beam has one of its
+## parts but couldn't lift the furniture itself, so pulling a drawer can't
+## drag or tip a table that's too heavy for you. unplant() undoes it.
+func plant() -> void:
+	if _plant_count == 0:
+		_was_frozen = freeze
+		freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+		freeze = true
+	_plant_count += 1
+
+
+func unplant() -> void:
+	_plant_count = maxi(_plant_count - 1, 0)
+	if _plant_count == 0 and not _was_frozen:
+		freeze = false
+		sleeping = false
 
 
 ## Called by the beam when it lets go (dropped, thrown, or snapped off).

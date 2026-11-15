@@ -8,8 +8,8 @@ extends CanvasLayer
 ##   3 = smooth pixels at 360p
 ##   4 = rim light and gloss on/off (on top of any of the above)
 ##   5 = edge rounding filter on/off (edge_round.gd)
-## Starts on 3 with 4 and 5 on, reapplied each time a scene loads (this overrides
-## the saved Graphics > Pixel filter while the tool exists).
+## Starts with 4 on and 5 off, reapplied each time a scene loads. The pixel
+## filter is left to Graphics > Pixel filter / Pixel size (full res when off).
 
 var _label: Label
 var _hide_at: float = 0.0
@@ -17,7 +17,7 @@ var _hide_at: float = 0.0
 ## so key 4 can put it back.
 var _originals: Dictionary = {}
 var wii_finish: bool = false
-var edge_round: bool = true
+var edge_round: bool = false
 
 
 func _init() -> void:
@@ -36,7 +36,6 @@ func _ready() -> void:
 
 
 func _apply_defaults() -> void:
-	set_look("", true, 2)
 	set_wii_finish(true)
 	set_edge_round(edge_round)
 	_label.visible = false

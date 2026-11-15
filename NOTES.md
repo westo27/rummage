@@ -372,7 +372,7 @@ child up past your bedtime". So it's night.
   −100 under the Game autoload; its shader (`shaders/pixel_filter.gdshader`)
   point-samples the screen in whole-pixel blocks, so only the 3D is
   pixelated and the HUD and menus stay crisp. Size n makes the screen
-  1080/(n+1) blocks tall (default 3 = 270). On by default. It's a look, not
+  1080/(n+1) blocks tall (default 3 = 270). Off by default (full res). It's a look, not
   a saving: the 3D still renders at full resolution.
   It also limits colours to 16 shades per channel with a 4x4 Bayer dither
   per block (`levels`, `spread` in the shader: lower spread = flatter bands).

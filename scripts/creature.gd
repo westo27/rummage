@@ -30,7 +30,18 @@ enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 @export var reveal_on_knock: bool = true
 
 const LAYER_CREATURES: int = 8
+const LAYER_CLUTTER: int = 16
 const MASK_PROPS: int = 4 | 16  # heavy props and light "clutter" props
+## What the body bumps into: walls and floor, props, clutter and the other
+## creatures. Set here rather than in the .tscn so it sits with the code.
+const MASK_BODY: int = 1 | 4 | LAYER_CREATURES | LAYER_CLUTTER
+## A new bump faster than this (m/s, into the surface) clacks like a marble.
+const CLACK_SPEED: float = 0.5
+## Loudest clack (dB), for a hit at full flee speed. Under the squeaks.
+const CLACK_MAX_DB: float = -12.0
+## How heavy the ball counts as when it knocks clutter about (kg): a book is
+## nudged along, a bin barely moves.
+const KNOCK_MASS: float = 0.25
 ## How far around a hidden creature to look for the props that cover it.
 const COVER_RADIUS_HIDDEN: float = 0.3
 ## Cowering creatures watch a wider area, so things landing near them count.
@@ -109,6 +120,10 @@ var _drawer_spot: Transform3D
 ## Seconds left heading straight out of the drawer before it starts steering
 ## away from the player (which could mean back through the furniture).
 var _escape_left: float = 0.0
+## Instance ids of what it touched last tick, so only a fresh bump clacks,
+## not every tick of rolling along a wall.
+var _touching: Dictionary = {}
+var _clack_voice: AudioStreamPlayer3D
 
 @onready var _visual: Node3D = $Visual
 @onready var _eyes: CreatureEyes = $Visual/Eyes
@@ -123,6 +138,11 @@ func _ready() -> void:
 	_base_pitch = randf_range(0.85, 1.35)
 	_voice.stream = Tones.squeak()
 	_voice.volume_db = Game.tune.squeak_volume_db
+	collision_mask = MASK_BODY
+	_clack_voice = AudioStreamPlayer3D.new()
+	_clack_voice.unit_size = 3.0  # same falloff as the squeaks
+	_clack_voice.max_distance = 16.0
+	add_child(_clack_voice)
 	_apply_random_color()
 	_peek_next = randf_range(PEEK_GAP_MIN, PEEK_GAP_MAX)
 	_wink_next = randf_range(WINK_GAP_MIN, WINK_GAP_MAX)
@@ -630,7 +650,10 @@ func _move(direction: Vector3, speed: float, delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= Game.tune.gravity * delta
 	var before: Vector3 = global_position
+	# move_and_slide changes velocity as it slides, so keep the speed going in.
+	var moving: Vector3 = velocity
 	move_and_slide()
+	_react_to_bumps(moving)
 	# Roll like a marble: turn the ball (eyes and all) about the axis that's
 	# sideways to its travel, by the distance covered over its radius.
 	var travelled: Vector3 = global_position - before
@@ -638,6 +661,48 @@ func _move(direction: Vector3, speed: float, delta: float) -> void:
 	if travelled.length() > 0.0005:
 		var axis: Vector3 = Vector3.UP.cross(travelled.normalized())
 		_visual.basis = (Basis(axis, travelled.length() / ROLL_RADIUS) * _visual.basis).orthonormalized()
+
+
+## Clacks like a glass marble on a fresh bump into a wall, a prop or another
+## creature, and knocks light clutter along. The floor it rolls on doesn't count.
+func _react_to_bumps(moving: Vector3) -> void:
+	var touching: Dictionary = {}
+	for i in get_slide_collision_count():
+		var hit: KinematicCollision3D = get_slide_collision(i)
+		var other: Object = hit.get_collider()
+		if other == null:
+			continue
+		var normal: Vector3 = hit.get_normal()
+		var creature := other as Creature
+		if normal.y > 0.7 and creature == null:
+			continue  # standing on it
+		var id: int = other.get_instance_id()
+		if touching.has(id):
+			continue
+		touching[id] = true
+		# How fast the two were closing along the line between them.
+		var closing: Vector3 = moving - (creature.velocity if creature != null else Vector3.ZERO)
+		var speed: float = -closing.dot(normal)
+		var body := other as RigidBody3D
+		if body != null and body.collision_layer & LAYER_CLUTTER and speed > 0.0:
+			# A CharacterBody3D stops at rigid bodies rather than pushing them,
+			# so give it the shove a rolling ball would (an elastic knock).
+			body.apply_impulse(-normal * speed * KNOCK_MASS * 2.0, hit.get_position() - body.global_position)
+		if _touching.has(id) or speed < CLACK_SPEED:
+			continue
+		_clack(speed, hit.get_position())
+		if creature != null:
+			# One clack per meeting: the other one doesn't play its own.
+			creature._touching[get_instance_id()] = true
+	_touching = touching
+
+
+func _clack(speed: float, at: Vector3) -> void:
+	_clack_voice.stream = Tones.clack(randi() % 3)
+	_clack_voice.global_position = at
+	_clack_voice.pitch_scale = randf_range(0.88, 1.08)
+	_clack_voice.volume_db = linear_to_db(clampf(speed / Game.tune.flee_speed, 0.2, 1.0)) + CLACK_MAX_DB
+	_clack_voice.play()
 
 
 func _away_from_player() -> Vector3:

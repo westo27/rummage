@@ -441,6 +441,7 @@ other's layer.
 
 - **Player** (mask world + props): blocked by walls and heavy props, never by
   clutter or creatures.
+- **Creatures** (mask world + props + creatures + clutter, set in creature.gd).
 - **Held objects** pass through the player through collision exceptions (prop.gd),
   which are removed once the object is clear of the player after you let go.
 - **Creatures** (mask world + props): run around heavy props and straight through
@@ -475,6 +476,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage4 | ping range and cooldown, both gates, wardrobe off the doorway, side room, win, timer, marble bag (one ball per catch, none escape), restart |
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
+| check_bump | a creature rolling into another collides and clacks, once |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
@@ -560,6 +562,11 @@ creature.gd). Once cowering, they roll back upright to look at you and bob
 in a happy bounce instead of the old shiver, which looked sad (Grace's
 playtest). `BOUNCE_*`, `SETTLE_RATE` and `ROLL_RADIUS` are at the top of
 creature.gd.
+
+They bump into each other, walls, props and clutter (`MASK_BODY`), and a
+fresh bump faster than `CLACK_SPEED` plays the bag's marble clack from where
+it hit (`_react_to_bumps`). A CharacterBody3D can't push rigid bodies, so it
+knocks clutter along with an impulse (`KNOCK_MASS`).
 
 They're 11 cm across (radius 0.054; the eyes are the old ones scaled 0.6)
 and run at `flee_speed` 2.2 m/s, so they fit in drawers. Four hide in

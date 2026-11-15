@@ -68,7 +68,7 @@ func _run() -> void:
 	await _wait(0.5)
 	Input.action_release("move_forward")
 	walked = player.global_position.x - start_x
-	_check("crouch-walks at about 2.2 m/s", absf(walked - 1.1) < 0.25, "moved %.2f m in 0.5 s" % walked)
+	_check("crouch-walks at about 1.4 m/s", absf(walked - 0.7) < 0.2, "moved %.2f m in 0.5 s" % walked)
 	Input.action_release("crouch")
 	await _wait(0.4)
 	_check("letting go stands back up", head.position.y > 1.5, "head y=%.2f" % head.position.y)

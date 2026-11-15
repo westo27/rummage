@@ -21,7 +21,7 @@ extends Resource
 @export var walk_speed: float = 4.5
 @export var run_speed: float = 7.5
 ## Hold C or Ctrl. Running has no effect while crouched.
-@export var crouch_speed: float = 2.2
+@export var crouch_speed: float = 1.4
 ## Head height (eyes above the feet) standing and crouched, metres.
 @export var stand_eye_height: float = 1.55
 @export var crouch_eye_height: float = 0.8

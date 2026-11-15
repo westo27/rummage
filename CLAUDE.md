@@ -36,6 +36,7 @@ Run only the suites the change touches; the full set once before committing.
   in `%APPDATA%/Godot/app_userdata/rummage_prototype/shots`.
 - Render at `--resolution 960x540` and look only when the look is the point.
 - `tests/bench_gpu.tscn` measures GPU cost per graphics setting.
+- `tests/check_marble_text.tscn` (needs a window): swirl text stays steady.
 - `tests/render_knocks.tscn` / `render_clacks.tscn` save sounds as WAVs.
 
 ## Ideas

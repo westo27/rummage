@@ -66,6 +66,9 @@ a root node and a script.
   button's accent) and tiny bubbles. Dark text stays solid with a dark edge.
   Letter-local coordinates come from VERTEX_ID (one quad per glyph).
   Small text gets less swirl (`detail`, set from the font size).
+  Each letter's swirls come from smooth waves of its left edge (`pick`), never
+  a floor or hash: those split letters in two. Headings drift via a `MarbleFlow`
+  node, not TIME (it resets hourly). `tests/check_marble_text.tscn` guards it.
 - **The glossy finish** (mid-2000s style) is `UiStyle.draw_glossy_panel`. It
   draws five passes: a drop shadow, a body shaded from light at the top to
   blue-grey at the bottom, a thin band of reflected light along the bottom, a

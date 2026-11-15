@@ -309,9 +309,31 @@ const HEADING_DRIFT: float = 0.25
 ## Other marble text has no swirls.
 static func set_marble_drift(item: CanvasItem, speed: float = HEADING_DRIFT) -> void:
 	var m := item.material as ShaderMaterial
-	if m != null:
-		m.set_shader_parameter("swirls", 1.0)
-		m.set_shader_parameter("drift_speed", speed)
+	if m == null:
+		return
+	m.set_shader_parameter("swirls", 1.0)
+	m.set_shader_parameter("drift", 0.0)
+	var flow := MarbleFlow.new()
+	flow.material = m
+	flow.speed = speed
+	item.add_child(flow)
+
+
+## Adds to a heading's swirl drift every frame. Kept here rather than as TIME
+## in the shader, because TIME jumps back to 0 every hour. PROCESS_MODE_ALWAYS
+## so the pause menu's heading keeps flowing while the game is paused.
+class MarbleFlow extends Node:
+	var material: ShaderMaterial
+	var speed: float = 0.0
+	var drift: float = 0.0
+
+	func _init() -> void:
+		name = "MarbleFlow"
+		process_mode = Node.PROCESS_MODE_ALWAYS
+
+	func _process(delta: float) -> void:
+		drift += delta * speed
+		material.set_shader_parameter("drift", drift)
 
 
 ## Tells the marble shader where a line of text sits in the item's own pixels.

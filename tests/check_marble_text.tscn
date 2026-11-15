@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/check_marble_text.gd" id="1"]
+
+[node name="CheckMarbleText" type="Node"]
+script = ExtResource("1")

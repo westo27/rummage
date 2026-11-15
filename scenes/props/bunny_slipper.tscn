@@ -1,0 +1,152 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_fluff"]
+albedo_color = Color(0.97, 0.9, 0.9, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_pink"]
+albedo_color = Color(0.95, 0.62, 0.72, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_sole"]
+albedo_color = Color(0.72, 0.5, 0.52, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_eye"]
+albedo_color = Color(0.08, 0.06, 0.07, 1)
+roughness = 0.15
+
+[sub_resource type="CylinderMesh" id="Mesh_Sole"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 0.02
+radial_segments = 24
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_Footbed"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 0.012
+radial_segments = 24
+rings = 1
+
+[sub_resource type="SphereMesh" id="Mesh_Head"]
+radius = 0.05
+height = 0.1
+
+[sub_resource type="TorusMesh" id="Mesh_Collar"]
+inner_radius = 0.029
+outer_radius = 0.054
+rings = 32
+ring_segments = 12
+
+[sub_resource type="CapsuleMesh" id="Mesh_Ear"]
+radius = 0.016
+height = 0.085
+
+[sub_resource type="CapsuleMesh" id="Mesh_EarInner"]
+radius = 0.01
+height = 0.062
+
+[sub_resource type="SphereMesh" id="Mesh_Eye"]
+radius = 0.0065
+height = 0.013
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="Mesh_Nose"]
+radius = 0.007
+height = 0.014
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="Mesh_Tail"]
+radius = 0.016
+height = 0.032
+radial_segments = 16
+rings = 8
+
+[sub_resource type="BoxShape3D" id="Shape_Sole"]
+size = Vector3(0.1, 0.02, 0.25)
+
+[sub_resource type="BoxShape3D" id="Shape_Toe"]
+size = Vector3(0.096, 0.055, 0.125)
+
+[node name="BunnySlipper" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.15
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.13
+impact_material = 2
+tint_variation = 0.3
+
+[node name="SoleShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.025, 0)
+shape = SubResource("Shape_Sole")
+
+[node name="ToeShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.06)
+shape = SubResource("Shape_Toe")
+
+[node name="Sole" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 2.5, 0, -0.025, 0)
+material_override = SubResource("Mat_sole")
+mesh = SubResource("Mesh_Sole")
+
+[node name="Footbed" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 2.6, 0, -0.012, -0.002)
+material_override = SubResource("Mat_pink")
+mesh = SubResource("Mesh_Footbed")
+
+[node name="Collar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.7, 0, -0.007, -0.04)
+material_override = SubResource("Mat_fluff")
+mesh = SubResource("Mesh_Collar")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.8, 0, 0, 0, 1.25, 0, -0.008, 0.06)
+material_override = SubResource("Mat_fluff")
+mesh = SubResource("Mesh_Head")
+
+[node name="EarL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9272, -0.2408, -0.1291, 0.3746, 0.596, 0.3196, 0, -0.766, 0.2893, -0.03019, 0.04426, 0.008954)
+material_override = SubResource("Mat_fluff")
+mesh = SubResource("Mesh_Ear")
+
+[node name="EarLInner" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9272, -0.2408, -0.08609, 0.3746, 0.596, 0.2131, 0, -0.766, 0.1928, -0.03196, 0.04865, 0.01031)
+material_override = SubResource("Mat_pink")
+mesh = SubResource("Mesh_EarInner")
+
+[node name="EarR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.866, 0.1873, 0.2086, -0.5, 0.3244, 0.3613, 0, -0.9272, 0.1686, 0.02837, 0.03503, 0.003476)
+material_override = SubResource("Mat_fluff")
+mesh = SubResource("Mesh_Ear")
+
+[node name="EarRInner" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.866, 0.1873, 0.1391, -0.5, 0.3244, 0.2409, 0, -0.9272, 0.1124, 0.03083, 0.03929, 0.003307)
+material_override = SubResource("Mat_pink")
+mesh = SubResource("Mesh_EarInner")
+
+[node name="EyeL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.019, 0.008, 0.11)
+material_override = SubResource("Mat_eye")
+mesh = SubResource("Mesh_Eye")
+
+[node name="EyeR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.019, 0.008, 0.11)
+material_override = SubResource("Mat_eye")
+mesh = SubResource("Mesh_Eye")
+
+[node name="Nose" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.004, 0.121)
+material_override = SubResource("Mat_pink")
+mesh = SubResource("Mesh_Nose")
+
+[node name="Tail" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.006, -0.128)
+material_override = SubResource("Mat_fluff")
+mesh = SubResource("Mesh_Tail")

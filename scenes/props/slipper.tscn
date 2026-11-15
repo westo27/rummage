@@ -2,34 +2,46 @@
 
 [ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
 
-[sub_resource type="StandardMaterial3D" id="Mat_fluff"]
-albedo_color = Color(0.93, 0.6, 0.7, 1)
+[sub_resource type="StandardMaterial3D" id="Mat_felt"]
+albedo_color = Color(0.42, 0.52, 0.7, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_fleece"]
+albedo_color = Color(0.96, 0.92, 0.84, 1)
+roughness = 1.0
 
 [sub_resource type="StandardMaterial3D" id="Mat_sole"]
-albedo_color = Color(0.55, 0.4, 0.35, 1)
+albedo_color = Color(0.5, 0.38, 0.33, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_pom"]
-albedo_color = Color(0.98, 0.96, 0.92, 1)
+[sub_resource type="CylinderMesh" id="Mesh_Sole"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 0.02
+radial_segments = 24
+rings = 1
 
-[sub_resource type="BoxMesh" id="Mesh_Sole"]
-size = Vector3(0.1, 0.02, 0.25)
+[sub_resource type="CylinderMesh" id="Mesh_Footbed"]
+top_radius = 0.045
+bottom_radius = 0.045
+height = 0.012
+radial_segments = 24
+rings = 1
+
+[sub_resource type="SphereMesh" id="Mesh_Toe"]
+radius = 0.05
+height = 0.1
+
+[sub_resource type="TorusMesh" id="Mesh_Collar"]
+inner_radius = 0.031
+outer_radius = 0.053
+rings = 32
+ring_segments = 12
 
 [sub_resource type="BoxShape3D" id="Shape_Sole"]
 size = Vector3(0.1, 0.02, 0.25)
 
-[sub_resource type="BoxMesh" id="Mesh_Footbed"]
-size = Vector3(0.094, 0.012, 0.24)
-
-[sub_resource type="CapsuleMesh" id="Mesh_Cover"]
-radius = 0.047
-height = 0.13
-
-[sub_resource type="SphereMesh" id="Mesh_Pom"]
-radius = 0.022
-height = 0.044
-
 [sub_resource type="BoxShape3D" id="Shape_Toe"]
-size = Vector3(0.094, 0.05, 0.13)
+size = Vector3(0.096, 0.045, 0.13)
 
 [node name="Slipper" type="RigidBody3D"]
 collision_layer = 4
@@ -41,30 +53,30 @@ hold_radius = 0.13
 impact_material = 2
 tint_variation = 0.3
 
-[node name="Sole" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.025, 0)
-material_override = SubResource("Mat_sole")
-mesh = SubResource("Mesh_Sole")
-
 [node name="SoleShape" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.025, 0)
 shape = SubResource("Shape_Sole")
 
+[node name="ToeShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.005, 0.05)
+shape = SubResource("Shape_Toe")
+
+[node name="Sole" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 2.5, 0, -0.025, 0)
+material_override = SubResource("Mat_sole")
+mesh = SubResource("Mesh_Sole")
+
 [node name="Footbed" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
-material_override = SubResource("Mat_fluff")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 2.6, 0, -0.012, -0.002)
+material_override = SubResource("Mat_fleece")
 mesh = SubResource("Mesh_Footbed")
 
-[node name="Cover" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, -0.005, 0.055)
-material_override = SubResource("Mat_fluff")
-mesh = SubResource("Mesh_Cover")
+[node name="Collar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1.7, 0, -0.008, -0.04)
+material_override = SubResource("Mat_fleece")
+mesh = SubResource("Mesh_Collar")
 
-[node name="Pom" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0.085)
-material_override = SubResource("Mat_pom")
-mesh = SubResource("Mesh_Pom")
-
-[node name="ToeShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.055)
-shape = SubResource("Shape_Toe")
+[node name="Toe" type="MeshInstance3D" parent="."]
+transform = Transform3D(1.02, 0, 0, 0, 0.7, 0, 0, 0, 1.4, 0, -0.014, 0.05)
+material_override = SubResource("Mat_felt")
+mesh = SubResource("Mesh_Toe")

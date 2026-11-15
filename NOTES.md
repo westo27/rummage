@@ -294,7 +294,8 @@ each room (needs a window).
 - Small household things, all clutter (0.15–1.8 kg, liftable from the start).
   Playroom: teddy bear, toy car, stacking rings (table), toy drum, floor
   cushion, shape sorter, toy dinosaur. Bedroom: alarm clock (bedside table),
-  globe, pencil pot and mug (desk), two slippers by the bed, school bag, two
+  globe, pencil pot and mug (desk), two slippers by the bed (felt toe, fleece
+  cuff; a spare `bunny_slipper.tscn` is kept for later), school bag, two
   stacked shoe boxes, folded jumpers and a piggy bank (chest). Their meshes
   are only partly matched by collision shapes (fine detail like wheels and
   pencils is visual only). `check_room` checks they settle where they're put.

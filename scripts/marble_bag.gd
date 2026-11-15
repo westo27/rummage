@@ -1,14 +1,20 @@
 class_name MarbleBag
-extends SubViewportContainer
+extends Control
 ## A clear drawstring bag in the corner of the HUD. Every creature you catch
 ## drops into it as a glass marble with eyes (BagMarble) and piles up with the
 ## others, like a bag of marbles.
 ##
 ## It's a little world of its own. A SubViewport renders its own scene and,
 ## importantly, has its own 2D physics space, so the marbles can tumble about
-## without touching the 3D game. The SubViewportContainer shows that render
-## as an ordinary UI element, anchored like any other Control. Its background
-## is transparent, so the room shows through the bag.
+## without touching the 3D game. A SubViewportContainer (_view) shows that
+## render as an ordinary UI element. Its background is transparent, so the
+## room shows through the bag.
+##
+## The bag is held in your hand: turning the camera or moving swings it from
+## its neck like a pendulum, and the marbles slosh about inside. The swing is
+## the _sway control's rotation (around the neck); the slosh is the marbles'
+## gravity tilted to match plus a push opposite to the hand's movement. The
+## bag's own node stays put, so the HUD and the win card can lay it out.
 ##
 ## Drawing order inside the viewport, back to front:
 ##   _back     the far side of the bag (a faint film) and the far rim of the
@@ -49,6 +55,32 @@ const FILM_BOTTOM := Color(0.75, 0.86, 0.97, 0.14)
 ## Light along the edges and in the reflections.
 const LIGHT := Color(1.0, 1.0, 1.0)
 
+## How the hand's movement reaches the bag. Turning the camera moves the hand
+## this many bag pixels per second for each radian per second of turn, and
+## walking this many for each metre per second.
+const HAND_PER_TURN: float = 150.0
+const HAND_PER_METRE: float = 30.0
+## How hard a change in the hand's speed kicks the swing (radians per second
+## per bag pixel per second), and the swing's spring and friction.
+const SWING_KICK: float = 0.0035
+const SWING_SPRING: float = 30.0
+const SWING_DAMP: float = 3.2
+const SWING_MAX: float = 0.4
+## How much of a change in the hand's speed the marbles feel (they keep going
+## while the bag moves), and the most they're pushed upward in one go, so a
+## flick can't throw them out of the open top.
+const SLOSH: float = 0.9
+const SLOSH_UP_MAX: float = 120.0
+const SLOSH_MAX: float = 400.0
+## The fastest the hand counts as moving (bag pixels per second), and the
+## fastest a marble may go, so even a wild flick can't fire one through a wall.
+const HAND_MAX: float = 1500.0
+const MARBLE_MAX_SPEED: float = 700.0
+## The fastest a marble may rise: at this it climbs about 30 px, well inside.
+const MARBLE_MAX_RISE: float = 250.0
+
+var _sway: Control
+var _view: SubViewportContainer
 var _viewport: SubViewport
 var _back: Node2D
 var _marbles: Node2D
@@ -66,15 +98,37 @@ var _squash: Tween
 var _caught: int = 0
 var _total: int = 0
 
+## The swing angle (radians, positive swings the bottom left) and its speed.
+var _swing: float = 0.0
+var _swing_speed: float = 0.0
+## The hand's speed in bag pixels per second, smoothed, and last frame's.
+var _hand_velocity: Vector2 = Vector2.ZERO
+## The camera as it was last frame, to work out how it's moving.
+var _last_camera: Transform3D
+var _has_last_camera: bool = false
+## The walls' shape, kept for the safety net in _physics_process.
+var _walls_outline: PackedVector2Array
+
 
 func _ready() -> void:
 	# Never swallow clicks meant for the beam.
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# stretch: the SubViewport is resized to fill this container.
-	stretch = true
 	custom_minimum_size = DISPLAY_SIZE
-	# Squash from the bottom middle, so it sits down rather than shrinking.
-	pivot_offset = Vector2(DISPLAY_SIZE.x * 0.5, DISPLAY_SIZE.y)
+
+	# Two layers, so swinging and squashing each get their own pivot: _sway
+	# turns around the neck, _view squashes from the bottom middle.
+	_sway = Control.new()
+	_sway.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sway.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_sway.pivot_offset = Vector2(CENTRE_X, NECK_Y) * DISPLAY_SIZE / VIEW_SIZE
+	add_child(_sway)
+	_view = SubViewportContainer.new()
+	_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# stretch: the SubViewport is resized to fill this container.
+	_view.stretch = true
+	_view.pivot_offset = Vector2(DISPLAY_SIZE.x * 0.5, DISPLAY_SIZE.y)
+	_sway.add_child(_view)
 
 	_viewport = SubViewport.new()
 	_viewport.transparent_bg = true
@@ -84,7 +138,7 @@ func _ready() -> void:
 	_viewport.size_2d_override = Vector2i(VIEW_SIZE)
 	_viewport.size_2d_override_stretch = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	add_child(_viewport)
+	_view.add_child(_viewport)
 
 	# Each layer draws through its `draw` signal, which fires just as the node
 	# is about to draw, so these functions can call _back.draw_* directly.
@@ -164,8 +218,8 @@ func _on_marble_landed(speed: float) -> void:
 	if _squash != null and _squash.is_valid():
 		_squash.kill()
 	_squash = create_tween()
-	_squash.tween_property(self, "scale", Vector2(1.0 + 0.05 * amount, 1.0 - 0.06 * amount), 0.07)
-	_squash.tween_property(self, "scale", Vector2.ONE, 0.35) \
+	_squash.tween_property(_view, "scale", Vector2(1.0 + 0.05 * amount, 1.0 - 0.06 * amount), 0.07)
+	_squash.tween_property(_view, "scale", Vector2.ONE, 0.35) \
 		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
@@ -203,6 +257,7 @@ func _half_width(t: float, neck: float) -> float:
 ## points and, unlike a polygon, doesn't close the loop across the top.
 func _build_walls() -> void:
 	var outline: PackedVector2Array = _outline(1.0)
+	_walls_outline = outline
 	var segments := PackedVector2Array()
 	for i in outline.size() - 1:
 		segments.append(outline[i])
@@ -218,6 +273,94 @@ func _build_walls() -> void:
 	walls.physics_material_override = material
 	walls.add_child(collision)
 	_viewport.add_child(walls)
+
+
+# ---------------------------------------------------------------- swaying
+
+func _physics_process(delta: float) -> void:
+	var hand: Vector2 = _hand_velocity_now(delta)
+	var change: Vector2 = hand - _hand_velocity
+	_hand_velocity = hand
+
+	# The bag hangs from the hand: when the hand speeds up to the right, the
+	# bottom lags behind to the left, then swings back on a damped spring.
+	_swing_speed += change.x * SWING_KICK
+	_swing_speed += (-SWING_SPRING * _swing - SWING_DAMP * _swing_speed) * delta
+	_swing = clampf(_swing + _swing_speed * delta, -SWING_MAX, SWING_MAX)
+	_sway.rotation = _swing
+
+	# The marbles: "down" tilts with the bag, so they roll to its low side...
+	var down := Vector2.DOWN.rotated(-_swing)
+	PhysicsServer2D.area_set_param(_viewport.world_2d.space,
+		PhysicsServer2D.AREA_PARAM_GRAVITY_VECTOR, down)
+	# ...and they carry on as they were while the bag moves under them, so
+	# they get the hand's change in speed backwards, in the bag's own frame.
+	var push: Vector2 = (-change * SLOSH).rotated(-_swing).limit_length(SLOSH_MAX)
+	push.y = maxf(push.y, -SLOSH_UP_MAX)
+	var moving: bool = push.length() > 4.0 or absf(_swing_speed) > 0.05
+	for marble: BagMarble in _marbles.get_children():
+		# One still dropping in, above the neck, falls straight so it can't
+		# miss the opening.
+		if marble.position.y < NECK_Y:
+			continue
+		# A safety net: a marble that somehow squeezes out through a wall
+		# (the physics can slip under a lot of shaking) is put back in. A
+		# rigid body is moved through the physics server, or the physics
+		# would just put it back where it was.
+		if not Geometry2D.is_point_in_polygon(marble.position, _walls_outline):
+			PhysicsServer2D.body_set_state(marble.get_rid(), PhysicsServer2D.BODY_STATE_TRANSFORM,
+				Transform2D(0.0, Vector2(CENTRE_X, NECK_Y + 20.0)))
+			marble.linear_velocity = Vector2.ZERO
+			continue
+		if moving:
+			marble.sleeping = false
+			var v: Vector2 = (marble.linear_velocity + push).limit_length(MARBLE_MAX_SPEED)
+			# Never fast enough upward to leave through the open top.
+			v.y = maxf(v.y, -MARBLE_MAX_RISE)
+			marble.linear_velocity = v
+
+
+## How fast the hand holding the bag is moving, in bag pixels per second
+## (x right, y down on screen), from how the camera moved since last tick.
+func _hand_velocity_now(delta: float) -> Vector2:
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	if camera == null or delta <= 0.0:
+		_has_last_camera = false
+		return Vector2.ZERO
+	var now: Transform3D = camera.global_transform
+	if not _has_last_camera:
+		_last_camera = now
+		_has_last_camera = true
+		return _hand_velocity
+	var before: Transform3D = _last_camera
+	_last_camera = now
+	# Turning: the hand swings with the view. A turn to the right (negative
+	# about up) moves it right; looking up moves it up.
+	var forward_before: Vector3 = -before.basis.z
+	var forward_now: Vector3 = -now.basis.z
+	var flat_before := Vector3(forward_before.x, 0.0, forward_before.z)
+	var flat_now := Vector3(forward_now.x, 0.0, forward_now.z)
+	var yaw: float = 0.0
+	if flat_before.length() > 0.01 and flat_now.length() > 0.01:
+		yaw = flat_before.signed_angle_to(flat_now, Vector3.UP)
+	var pitch: float = asin(clampf(forward_now.y, -1.0, 1.0)) - asin(clampf(forward_before.y, -1.0, 1.0))
+	# A big jump in one tick is the camera being placed (a restart, a
+	# test), not the player turning.
+	if absf(yaw) > 0.5 or absf(pitch) > 0.5:
+		yaw = 0.0
+		pitch = 0.0
+	# Moving: sideways and up/down, as the camera sees it. A jump to the
+	# respawn point isn't movement.
+	var moved: Vector3 = now.origin - before.origin
+	if moved.length() > 1.0:
+		moved = Vector3.ZERO
+	var side: float = moved.dot(now.basis.x)
+	var up: float = moved.dot(now.basis.y)
+	var target := Vector2(-yaw * HAND_PER_TURN + side * HAND_PER_METRE,
+		-pitch * HAND_PER_TURN - up * HAND_PER_METRE) / delta
+	target = target.limit_length(HAND_MAX)
+	# Mouse movement arrives in uneven steps, so smooth it a little.
+	return _hand_velocity.lerp(target, 0.5)
 
 
 # ---------------------------------------------------------------- drawing

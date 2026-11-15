@@ -95,6 +95,12 @@ a root node and a script.
   gathered neck. No bow, no tag. Balls clack like glass marbles when they land and knock together
   (`Tones.clack`: a bright crack with a very short two-pitch glass ring,
   three takes; you picked it from five in `tests/render_clacks.tscn`).
+  **It sways with you**: turning the camera or moving swings it from the
+  neck on a damped spring (`_sway`, `SWING_*`), and the marbles slosh: their
+  gravity tilts with it and they get the hand's change in speed backwards
+  (`SLOSH`). `HAND_PER_TURN`/`HAND_PER_METRE` set how strongly. Marbles
+  can't rise fast enough to leave by the open top, and any that slip out
+  through a wall are put back.
   Catches made close together queue up and drop 0.16 s apart. The neck
   loosens while balls go in, and the bag squashes a little when each lands.
   To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`

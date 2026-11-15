@@ -46,7 +46,7 @@ var invert_look: bool = false
 var lighting: Lighting = Lighting.MEDIUM
 ## Graphics > Pixel filter: the chunky low-resolution look (see pixel_filter.gd).
 ## On by default; strength is how big the pixels are.
-var pixel_filter: bool = true
+var pixel_filter: bool = false
 var pixel_strength: int = 3
 ## Graphics > Dither: limits the pixel filter's colours to a few shades with a
 ## checkered dither between them. Off by default.

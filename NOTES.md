@@ -59,9 +59,8 @@ few parts repeated: `scenes/title.tscn` and `scenes/pause_menu.tscn` hold only
 a root node and a script.
 
 - `scripts/ui_style.gd` is the whole look in one place: the palette, the fonts,
-  the panel shapes and the icons. Change a colour here and every menu and the
-  crosshair follow. Icons are drawn from circles, rectangles and triangles in
-  code. The one imported asset is the font, Coiny (`fonts/`, OFL), which has a
+  and the glass text. Change a colour here and every menu and the
+  crosshair follow. The one imported asset is the font, Coiny (`fonts/`, OFL), which has a
   single weight. Menu text (UiStyle.label and button labels) uses
   `shaders/marble_text.gdshader`: each letter is a 3D glass marble: smoky
   see-through glass, white edge light, pink/blue/teal swirls (pink becomes the
@@ -71,22 +70,14 @@ a root node and a script.
   Each letter's swirls come from smooth waves of its left edge (`pick`), never
   a floor or hash: those split letters in two. Headings drift via a `MarbleFlow`
   node, not TIME (it resets hourly). `tests/check_marble_text.tscn` guards it.
-- **The glossy finish** (mid-2000s style) is `UiStyle.draw_glossy_panel`. It
-  draws five passes: a drop shadow, a body shaded from light at the top to
-  blue-grey at the bottom, a thin band of reflected light along the bottom, a
-  white gloss over the top half, and a coloured rim with a bevel line. The
-  gloss is a stack of overlapping see-through pills, which fakes a blur
-  without a shader. To change how glassy everything looks, start with the
-  `PANEL_TOP`/`PANEL_BOTTOM` colours and the gloss height (0.58).
-- `scripts/menu_panel.gd` is the only kind of button. Its shape follows its
-  size: wider than 2:1 makes a pill with the icon at the left (the main
-  menus), square makes a circle (the steppers), anything else a rounded
-  gumdrop. It rises and glows when pointed at, sinks when pressed, and
-  chimes. Menus are mouse only: panels can't take keyboard focus
-  (`focus_mode = FOCUS_NONE`), so nothing is pre-selected and the arrow keys
-  do nothing. Esc still backs out of menus.
-- `scripts/glossy_card.gd` is the same finish as a container, used for the
-  win screen's card.
+- **No panels anywhere.** All UI is glass words over the scene: menus, the
+  HUD readouts, the lesson hint and the win screen (the room dimmed behind
+  it). The old glossy panels, pills, cards and icons were removed.
+- `scripts/menu_panel.gd` is the only kind of button: clickable glass words
+  (`make_text`, or `make_text_stepper` for − and +). They grow and their
+  swirls drift when pointed at, and they chime. Menus are mouse only: words
+  can't take keyboard focus (`focus_mode = FOCUS_NONE`), so nothing is
+  pre-selected and the arrow keys do nothing. Esc still backs out of menus.
 - **The marble bag** (`scripts/marble_bag.gd`, `scripts/bag_marble.gd`) sits
   in the HUD's bottom-right corner. Each catch drops a ball in that
   creature's colour, with eyes, into a clear bag where it rolls and
@@ -112,7 +103,7 @@ a root node and a script.
   (21): all 25 currently fill a little over half of it.
 - **No number on screen for catches**: the marbles in the bag are the
   counter. The bag still keeps the count for tests (`Hud.caught_text()`).
-- **On winning, the bag moves onto the win card** beside your time.
+- **On winning, the bag moves onto the win screen** beside your time.
   `reparent()` carries its whole subtree, physics world included, so any
   balls still queued keep dropping in there.
 - **The mouse pointer** is the normal system arrow (the custom hand was removed).
@@ -197,7 +188,7 @@ than the creature squeaks.
 
 Every run starts on the **landing** (x -4.4..-0.8, z 2.65..5.85), south of
 the playroom, behind a shut door. `scripts/tutorial.gd` shows one hint at a
-time in a mint glossy card at the top of the screen (`Hud.show_hint`): grab
+time in glass words just above the crosshair (`Hud.show_hint`): grab
 the box, throw it, ping, lift what squeaked, catch it. Each goes once done
 (via `Beam.grabbed`/`thrown`, `Ping.pinged`, the creature's state and
 `captured`); doing a later thing early skips ahead. The catch swings the

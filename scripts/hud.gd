@@ -16,48 +16,47 @@ extends CanvasLayer
 ## The drawstring bag in the bottom-right corner that caught creatures drop
 ## into. Its marbles are the only catch counter on screen. See marble_bag.gd.
 var _bag: MarbleBag
-## The win screen, built in code by _build_win_screen: a dimmed backdrop with a
-## glossy card holding the bag, the heading, the time and two pills. Named
-## WinPanel and WinLabel so tests can find them.
+## The win screen, built in code by _build_win_screen: the room dimmed, with
+## the bag, the heading, the time and two clickable glass words floating over
+## it. Named WinPanel and WinLabel so tests can find them.
 var _win_panel: Control
-## Where the bag moves to on the win card.
+## Where the bag moves to on the win screen.
 var _win_bag_slot: CenterContainer
 var _win_heading: Label
 var _win_label: Label
 var _play_again: MenuPanel
-## The one-at-a-time lesson prompt at the top of the screen (tutorial.gd
-## decides what it says). Named HintCard so tests can find it.
-var _hint_card: GlossyCard
+## The one-at-a-time lesson prompt just above the crosshair, in glass words
+## (tutorial.gd decides what it says).
 var _hint_label: Label
 var _hint_tween: Tween
 
 
 ## Sizes here are in the project's 2560x1440 design space, which the window
 ## scales to fit, so the numbers are roughly twice what they look on a 1080p
-## screen. The look (font, colours, pill backgrounds) comes from UiStyle, the
-## same place the menus get theirs.
+## screen. The look (font, colours, glass text) comes from UiStyle, the same
+## place the menus get theirs.
 const READOUT_FONT_SIZE: int = 36
 const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
 ## Gap between the marble bag and the bottom-right corner of the screen.
 const BAG_MARGIN := Vector2(40.0, 16.0)
-const HINT_FONT_SIZE: int = 52
-## How far down from the top of the screen the hint card sits.
-const HINT_TOP: float = 70.0
+const HINT_FONT_SIZE: int = 64
+## How far down from the top of the screen the hint sits: a little above
+## the crosshair (720), close to where you're looking without covering it.
+const HINT_TOP: float = 460.0
 const HINT_FADE: float = 0.25
 
 
 func _ready() -> void:
 	# Lets the pause menu find and hide the HUD without a hard-coded path.
 	add_to_group("hud")
-	# The corner readouts. They keep their dark outline rather than getting a
-	# panel behind them: during play the walls are pale and the floor is dark,
-	# and an outline survives both without putting boxes on screen.
+	# The corner readouts, in the same glass text as the menus.
 	for label: Label in [_lift_label, _timer_label, _ping_label]:
-		label.add_theme_font_override("font", UiStyle.font(600))
+		label.add_theme_font_override("font", UiStyle.font())
 		label.add_theme_font_size_override("font_size", READOUT_FONT_SIZE)
 		label.add_theme_color_override("font_color", UiStyle.CREAM)
-		label.add_theme_constant_override("outline_size", 10)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		UiStyle.marble_label(label)
 	_build_bag()
 	_build_hint()
 	# Built after the bag, so the win screen's dimming covers it.
@@ -81,24 +80,15 @@ func _build_bag() -> void:
 
 
 func _build_hint() -> void:
-	# A full-width strip along the top; the CenterContainer keeps the card
-	# centred in it whatever its width.
-	var strip := CenterContainer.new()
-	strip.anchor_right = 1.0
-	strip.offset_top = HINT_TOP
-	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(strip)
-	_hint_card = GlossyCard.new()
-	_hint_card.name = "HintCard"
-	_hint_card.accent = UiStyle.MINT
-	_hint_card.radius = 40.0
-	_hint_card.padding = Vector2(56.0, 26.0)
-	_hint_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hint_card.modulate.a = 0.0
-	_hint_card.visible = false
-	strip.add_child(_hint_card)
-	_hint_label = UiStyle.label("", HINT_FONT_SIZE, UiStyle.INK)
-	_hint_card.add_child(_hint_label)
+	# Full width, centred, so any length of hint fits.
+	_hint_label = UiStyle.label("", HINT_FONT_SIZE, UiStyle.CREAM)
+	_hint_label.name = "Hint"
+	_hint_label.anchor_right = 1.0
+	_hint_label.offset_top = HINT_TOP
+	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint_label.modulate.a = 0.0
+	_hint_label.visible = false
+	add_child(_hint_label)
 
 
 ## Shows a lesson prompt, fading out the old one first if there was one.
@@ -107,25 +97,25 @@ func show_hint(text: String) -> void:
 		_hint_tween.kill()
 	# A Tween animates properties over time; its steps run one after another.
 	_hint_tween = create_tween()
-	if _hint_card.visible and _hint_card.modulate.a > 0.0:
-		_hint_tween.tween_property(_hint_card, "modulate:a", 0.0, HINT_FADE)
+	if _hint_label.visible and _hint_label.modulate.a > 0.0:
+		_hint_tween.tween_property(_hint_label, "modulate:a", 0.0, HINT_FADE)
 	_hint_tween.tween_callback(func() -> void:
 		_hint_label.text = text
-		_hint_card.visible = true)
-	_hint_tween.tween_property(_hint_card, "modulate:a", 1.0, HINT_FADE)
+		_hint_label.visible = true)
+	_hint_tween.tween_property(_hint_label, "modulate:a", 1.0, HINT_FADE)
 
 
 func hide_hint() -> void:
 	if _hint_tween != null:
 		_hint_tween.kill()
 	_hint_tween = create_tween()
-	_hint_tween.tween_property(_hint_card, "modulate:a", 0.0, HINT_FADE)
-	_hint_tween.tween_callback(func() -> void: _hint_card.visible = false)
+	_hint_tween.tween_property(_hint_label, "modulate:a", 0.0, HINT_FADE)
+	_hint_tween.tween_callback(func() -> void: _hint_label.visible = false)
 
 
-## What the hint card says, or "" when it's hidden. For tests.
+## What the hint says, or "" when it's hidden. For tests.
 func hint_text() -> String:
-	return _hint_label.text if _hint_card.visible else ""
+	return _hint_label.text if _hint_label.visible else ""
 
 
 ## Drops a ball of this colour into the bag. Called by main.gd on each catch.
@@ -141,10 +131,10 @@ func _build_win_screen() -> void:
 	_win_panel.visible = false
 	add_child(_win_panel)
 
-	# Dims the room and catches stray clicks, so clicking beside the card
-	# doesn't fire the grab beam.
+	# Dims the room so the glass words read, and catches stray clicks, so
+	# clicking beside the words doesn't fire the grab beam.
 	var dim := ColorRect.new()
-	dim.color = Color(0.03, 0.06, 0.08, 0.72)
+	dim.color = Color(0.03, 0.06, 0.08, 0.78)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_win_panel.add_child(dim)
 
@@ -153,15 +143,10 @@ func _build_win_screen() -> void:
 	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_win_panel.add_child(centre)
 
-	var card := GlossyCard.new()
-	card.name = "Card"
-	card.accent = UiStyle.AMBER
-	centre.add_child(card)
-
-	# The bag on the left, the words and buttons on the right.
+	# The bag on the left, the words on the right.
 	var content := HBoxContainer.new()
-	content.add_theme_constant_override("separation", 56)
-	card.add_child(content)
+	content.add_theme_constant_override("separation", 80)
+	centre.add_child(content)
 
 	# Empty until show_win moves the bag in from the corner.
 	_win_bag_slot = CenterContainer.new()
@@ -174,35 +159,34 @@ func _build_win_screen() -> void:
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	content.add_child(column)
 
-	_win_heading = UiStyle.label("", WIN_HEADING_FONT_SIZE, UiStyle.INK)
+	_win_heading = UiStyle.label("", WIN_HEADING_FONT_SIZE, UiStyle.CREAM)
 	_win_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiStyle.set_marble_drift(_win_heading)
 	column.add_child(_win_heading)
 
-	_win_label = UiStyle.label("", WIN_TIME_FONT_SIZE, UiStyle.INK_SOFT, 600)
+	_win_label = UiStyle.label("", WIN_TIME_FONT_SIZE, UiStyle.CREAM_SOFT)
 	_win_label.name = "WinLabel"
 	_win_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(_win_label)
 
 	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 44.0)
+	gap.custom_minimum_size = Vector2(0.0, 30.0)
 	column.add_child(gap)
 
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 40)
+	row.add_theme_constant_override("separation", 60)
 	column.add_child(row)
 
-	_play_again = MenuPanel.make_pill("loop", "Play again", UiStyle.AMBER)
-	_play_again.custom_minimum_size = Vector2(540.0, 140.0)
+	_play_again = MenuPanel.make_text("Play again", 96)
 	_play_again.pressed.connect(func() -> void: get_tree().reload_current_scene())
 	row.add_child(_play_again)
 
-	var to_title := MenuPanel.make_pill("house", "Title", UiStyle.CORAL)
-	to_title.custom_minimum_size = Vector2(540.0, 140.0)
+	var to_title := MenuPanel.make_text("Title", 96)
 	to_title.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/title.tscn"))
 	row.add_child(to_title)
 
-	var hint := UiStyle.label("or press R", UiStyle.HINT_FONT_SIZE, UiStyle.INK_SOFT, 400)
+	var hint := UiStyle.label("or press R", UiStyle.HINT_FONT_SIZE, UiStyle.CREAM_SOFT, 400)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(hint)
 
@@ -243,12 +227,15 @@ func set_ping_cooldown(seconds_left: float) -> void:
 func show_win(seconds: float, total: int) -> void:
 	_win_heading.text = "All %d caught!" % total
 	_win_label.text = "Time  %s" % format_time(seconds)
-	# Move the bag, balls and all, from the corner onto the card. reparent()
+	# Move the bag, balls and all, from the corner onto the win screen. reparent()
 	# keeps its whole subtree, including its own little physics world, so any
-	# balls still queued keep dropping in on the card.
+	# balls still queued keep dropping in there.
 	_bag.reparent(_win_bag_slot, false)
 	_win_panel.visible = true
-	# Hand the cursor back so the pills can be clicked. main.gd stops the
+	# Nothing floats over the words: no lesson hint, no crosshair.
+	_hint_label.visible = false
+	_crosshair.visible = false
+	# Hand the cursor back so the words can be clicked. main.gd stops the
 	# player grabbing it again on the next click.
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 

@@ -1,39 +1,27 @@
 class_name MenuPanel
 extends BaseButton
-## One big glossy panel you point at and click: the only kind of button the
-## menus use.
+## A clickable glass word: the only kind of button the menus use. No panel,
+## just the words in marble text, which grow and start their swirls drifting
+## when pointed at, and chime.
 ##
-## BaseButton is a button with no look of its own (unlike Button), so the whole
-## thing is drawn here in _draw, via UiStyle.draw_glossy_panel, which does the
-## shadow, the lit body, the rim, the bevel and the gloss.
+## BaseButton is a button with no look of its own (unlike Button), so the
+## words are drawn here, on a child at UiStyle.TEXT_Z.
 ##
-## Mouse only: pointing at it raises it, clicking pushes it in. Panels never
-## take keyboard focus, so nothing is pre-selected when a menu opens and the
-## arrow keys don't move a selection around.
+## Mouse only: words never take keyboard focus, so nothing is pre-selected
+## when a menu opens and the arrow keys don't move a selection around.
 ##
-## Both are animated by easing `_lift` and `_sink` toward their targets every
-## frame rather than with tweens, so interrupting one mid-animation
-## can't leave it half-finished. Those same values drive how strong the gloss
-## and the shadow are, so the panel looks like it's tilting into the light
-## rather than just sliding up and down.
+## Pointing and pressing are animated by easing `_lift` and `_sink` toward
+## their targets every frame rather than with tweens, so interrupting one
+## mid-animation can't leave it half-finished.
 
-## Shown above the label, drawn in the accent colour.
-@export var icon_name: String = ""
-## A character drawn instead of an icon, for the small +/- steppers.
-@export var glyph: String = ""
 @export var label_text: String = ""
-## The rim and the icon.
-@export var accent: Color = UiStyle.AMBER
-## Compact panels (the steppers) are drawn as circles or near-circles.
-@export var compact: bool = false
-## No panel at all: just the label, big, in the title's clear glass. Pointing
-## at it makes the words grow instead of raising a panel.
-@export var bare: bool = false
+## A single character drawn instead of words, for the settings' − and +.
+@export var glyph: String = ""
 
-## Font size of a bare label at rest; it grows by BARE_GROW when pointed at.
+## Font size of the words at rest; they grow by BARE_GROW when pointed at.
 const BARE_FONT_SIZE: int = 112
 const BARE_GROW: float = 0.12
-## How fast a pointed-at bare label's swirls drift, in radians per second.
+## How fast pointed-at words' swirls drift, in radians per second.
 ## Slow on purpose: a lazy flow rather than a spin.
 const DRIFT_SPEED: float = 0.7
 
@@ -41,15 +29,14 @@ const DRIFT_SPEED: float = 0.7
 ## TIME * speed in the shader) so easing the speed in and out never makes
 ## them jump.
 var _drift: float = 0.0
-## A bare label's font size at rest (it's drawn this much bigger, grown).
+## The words' font size at rest (they're drawn this much bigger, grown).
 var bare_font_size: int = BARE_FONT_SIZE
 
 var _lift: float = 0.0
 var _sink: float = 0.0
 var _voice: AudioStreamPlayer
-## The label and glyph are drawn on this child, at UiStyle.TEXT_Z, so they sit
-## above the menus' pixel filter and stay crisp. The panel itself is drawn
-## below it.
+## The words are drawn on this child, at UiStyle.TEXT_Z, so they sit above
+## the menus' pixel filter and stay crisp.
 var _text: Control
 
 
@@ -75,8 +62,6 @@ func _ready() -> void:
 	# FOCUS_NONE: the panel can't hold keyboard focus, so Godot's built-in
 	# arrow-key and Tab navigation between buttons never applies to it.
 	focus_mode = Control.FOCUS_NONE
-	if custom_minimum_size == Vector2.ZERO:  # not already set by the caller
-		custom_minimum_size = UiStyle.PANEL_SIZE_SMALL if compact else UiStyle.PANEL_SIZE
 
 
 func _play_hover() -> void:
@@ -99,119 +84,38 @@ func _process(delta: float) -> void:
 	# Ease each value a fixed fraction of the way to its target per second.
 	_lift = lerpf(_lift, 1.0 if is_hovered() else 0.0, clampf(delta * 14.0, 0.0, 1.0))
 	_sink = lerpf(_sink, 1.0 if button_pressed else 0.0, clampf(delta * 22.0, 0.0, 1.0))
-	queue_redraw()
 	_text.queue_redraw()
-	if bare:
-		# Grow by scaling the whole text node, not by changing the font size:
-		# the shader picks each letter's swirls from where the letter sits in
-		# the node's own pixels, and a new font size moves every letter, which
-		# made the swirls jump about. Drawn at the largest size and scaled
-		# down, so it's never blurry.
-		_text.size = size
-		_text.pivot_offset = size * 0.5
-		var grow: float = 1.0 + BARE_GROW * _lift - 0.05 * _sink
-		_text.scale = Vector2.ONE * grow / (1.0 + BARE_GROW)
-		_drift += delta * DRIFT_SPEED * _lift
-		(_text.material as ShaderMaterial).set_shader_parameter("drift", _drift)
-
-
-func _draw() -> void:
-	if bare:
-		return
-	# Anything much wider than it is tall is drawn as a pill, with the icon
-	# tucked in at the left and the label across the middle. Steppers are
-	# circles. Anything else is a gumdrop: a square rounded by a good fraction
-	# of its own height, rather than by a fixed number of pixels.
-	var pill: bool = size.x > size.y * 2.0
-	var radius: float = size.y * 0.5 if (compact or pill) \
-		else minf(size.x, size.y) * UiStyle.PANEL_ROUNDNESS
-	# The panel is drawn above its layout rect when raised, and pushed back
-	# down into the page while held.
-	var rect := Rect2(Vector2(0.0, -UiStyle.LIFT * _lift + 6.0 * _sink), size)
-	UiStyle.draw_glossy_panel(self, rect, radius, accent, _lift, _sink)
-	if icon_name != "":
-		var icon_rect := _icon_rect()
-		UiStyle.draw_icon(self, icon_name, Rect2(rect.position + icon_rect.position, icon_rect.size), accent)
-
-
-## Where the icon goes, before the panel's lift and sink are added.
-func _icon_rect() -> Rect2:
-	var pill: bool = size.x > size.y * 2.0
-	var box: float = size.y * (0.56 if pill else 0.34)
-	var at := Vector2(size.y * 0.34, (size.y - box) * 0.5) if pill \
-		else Vector2((size.x - box) * 0.5, size.y * 0.22)
-	return Rect2(at, Vector2(box, box))
+	# Grow by scaling the whole text node, not by changing the font size:
+	# the shader picks each letter's swirls from where the letter sits in
+	# the node's own pixels, and a new font size moves every letter, which
+	# made the swirls jump about. Drawn at the largest size and scaled
+	# down, so it's never blurry.
+	_text.size = size
+	_text.pivot_offset = size * 0.5
+	var grow: float = 1.0 + BARE_GROW * _lift - 0.05 * _sink
+	_text.scale = Vector2.ONE * grow / (1.0 + BARE_GROW)
+	_drift += delta * DRIFT_SPEED * _lift
+	(_text.material as ShaderMaterial).set_shader_parameter("drift", _drift)
 
 
 func _draw_text() -> void:
-	var pill: bool = size.x > size.y * 2.0
-	var offset := Vector2(0.0, -UiStyle.LIFT * _lift + 6.0 * _sink)
 	var font: Font = UiStyle.font(700)
-
-	if bare:
-		var fs: int = roundi(bare_font_size * (1.0 + BARE_GROW))
-		var words: String = label_text if label_text != "" else glyph
-		var w: float = font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		# Words are centred on their capitals; − and + sit lower in the font,
-		# around the middle of the lowercase letters, so they're centred there.
-		var lift: float = UiStyle.CAP_HEIGHT * 0.5 if label_text != "" else 0.27
-		var at := Vector2((size.x - w) * 0.5, size.y * 0.5 + fs * lift)
-		UiStyle.set_marble_line(_text, at.y, fs)
-		_text.draw_string(font, at, words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiStyle.CREAM)
-		return
-
-	if glyph != "":
-		var glyph_size: int = int(size.y * 0.46)
-		var measured: Vector2 = font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, glyph_size)
-		_draw_engraved(font, offset + Vector2((size.x - measured.x) * 0.5, size.y * 0.66),
-			glyph, glyph_size)
-		return
-
-	if label_text != "":
-		# Where the icon ends, so a pill's label can keep clear of it.
-		var icon_right: float = _icon_rect().end.x if icon_name != "" else 0.0
-		var label_size: int = UiStyle.PILL_FONT_SIZE if pill else UiStyle.LABEL_FONT_SIZE
-		var width: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x
-		var baseline: float = size.y * (0.64 if pill else 0.82)
-		# Centred, unless that would run into the icon on a short pill.
-		var x: float = (size.x - width) * 0.5
-		if pill and icon_right > 0.0:
-			x = maxf(x, icon_right + size.y * 0.22)
-		_draw_engraved(font, offset + Vector2(x, baseline), label_text, label_size)
+	var fs: int = roundi(bare_font_size * (1.0 + BARE_GROW))
+	var words: String = label_text if label_text != "" else glyph
+	var w: float = font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	# Words are centred on their capitals; − and + sit lower in the font,
+	# around the middle of the lowercase letters, so they're centred there.
+	var lift: float = UiStyle.CAP_HEIGHT * 0.5 if label_text != "" else 0.27
+	var at := Vector2((size.x - w) * 0.5, size.y * 0.5 + fs * lift)
+	UiStyle.set_marble_line(_text, at.y, fs)
+	_text.draw_string(font, at, words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiStyle.CREAM)
 
 
-## Text with a pale copy a little below it. Light comes from above, so a
-## highlight along the lower edge reads as the letters being cut into the
-## surface. It's a small thing that stops the type looking stuck on top.
-func _draw_engraved(font: Font, at: Vector2, text: String, font_size: int) -> void:
-	UiStyle.set_marble_line(_text, at.y, font_size)
-	_text.draw_string(font, at + Vector2(0.0, 2.5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
-		Color(1.0, 1.0, 1.0, 0.6))
-	_text.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiStyle.INK)
-
-
-## Builds a panel in one call, instead of five lines of property setting.
-static func make(icon: String, text: String, tint: Color) -> MenuPanel:
-	var panel := MenuPanel.new()
-	panel.icon_name = icon
-	panel.label_text = text
-	panel.accent = tint
-	return panel
-
-
-## A wide pill: icon at the left, label across the middle.
-static func make_pill(icon: String, text: String, tint: Color) -> MenuPanel:
-	var panel := make(icon, text, tint)
-	panel.custom_minimum_size = UiStyle.PILL_SIZE
-	return panel
-
-
-## Just the words, big and glassy, with no panel behind them. Sized to fit the
-## words at their hovered size, so growing never spills past the click area.
+## Glass words. Sized to fit the words at their hovered size, so growing
+## never spills past the click area.
 static func make_text(text: String, font_size: int = BARE_FONT_SIZE) -> MenuPanel:
 	var panel := MenuPanel.new()
 	panel.label_text = text
-	panel.bare = true
 	panel.bare_font_size = font_size
 	var fs: int = roundi(font_size * (1.0 + BARE_GROW))
 	var w: float = UiStyle.font(700).get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
@@ -219,21 +123,10 @@ static func make_text(text: String, font_size: int = BARE_FONT_SIZE) -> MenuPane
 	return panel
 
 
-## A bare − or + for the settings rows: a fixed square, so both line up.
+## A − or + for the settings rows: a fixed square, so both line up.
 static func make_text_stepper(character: String) -> MenuPanel:
 	var panel := MenuPanel.new()
 	panel.glyph = character
-	panel.bare = true
 	panel.bare_font_size = 104
 	panel.custom_minimum_size = Vector2(110.0, 110.0)
-	return panel
-
-
-## A small round stepper button showing a single character.
-static func make_stepper(character: String) -> MenuPanel:
-	var panel := MenuPanel.new()
-	panel.glyph = character
-	panel.compact = true
-	panel.accent = UiStyle.SKY
-	panel.custom_minimum_size = Vector2(118.0, 118.0)
 	return panel

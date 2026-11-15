@@ -86,7 +86,7 @@ func _process(_delta: float) -> void:
 
 
 func _on_body_entered(_body: Node) -> void:
-	# The bag moving onto the win card takes every ball out of the scene
+	# The bag moving onto the win screen takes every ball out of the scene
 	# for a moment, and a bump during that can't play a sound.
 	if not is_inside_tree():
 		return

@@ -50,16 +50,10 @@ func _build() -> void:
 	_panels.add_theme_constant_override("separation", 10)
 	centre.add_child(_panels)
 
-	var title := UiStyle.label("RUMMAGE", UiStyle.TITLE_FONT_SIZE, UiStyle.CREAM)
+	var title := UiStyle.label("Losing My Marbles!", UiStyle.TITLE_FONT_SIZE, UiStyle.CREAM)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	# Letter spacing: wide tracking reads as a logo rather than a sentence.
 	title.add_theme_constant_override("line_spacing", 0)
 	_panels.add_child(title)
-
-	var subtitle := UiStyle.label("physics hide-and-seek", UiStyle.SUBTITLE_FONT_SIZE,
-		UiStyle.CREAM_SOFT, 400)
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_panels.add_child(subtitle)
 
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0.0, 80.0)

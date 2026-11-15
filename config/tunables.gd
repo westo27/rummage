@@ -18,7 +18,7 @@ extends Resource
 @export var fall_reset_y: float = -5.0
 
 @export_group("Player")
-@export var walk_speed: float = 4.5
+@export var walk_speed: float = 3.2
 @export var run_speed: float = 7.5
 ## Hold C or Ctrl. Running has no effect while crouched.
 @export var crouch_speed: float = 1.4

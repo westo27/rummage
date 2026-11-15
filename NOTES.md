@@ -101,11 +101,7 @@ a root node and a script.
 - **On winning, the bag moves onto the win card** beside your time.
   `reparent()` carries its whole subtree, physics world included, so any
   balls still queued keep dropping in there.
-- **The mouse pointer** is a pointing hand drawn in the menus' style
-  (`scripts/pointer_cursor.gd`). It's drawn once at startup into an image and
-  set as the hardware cursor, so it moves as smoothly as the normal arrow.
-  During play the cursor is captured and hidden, so it only shows in menus.
-  It's our own hand (cream, amber cuff, no player number), not the Wii's.
+- **The mouse pointer** is the normal system arrow (the custom hand was removed).
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu, in three sections: Controls, Sound and Graphics. Each
   setting is a −/+ stepper rather than a slider, so

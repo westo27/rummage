@@ -31,8 +31,6 @@ func _ready() -> void:
 	pixel_filter = PixelFilter.new()
 	add_child(pixel_filter)
 	settings.apply_pixel_filter()
-	# Swap the mouse arrow for the menus' pointing hand. See pointer_cursor.gd.
-	add_child(PointerCursor.new())
 	# Temporary: 1/2/3 switch looks while choosing an art direction.
 	looks = LookSwitcher.new()
 	add_child(looks)

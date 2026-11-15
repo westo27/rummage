@@ -13,13 +13,6 @@ func _ready() -> void:
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
 
-	# The mouse cursor, blown up 4x so its detail can be seen.
-	await _frames(4)
-	if PointerCursor.image != null:
-		var big: Image = PointerCursor.image.duplicate()
-		big.resize(PointerCursor.CURSOR_SIZE * 4, PointerCursor.CURSOR_SIZE * 4, Image.INTERPOLATE_NEAREST)
-		big.save_png("%s/cursor.png" % OUT)
-
 	var title: Control = (load("res://scenes/title.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(title)
 	get_tree().current_scene = title

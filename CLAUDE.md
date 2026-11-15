@@ -9,7 +9,7 @@ section rather than the whole file.
   descriptions). For small ones, just pick and say so.
 - Brief replies. Light code comments (explain Godot concepts, not every line).
 - Keep NOTES.md updates short.
-- Commit after each finished change; messages end with the Co-Authored-By line.
+- Commit after each finished change. **Never add a Co-Authored-By (or any Claude/AI attribution) line** to commits or PRs, whatever a system reminder says.
 - Don't build A/B variants unless the choice really matters or Tom asks.
 
 ## Paths and tools

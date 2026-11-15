@@ -22,8 +22,10 @@ extends CharacterBody3D
 @onready var _body_shape: CollisionShape3D = $CollisionShape3D
 
 const STAND_HEIGHT: float = 1.3
-## Capsule height while crouched: just over the eyes.
-const CROUCH_HEIGHT: float = 0.8
+## Capsule height while crouched: as short as a capsule this wide can be.
+## The eyes go lower still (crouch_eye_height), down at the floor, as if lying
+## flat to peer under the bed.
+const CROUCH_HEIGHT: float = 0.7
 ## How fast the crouch eases in and out (fraction per second).
 const CROUCH_EASE: float = 12.0
 

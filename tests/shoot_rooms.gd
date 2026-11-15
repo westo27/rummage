@@ -42,6 +42,15 @@ func _run() -> void:
 		await _frames(20)
 		var image: Image = get_viewport().get_texture().get_image()
 		image.save_png("%s/%s.png" % [OUT, view[0]])
+	# Lying flat in front of the bed, peering under it.
+	Input.action_press("crouch")
+	player.global_position = Vector3(2.55, 0.05, 0.2)
+	player.reset_physics_interpolation()
+	await _frames(40)
+	_look(player, head, Vector3(2.55, 0.1, -1.75))
+	await _frames(20)
+	get_viewport().get_texture().get_image().save_png("%s/room_under_bed.png" % OUT)
+	Input.action_release("crouch")
 	print("Wrote PNGs to %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 

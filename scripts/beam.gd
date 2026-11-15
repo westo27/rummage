@@ -282,7 +282,7 @@ func _can_see(creature: Creature, from: Vector3, space: PhysicsDirectSpaceState3
 
 
 func _capture(creature: Creature) -> void:
-	creature.capture(_camera.to_global(BEAM_ORIGIN_LOCAL))
+	creature.capture(beam_origin())
 	_catching = creature
 	_catch_started = Time.get_ticks_msec() / 1000.0
 	_capture_sound.play()
@@ -432,6 +432,14 @@ func _min_hold_distance(prop: Prop) -> float:
 	return Game.tune.min_hold_distance + prop.hold_radius * 0.5
 
 
+## Where the beam leaves the hand: below and right of the eye, but never
+## under the floor when you're lying flat.
+func beam_origin() -> Vector3:
+	var origin: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
+	origin.y = maxf(origin.y, 0.06)
+	return origin
+
+
 ## The camera looks down its own -Z axis (a Godot convention).
 func _forward() -> Vector3:
 	return -_camera.global_transform.basis.z
@@ -495,7 +503,7 @@ func _update_beam_mesh() -> void:
 	if end_body == null:
 		_hide_beam()
 		return
-	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
+	var start: Vector3 = beam_origin()
 	# The grab point on the object as it's *drawn* this frame (see physics
 	# interpolation in player.gd), so the beam stays attached to the spot you
 	# grabbed instead of wobbling against it.
@@ -517,7 +525,7 @@ func _update_beam_mesh() -> void:
 ## the creature yet; after that it reels the creature in, so it shortens as
 ## the creature comes. A slight bow keeps it looking like the same beam.
 func _draw_catch_beam() -> void:
-	var start: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
+	var start: Vector3 = beam_origin()
 	var target: Vector3 = _catching._visual.get_global_transform_interpolated().origin
 	var reach: float = clampf((Time.get_ticks_msec() / 1000.0 - _catch_started) / CATCH_REACH_TIME, 0.0, 1.0)
 	var end: Vector3 = start.lerp(target, reach)

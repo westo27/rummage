@@ -24,7 +24,7 @@ extends Resource
 @export var crouch_speed: float = 1.4
 ## Head height (eyes above the feet) standing and crouched, metres.
 @export var stand_eye_height: float = 1.15
-@export var crouch_eye_height: float = 0.6
+@export var crouch_eye_height: float = 0.16
 ## Radians of turn per pixel of mouse movement.
 @export var mouse_sensitivity: float = 0.0004
 ## Props this light or lighter are "clutter": the player walks through them,

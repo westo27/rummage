@@ -1,140 +1,145 @@
 extends Node
-## Renders the itch.io cover (630x500): the beam pulling a creature out from
-## under the bed, HUD hidden, the title on top. Time is slowed to a crawl once
-## the catch starts, so the beam reaches the creature while it's still by the
-## bed; a few frames are saved to pick from. Needs a real window (no --headless).
+## Renders the itch.io cover (630x500): the title on a plain night background
+## with five marbles in a row below it, each pulling a different face, the
+## middle one winking. Needs a real window (no --headless).
 ## Run: Godot --path . --resolution 1260x1000 res://tests/shoot_cover.tscn
 
 const OUT: String = "user://shots"
 const COVER_SIZE := Vector2i(630, 500)
-const SPOT := Vector3(2.45, 0.1, -1.17)  # at the bed's front edge, coming out
-const EYE := Vector3(2.3, 0.05, 0.5)  # where the player stands
-const LOOK_AT := Vector3(2.5, 0.3, -1.6)  # under the bed, just above the creature
-const TITLE_SIZE: int = 290
-const FOV: float = 42.0
-const SEED: int = 2
-## How far out the beam is held in each saved frame (1 = on the creature).
-const REACHES: Array[float] = [0.55, 0.7, 0.8, 0.9, 1.0]
+const TITLE := "Losing My\nMarbles!"
+const TITLE_SIZE: int = 300
+## Lifts the title from dead centre; with the row below, the pair sits centred.
+const TITLE_RAISE: float = 340.0
+const BACKGROUND := Color(0.11, 0.08, 0.2)
+const FOV: float = 30.0
+## Camera distance from the row, and how far above it the camera sits
+## (looking straight ahead, so the row lands low in the frame).
+const DISTANCE: float = 1.12
+const LIFT: float = 0.133
+const SPACING: float = 0.141
+## Left to right: [colour index into Creature.BODY_COLORS, mood, swirl seed].
+## A null mood means the wink, which isn't a mood (see creature_eyes.gd).
+const ROW: Array = [
+	[0, CreatureEyes.Mood.NORMAL, 0.15],
+	[3, CreatureEyes.Mood.WIDE, 0.35],
+	[1, null, 0.6],
+	[2, CreatureEyes.Mood.SQUINT, 0.8],
+	[4, CreatureEyes.Mood.HAPPY, 0.9],
+]
 
-var _beam: Beam = null
-var _reach: float = -1.0
+var _eyes: Array[CreatureEyes] = []
+var _cam: Camera3D = null
 
 
 func _ready() -> void:
 	_run.call_deferred()
 
 
-func _process(_delta: float) -> void:
-	if _beam != null and _reach >= 0.0:
-		_beam._catch_started = Time.get_ticks_msec() / 1000.0 - _reach * Beam.CATCH_REACH_TIME
+## Their own physics is off, so step the eyes here. The winker's wink is held
+## at its shut-most point; the rest just look at the camera in their mood.
+func _process(delta: float) -> void:
+	for i in _eyes.size():
+		var e: CreatureEyes = _eyes[i]
+		if ROW[i][1] == null:
+			e._wink_eye = 1
+			e._wink_left = CreatureEyes.WINK_SECONDS * 0.5
+		e._blink_left = 0.0
+		e._next_blink = 99.0
+		e.look_target = _cam.global_position
+		e.step(delta)
 
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
-	# Creature colours are random; a fixed seed keeps the cover the same each run.
-	seed(SEED)
-	var main: Node = (load("res://scenes/main.tscn") as PackedScene).instantiate()
-	get_tree().root.add_child(main)
-	get_tree().current_scene = main
-	var player := main.get_node("Player") as Node3D
-	player.set_process_unhandled_input(false)
-	(main.get_node("HUD") as CanvasLayer).visible = false
-	_hide_canvas(main.get_node("Tutorial"))
+	var world := Node3D.new()
+	add_child(world)
 
-	# The slippers nudged into frame beside it.
-	var props := main.get_node("MainRoomProps")
-	_put(props, "SlipperL", SPOT + Vector3(-0.32, -0.06, 0.12))
-	_put(props, "SlipperR", SPOT + Vector3(0.3, -0.06, 0.2))
+	# A flat colour behind everything, with a little bloom for the highlights.
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = BACKGROUND
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.55, 0.5, 0.7)
+	env.ambient_light_energy = 0.6
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.glow_enabled = true
+	var we := WorldEnvironment.new()
+	we.environment = env
+	world.add_child(we)
 
-	Input.action_press("crouch")  # a low view, level with the gap under the bed
-	player.global_position = EYE
-	player.reset_physics_interpolation()
-	await _frames(60)
-	# A narrower lens from further back: a bigger creature, same bed behind it.
-	(player.get_node("Head/Camera3D") as Camera3D).fov = FOV
-	_look(player, player.get_node("Head") as Node3D, LOOK_AT)
-	await _frames(30)
+	# A warm key light from the upper left, like the bedside lamp.
+	var key := DirectionalLight3D.new()
+	key.light_color = Color(1.0, 0.85, 0.65)
+	key.light_energy = 1.4
+	key.rotation = Vector3(deg_to_rad(-35.0), deg_to_rad(-30.0), 0.0)
+	world.add_child(key)
+
+	_cam = Camera3D.new()
+	_cam.fov = FOV
+	world.add_child(_cam)
+	_cam.global_position = Vector3(0.0, LIFT, DISTANCE)
+	_cam.current = true
+
+	var scene := load("res://scenes/creature.tscn") as PackedScene
+	for i in ROW.size():
+		var spec: Array = ROW[i]
+		var marble := scene.instantiate() as Creature
+		world.add_child(marble)
+		marble.set_physics_process(false)  # no AI or gravity: it just sits there
+		marble.global_position = Vector3((i - 2) * SPACING, 0.0, 0.0)
+		# Face (-Z of its Visual) turned to the camera.
+		var visual := marble.get_node("Visual") as Node3D
+		visual.global_basis = Basis.looking_at(
+			(_cam.global_position - marble.global_position).normalized(), Vector3.UP)
+		var mat := marble.get_node("Visual/Body").material_override as ShaderMaterial
+		mat.set_shader_parameter("tint", Creature.BODY_COLORS[spec[0]])
+		mat.set_shader_parameter("seed", spec[2])
+		var eyes := marble.get_node("Visual/Eyes") as CreatureEyes
+		if spec[1] != null:
+			eyes.show_mood(spec[1], 0.0)  # 0 seconds: the mood stays
+		_eyes.append(eyes)
 
 	add_child(_title())
-	# A pink one: the catch flash takes the creature's colour, and pink keeps
-	# the room warm (a blue flash washes it cold).
-	var creature: Creature = null
-	for c in main.get_node("MainRoomCreatures").get_children():
-		if c is Creature and (c as Creature).body_color == Creature.BODY_COLORS[1]:
-			creature = c as Creature
-			break
-	creature.global_position = SPOT
-	creature.reset_physics_interpolation()
-	await _frames(3)
-	_cover("cover_pre")
-	_beam = main.get_node("Player/Head/Camera3D/Beam") as Beam
-	_beam._capture(creature)
-	# Slow the catch tween (game time) to a crawl so the creature stays round
-	# by the bed while the sparkles spread.
-	Engine.time_scale = 0.03
-	# Hold the beam part-way out (its reach runs in real time): once its tip
-	# lands on the creature, the tip's light blows the marble out to white.
-	for i in REACHES.size():
-		_reach = REACHES[i]
-		# ignore_time_scale (4th arg): wait in real seconds.
-		await get_tree().create_timer(0.12, true, false, true).timeout
-		_cover("cover_%d" % i)
-	Engine.time_scale = 1.0
+	await _frames(30)
+	_cover("cover_row")
 	print("RESULT cover shots in %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 
 
-## The title in marble text across the top of the frame.
 func _title() -> CanvasLayer:
 	var layer := CanvasLayer.new()
 	layer.layer = 10
+	layer.offset = Vector2(0.0, -TITLE_RAISE)
 	var holder := MarginContainer.new()
-	holder.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	holder.add_theme_constant_override("margin_top", 30)
-	# A dark, fat-outlined copy behind the marble text, so it reads against the
-	# wallpaper at thumbnail size. A MarginContainer stacks its children.
+	holder.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# A dark, fat-outlined copy behind the marble text so it reads at
+	# thumbnail size. A MarginContainer stacks its children.
 	var shade := Label.new()
-	shade.text = "Lost Marbles"
-	shade.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	shade.text = TITLE
 	shade.add_theme_font_override("font", UiStyle.font(700))
 	shade.add_theme_font_size_override("font_size", TITLE_SIZE)
-	shade.add_theme_color_override("font_color", Color(0.12, 0.05, 0.12, 0.55))
-	shade.add_theme_color_override("font_outline_color", Color(0.12, 0.05, 0.12, 0.55))
-	shade.add_theme_constant_override("outline_size", 36)
+	shade.add_theme_color_override("font_color", Color(0.04, 0.02, 0.08, 0.6))
+	shade.add_theme_color_override("font_outline_color", Color(0.04, 0.02, 0.08, 0.6))
+	shade.add_theme_constant_override("outline_size", 32)
 	holder.add_child(shade)
-	var label := UiStyle.label("Lost Marbles", TITLE_SIZE, UiStyle.CREAM)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var label := UiStyle.label(TITLE, TITLE_SIZE, UiStyle.CREAM)
 	UiStyle.set_marble_drift(label)
 	holder.add_child(label)
+	for l: Label in [shade, label]:
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.add_theme_constant_override("line_spacing", -15)
 	layer.add_child(holder)
 	return layer
 
 
-func _put(props: Node, prop_name: String, at: Vector3) -> void:
-	var p := props.get_node(prop_name) as RigidBody3D
-	p.global_position = at
-	p.linear_velocity = Vector3.ZERO
-	p.reset_physics_interpolation()
-
-
-func _hide_canvas(node: Node) -> void:
-	for child in node.get_children():
-		if child is CanvasItem:
-			(child as CanvasItem).visible = false
-		elif child is CanvasLayer:
-			(child as CanvasLayer).visible = false
-
-
 func _cover(shot_name: String) -> void:
+	# macOS stops drawing a window that's covered up, which would save a stale
+	# frame; force one.
+	RenderingServer.force_draw(false)
 	var image: Image = get_viewport().get_texture().get_image()
 	image.resize(COVER_SIZE.x, COVER_SIZE.y, Image.INTERPOLATE_LANCZOS)
 	image.save_png("%s/%s.png" % [OUT, shot_name])
-
-
-func _look(player: Node3D, head: Node3D, target: Vector3) -> void:
-	var dir: Vector3 = (target - head.global_position).normalized()
-	player.rotation.y = atan2(-dir.x, -dir.z)
-	head.rotation.x = asin(dir.y)
 
 
 func _frames(count: int) -> void:

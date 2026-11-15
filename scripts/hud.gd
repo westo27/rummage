@@ -25,6 +25,11 @@ var _win_bag_slot: CenterContainer
 var _win_heading: Label
 var _win_label: Label
 var _play_again: MenuPanel
+## The one-at-a-time lesson prompt at the top of the screen (tutorial.gd
+## decides what it says). Named HintCard so tests can find it.
+var _hint_card: GlossyCard
+var _hint_label: Label
+var _hint_tween: Tween
 
 
 ## Sizes here are in the project's 2560x1440 design space, which the window
@@ -36,6 +41,10 @@ const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
 ## Gap between the marble bag and the bottom-right corner of the screen.
 const BAG_MARGIN := Vector2(40.0, 16.0)
+const HINT_FONT_SIZE: int = 52
+## How far down from the top of the screen the hint card sits.
+const HINT_TOP: float = 70.0
+const HINT_FADE: float = 0.25
 
 
 func _ready() -> void:
@@ -50,6 +59,7 @@ func _ready() -> void:
 		label.add_theme_color_override("font_color", UiStyle.CREAM)
 		label.add_theme_constant_override("outline_size", 10)
 	_build_bag()
+	_build_hint()
 	# Built after the bag, so the win screen's dimming covers it.
 	_build_win_screen()
 
@@ -68,6 +78,54 @@ func _build_bag() -> void:
 	_bag.offset_right = -BAG_MARGIN.x
 	_bag.offset_bottom = -BAG_MARGIN.y
 	add_child(_bag)
+
+
+func _build_hint() -> void:
+	# A full-width strip along the top; the CenterContainer keeps the card
+	# centred in it whatever its width.
+	var strip := CenterContainer.new()
+	strip.anchor_right = 1.0
+	strip.offset_top = HINT_TOP
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(strip)
+	_hint_card = GlossyCard.new()
+	_hint_card.name = "HintCard"
+	_hint_card.accent = UiStyle.MINT
+	_hint_card.radius = 40.0
+	_hint_card.padding = Vector2(56.0, 26.0)
+	_hint_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hint_card.modulate.a = 0.0
+	_hint_card.visible = false
+	strip.add_child(_hint_card)
+	_hint_label = UiStyle.label("", HINT_FONT_SIZE, UiStyle.INK)
+	_hint_card.add_child(_hint_label)
+
+
+## Shows a lesson prompt, fading out the old one first if there was one.
+func show_hint(text: String) -> void:
+	if _hint_tween != null:
+		_hint_tween.kill()
+	# A Tween animates properties over time; its steps run one after another.
+	_hint_tween = create_tween()
+	if _hint_card.visible and _hint_card.modulate.a > 0.0:
+		_hint_tween.tween_property(_hint_card, "modulate:a", 0.0, HINT_FADE)
+	_hint_tween.tween_callback(func() -> void:
+		_hint_label.text = text
+		_hint_card.visible = true)
+	_hint_tween.tween_property(_hint_card, "modulate:a", 1.0, HINT_FADE)
+
+
+func hide_hint() -> void:
+	if _hint_tween != null:
+		_hint_tween.kill()
+	_hint_tween = create_tween()
+	_hint_tween.tween_property(_hint_card, "modulate:a", 0.0, HINT_FADE)
+	_hint_tween.tween_callback(func() -> void: _hint_card.visible = false)
+
+
+## What the hint card says, or "" when it's hidden. For tests.
+func hint_text() -> String:
+	return _hint_label.text if _hint_card.visible else ""
 
 
 ## Drops a ball of this colour into the bag. Called by main.gd on each catch.

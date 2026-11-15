@@ -110,7 +110,7 @@ func _run() -> void:
 	_check("catching raises lift by 4 kg", is_equal_approx(_beam.lift_limit, lift_before + 4.0),
 		"%.1f -> %.1f" % [lift_before, _beam.lift_limit])
 	var hud_text: String = (_main.get_node("HUD") as Hud).caught_text()
-	_check("bag tag shows caught count", hud_text == "1 / 25", "'%s'" % hud_text)
+	_check("bag tag shows caught count", hud_text == "1 / 26", "'%s'" % hud_text)
 	_check("capture didn't grab the crate behind it", _beam.held == null, "held=%s" % _beam.held)
 
 	# --- Chaos reveals: a thrown book hitting a crate scares out its creature ---

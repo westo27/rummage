@@ -19,7 +19,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 ├─ House           three rooms in a row, west to east (see "The house")
 │  ├─ Walls        CSGCombiner3D: walls/ceiling, both doorways, window, cubbies
 │  ├─ FloorPlayroom, FloorBedroom, FloorBoxRoom   CSGBox3D
-│  ├─ LandingDoor  a closed door (meshes only) behind where you start
+│  ├─ LandingDoor  the landing's door; its Door body swings open after the lesson
 │  └─ LampPlayroom, LampMain (bedroom), LampSide (box room), a ReflectionProbe each
 ├─ Player          scenes/player.tscn  (scripts/player.gd: move, look, kick clutter)
 │  ├─ CollisionShape3D  capsule
@@ -27,6 +27,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 │     └─ Camera3D       top_level, placed by player.gd every frame (see "Smoothness")
 │        └─ Beam        scripts/beam.gd: aim, grab, hold, throw, lift limit, catch
 │           └─ BeamMesh the curved beam ribbon, rebuilt each frame
+├─ Landing             scenes/landing.tscn: the lesson's box, bin, creature and clutter
 ├─ MainRoomProps        scenes/main_room_props.tscn: playroom and bedroom props
 ├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (13 playroom, 8 bedroom)
 ├─ SideRoomProps        scenes/side_room_props.tscn: the box room
@@ -34,7 +35,8 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 ├─ Ping                 scripts/ping.gd
 ├─ HUD                  scenes/hud.tscn (scripts/hud.gd, scripts/crosshair.gd)
 │  └─ MarbleBag         built by hud.gd (scripts/marble_bag.gd, scripts/bag_marble.gd)
-└─ PauseMenu            scenes/pause_menu.tscn (scripts/pause_menu.gd)
+├─ PauseMenu            scenes/pause_menu.tscn (scripts/pause_menu.gd)
+└─ Tutorial             scripts/tutorial.gd: the landing lesson
 ```
 
 - Each prop type is its own scene in `scenes/props/` (book, crate, bin, small_box,
@@ -191,6 +193,20 @@ than the creature squeaks.
   `impact_max_db` (-10, kept below the squeaks' -4).
 - Nothing knocks for the first 1.2 s after the room loads, while it settles.
 
+## The landing lesson
+
+Every run starts on the **landing** (x -4.4..-0.8, z 2.65..5.85), south of
+the playroom, behind a shut door. `scripts/tutorial.gd` shows one hint at a
+time in a mint glossy card at the top of the screen (`Hud.show_hint`): grab
+the box, throw it, ping, lift what squeaked, catch it. Each goes once done
+(via `Beam.grabbed`/`thrown`, `Ping.pinged`, the creature's state and
+`captured`); doing a later thing early skips ahead. The catch swings the
+door (an AnimatableBody3D, origin at the hinge) 100° into the playroom and
+the last hint fades after 4 s. The lesson creature counts like any other
+(26 in all), so its lift arrives before the house. The timer runs from the
+start. A ping from the landing can reach a couple of playroom creatures
+through the wall.
+
 ## The catch
 
 Your choices: the creature is sucked into the beam, with sparkles, a suction
@@ -266,8 +282,7 @@ its light onto the room, and a cosy bloom over everything.
 Three real-size rooms (the old 12 × 10 m room didn't read
 as a real room). Ceilings stay 3 m. Plan: `tests/shoot_rooms.tscn` renders
 each room (needs a window).
-- **Playroom** (x -5.1..-0.1, 5 × 4.5 m), where you start, in front of the
-  closed landing door: toy-box crates (a stacked pair in the north-west
+- **Playroom** (x -5.1..-0.1, 5 × 4.5 m), through the landing door: toy-box crates (a stacked pair in the north-west
   corner), the bookcase on the west wall, a beanbag, the play table on the
   rug over the trapdoor, a small box stack, two bins. Planks.
 - **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a doorway at z=0: the bed
@@ -489,6 +504,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
+| check_tutorial | you start on the landing behind a door that holds you in; hints follow grab, throw, ping, find, catch; the catch opens the door and you can walk through |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles and slurp; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
 | check_room | a ball thrown hard at the window stays in the room; wooden props are matte; the bedside lamp stands on its table; the drawer rests shut, slides out when the table stops suddenly and home when shoved back, and can be grabbed |

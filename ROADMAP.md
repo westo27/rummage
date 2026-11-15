@@ -8,7 +8,8 @@ Tick items off as they land. Tom decides the order inside each phase.
       (holding, throwing, clutter, gate pacing, the hunt).
 - [ ] Sound check by ear: squeaks audible and easy to place, menu chimes, clacks.
 - [ ] Squeak and ping sound pass (from that check).
-- [ ] First-minute lesson: teach grab, throw, ping and catch without text walls.
+- [x] First-minute lesson: teach grab, throw, ping and catch without text walls
+      (the landing room, `tutorial.gd`).
 - [ ] Try the untested edge cases: wedged doorway, stacked climbing, creatures
       cornered behind heavy furniture, wardrobe swept through clutter.
 - [ ] Smoothness on a real display (V-Sync, frame pacing).

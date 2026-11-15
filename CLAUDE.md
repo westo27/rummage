@@ -27,7 +27,7 @@ Run only the suites the change touches; the full set once before committing.
 - stage1 movement/walls · stage2 beam grab/throw/arc · stage3 creatures ·
   stage4 gates/win/bag · floor_clutter · smoothness · menus (settings, pause;
   writes then restores the real settings file) · grab_point · impacts ·
-  catch · beam_look · beam_sound · room · lamp
+  catch · beam_look · beam_sound · room · lamp · tutorial
 - In tests, wait two `process_frame`s before reading anything drawn per frame.
 
 ## Visual checks (need a real window, not --headless)

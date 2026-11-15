@@ -15,6 +15,9 @@ extends Node3D
 ## listens. main.gd connects these to the HUD. Like dispatching a Laravel event.
 signal aim_changed(state: AimState, detail: String)
 signal lift_limit_changed(kg: float)
+## For the landing lesson (tutorial.gd): you picked something up, or threw it.
+signal grabbed(prop: Prop)
+signal thrown(prop: Prop)
 
 enum AimState { IDLE, CAN_GRAB, TOO_HEAVY, HOLDING, CREATURE }
 
@@ -327,6 +330,7 @@ func _grab(prop: Prop, point: Vector3) -> void:
 	# A sleeping body ignores velocity changes, so make sure it's awake.
 	prop.sleeping = false
 	_last_point = point  # so the first tick doesn't read as a jump
+	grabbed.emit(prop)
 
 
 ## The grab point in world space, where it is right now.
@@ -402,7 +406,9 @@ func _release() -> void:
 func _throw() -> void:
 	var speed: float = Game.tune.throw_speed_base / (1.0 + held.mass / Game.tune.throw_speed_mass_scale)
 	held.linear_velocity = _forward() * speed
+	var prop: Prop = held
 	_release()
+	thrown.emit(prop)
 	# Without this, still holding the left button would instantly re-grab the
 	# object you just threw.
 	_grab_armed = false

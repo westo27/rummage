@@ -5,6 +5,8 @@ extends Node
 
 ## Seconds until the next ping is allowed (0 = ready). The HUD shows it.
 signal cooldown_changed(seconds_left: float)
+## Each time Q sends a ping out (the landing lesson listens).
+signal pinged
 
 var _cooldown_left: float = 0.0
 var _sound := AudioStreamPlayer.new()
@@ -31,6 +33,7 @@ func _ping() -> void:
 	_cooldown_left = Game.tune.ping_cooldown
 	cooldown_changed.emit(_cooldown_left)
 	_sound.play()
+	pinged.emit()
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	for node in get_tree().get_nodes_in_group("creatures"):
 		var creature := node as Creature

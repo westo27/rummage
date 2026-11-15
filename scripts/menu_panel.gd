@@ -49,6 +49,7 @@ func _init() -> void:
 	_text = Control.new()
 	_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_text.z_index = UiStyle.TEXT_Z
+	UiStyle.marble(_text)
 	_text.draw.connect(_draw_text)
 	add_child(_text)
 
@@ -142,6 +143,7 @@ func _draw_text() -> void:
 ## highlight along the lower edge reads as the letters being cut into the
 ## surface. It's a small thing that stops the type looking stuck on top.
 func _draw_engraved(font: Font, at: Vector2, text: String, font_size: int) -> void:
+	UiStyle.set_marble_line(_text, at.y, font_size)
 	_text.draw_string(font, at + Vector2(0.0, 2.5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
 		Color(1.0, 1.0, 1.0, 0.6))
 	_text.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiStyle.INK)

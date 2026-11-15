@@ -282,7 +282,50 @@ static func label(text: String, size: int, color: Color, weight: int = 700) -> L
 	l.add_theme_color_override("font_color", color)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.z_index = TEXT_Z
+	marble_label(l)
 	return l
+
+
+# --- Marble text ---------------------------------------------------------------
+
+## How tall Coiny's capitals are, as a share of the font size.
+const CAP_HEIGHT: float = 0.70
+const MARBLE_SHADER: Shader = preload("res://shaders/marble_text.gdshader")
+
+
+## Gives a canvas item the glassy marble text shader. Each item gets its own
+## material because the shader needs to know where that item's line of text is.
+static func marble(item: CanvasItem) -> void:
+	var m := ShaderMaterial.new()
+	m.shader = MARBLE_SHADER
+	item.material = m
+
+
+## Tells the marble shader where a line of text sits in the item's own pixels.
+static func set_marble_line(item: CanvasItem, baseline: float, font_size: int) -> void:
+	var m := item.material as ShaderMaterial
+	if m == null:
+		return
+	m.set_shader_parameter("baseline", baseline)
+	m.set_shader_parameter("cap_top", baseline - font_size * CAP_HEIGHT)
+
+
+## Marble text for a one-line Label, kept lined up whenever it resizes.
+static func marble_label(l: Label) -> void:
+	marble(l)
+	var place := func() -> void:
+		var fs: int = l.get_theme_font_size("font_size")
+		var f: Font = l.get_theme_font("font")
+		var h: float = f.get_height(fs)
+		var top: float = 0.0
+		match l.vertical_alignment:
+			VERTICAL_ALIGNMENT_CENTER:
+				top = (l.size.y - h) * 0.5
+			VERTICAL_ALIGNMENT_BOTTOM:
+				top = l.size.y - h
+		set_marble_line(l, top + f.get_ascent(fs), fs)
+	l.resized.connect(place)
+	place.call()
 
 
 # --- Icons -------------------------------------------------------------------

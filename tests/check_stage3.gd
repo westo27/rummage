@@ -52,21 +52,21 @@ func _run() -> void:
 	_check("its eyes glint as it gives itself away", shy._eyes.is_glinting(), "")
 
 	# --- Under the bed, the shake comes from the marble bouncing into it ---
-	var bed := _props.get_node("Bed") as Prop
-	var under: Creature = _creatures.get_node("UnderBed2")
-	_check("an under-bed marble bounces up into the bed", under._bump_underside(bed), "")
-	_check("the bed doesn't shake before the marble hits", bed._shudder_left <= 0.0, "")
+	var bed_prop := _props.get_node("Bed") as Prop
+	var bumper: Creature = _creatures.get_node("UnderBed2")
+	_check("an under-bed marble bounces up into the bed", bumper._bump_underside(bed_prop), "")
+	_check("the bed doesn't shake before the marble hits", bed_prop._shudder_left <= 0.0, "")
 	var peak: float = 0.0
 	var shook: bool = false
 	for i in 30:
 		await get_tree().physics_frame
-		peak = maxf(peak, under._visual.position.y)
-		shook = shook or bed._shudder_left > 0.0
+		peak = maxf(peak, bumper._visual.position.y)
+		shook = shook or bed_prop._shudder_left > 0.0
 	_check("the bed shakes when the marble hits it", shook, "peak %.3f" % peak)
 	_check("the marble rises about to the underside", peak > 0.03 and peak < 0.4, "peak %.3f" % peak)
 	await _wait(0.6)
-	_check("the marble lands back where it was", absf(under._visual.position.y) < 0.002, "y %.3f" % under._visual.position.y)
-	_check("bumping the bed doesn't reveal it", under.state == Creature.State.HIDDEN, "")
+	_check("the marble lands back where it was", absf(bumper._visual.position.y) < 0.002, "y %.3f" % bumper._visual.position.y)
+	_check("bumping the bed doesn't reveal it", bumper.state == Creature.State.HIDDEN, "")
 
 	# --- Lifting a crate reveals what's under it; it flees away from the player ---
 	# The creature will run west into the playroom; park the play table in the

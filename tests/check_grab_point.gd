@@ -65,7 +65,10 @@ func _run() -> void:
 	_check("the beam ends at the grab point, not the middle",
 		_beam_end().distance_to(_beam.grab_point()) < 0.05,
 		"%.3f m away" % _beam_end().distance_to(_beam.grab_point()))
-	_aim_at(Vector3(-4.1, 0.0, 0.15))  # pull the top down towards the floor
+	# The top is above a child's eyes, so aiming down alone mostly pushes it
+	# into the floor: reel the beam in as well, drawing the top towards you.
+	_aim_at(Vector3(-4.1, 0.0, 0.15))
+	_beam._hold_distance = 0.8
 	await _wait(2.5)
 	_release("grab")
 	await _wait(1.0)

@@ -21,9 +21,9 @@ extends CharacterBody3D
 
 @onready var _body_shape: CollisionShape3D = $CollisionShape3D
 
-const STAND_HEIGHT: float = 1.7
+const STAND_HEIGHT: float = 1.3
 ## Capsule height while crouched: just over the eyes.
-const CROUCH_HEIGHT: float = 1.0
+const CROUCH_HEIGHT: float = 0.8
 ## How fast the crouch eases in and out (fraction per second).
 const CROUCH_EASE: float = 12.0
 
@@ -40,7 +40,7 @@ var _kick_query := PhysicsShapeQueryParameters3D.new()
 func _init() -> void:
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.5
-	capsule.height = 1.7
+	capsule.height = STAND_HEIGHT
 	_kick_query.shape = capsule
 	_kick_query.collision_mask = 16  # the "clutter" layer
 	var standing := CapsuleShape3D.new()
@@ -158,7 +158,7 @@ func _kick_clutter() -> void:
 	var walk_dir: Vector3 = walk.normalized()
 	var kick_speed: float = walk.length() * Game.tune.player_kick_factor
 
-	_kick_query.transform = global_transform.translated_local(Vector3(0.0, 0.85, 0.0))
+	_kick_query.transform = global_transform.translated_local(Vector3(0.0, STAND_HEIGHT * 0.5, 0.0))
 	var hits: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(_kick_query, 16)
 	for hit in hits:
 		var prop := hit.collider as Prop

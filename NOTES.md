@@ -4,7 +4,7 @@ Godot 4.7.2, GDScript, Jolt Physics. Open the folder in Godot and press F5; it
 boots into `scenes/title.tscn` and Play loads `scenes/main.tscn`. To skip the
 menu while working, run the main scene on its own with F6.
 
-**Controls:** WASD move, Shift run, hold C or Ctrl to crouch (slower; stays down under furniture until there is headroom), mouse look, Esc pauses. Hold left mouse to
+**Controls:** You play a child: 1.3 m tall, eyes at 1.15 m. WASD move, Shift run, hold C or Ctrl to crouch (slower; stays down under furniture until there is headroom), mouse look, Esc pauses. Hold left mouse to
 grab, release to drop, right mouse or F to throw, mouse wheel to move the held
 object nearer/further. Click an exposed creature to catch it. Q pings. R
 restarts at any time.

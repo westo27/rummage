@@ -617,7 +617,7 @@ func _player_eye() -> Vector3:
 	if player == null:
 		return Vector3(0.0, 1.6, 0.0)
 	var head := player.get_node_or_null("Head") as Node3D
-	return head.global_position if head != null else player.global_position + Vector3.UP * 1.55
+	return head.global_position if head != null else player.global_position + Vector3.UP * Game.tune.stand_eye_height
 
 
 func _flat_distance(a: Vector3, b: Vector3) -> float:

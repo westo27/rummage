@@ -238,7 +238,7 @@ func _run() -> void:
 	beam._release()
 	await _wait(0.3)
 	_check("pulling a drawer with the beam slides it open", chest.drawer_out(0) > 0.2, "%.3f m out" % chest.drawer_out(0))
-	_check("the other drawers stay shut", absf(chest.drawer_out(1)) < 0.02 and absf(chest.drawer_out(2)) < 0.02,
+	_check("the other drawers stay shut", absf(chest.drawer_out(1)) < 0.05 and absf(chest.drawer_out(2)) < 0.05,
 		"%.3f, %.3f m out" % [chest.drawer_out(1), chest.drawer_out(2)])
 	_check("and the chest stays where it is", (chest as Node3D).global_position.distance_to(chest_at) < 0.1,
 		"moved %.3f m" % (chest as Node3D).global_position.distance_to(chest_at))

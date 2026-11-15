@@ -106,7 +106,7 @@ func _run() -> void:
 		await get_tree().physics_frame
 	await _wait(0.5)
 	_check("crate still held after walking", _beam.held == crate2, "held=%s" % _beam.held)
-	_beam._hold_distance = 4.5  # hold point now ~1.4 m beyond the north wall
+	_beam._hold_distance = 4.3  # hold point now ~1.2 m beyond the north wall
 	await _wait(1.5)
 	var cz: float = crate2.global_position.z
 	_check("held crate is pushed up to the wall but not through it", cz > -2.25 and cz < -1.85,

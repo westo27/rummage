@@ -33,7 +33,7 @@ Run only the suites the change touches; the full set once before committing.
 ## Visual checks (need a real window, not --headless)
 - `tests/shoot.tscn` (all screens), `tests/shoot_lamp.tscn` (lamp), `tests/shoot_title.tscn` (title backdrop),
   `tests/shoot_rooms.tscn` (each room) and `tests/shoot_pixel.tscn` (pixel filter), PNGs
-  in `%APPDATA%/Godot/app_userdata/rummage_prototype/shots`.
+  in `%APPDATA%/Godot/app_userdata/Lost Marbles/shots`.
 - Render at `--resolution 960x540` and look only when the look is the point.
 - `tests/bench_gpu.tscn` measures GPU cost per graphics setting.
 - `tests/check_marble_text.tscn` (needs a window): swirl text stays steady.

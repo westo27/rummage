@@ -308,6 +308,19 @@ static func set_marble_line(item: CanvasItem, baseline: float, font_size: int) -
 		return
 	m.set_shader_parameter("baseline", baseline)
 	m.set_shader_parameter("cap_top", baseline - font_size * CAP_HEIGHT)
+	# Small text gets less swirl and no sparkle: full detail from about 66 px.
+	m.set_shader_parameter("detail", clampf((font_size - 36.0) / 30.0, 0.0, 1.0))
+
+
+## Recolours a marble's swirl: two shades of `tint`, with a deep rim to match.
+## Without this the text has the default blue and green cat's-eye swirl.
+static func set_marble_tint(item: CanvasItem, tint: Color) -> void:
+	var m := item.material as ShaderMaterial
+	if m == null:
+		return
+	m.set_shader_parameter("swirl_color", tint)
+	m.set_shader_parameter("swirl_color_2", tint.lightened(0.45))
+	m.set_shader_parameter("rim_color", tint.darkened(0.65))
 
 
 ## Marble text for a one-line Label, kept lined up whenever it resizes.

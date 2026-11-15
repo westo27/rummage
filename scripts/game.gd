@@ -31,6 +31,8 @@ func _ready() -> void:
 	settings.apply_pixel_filter()
 	# Swap the mouse arrow for the menus' pointing hand. See pointer_cursor.gd.
 	add_child(PointerCursor.new())
+	# Temporary: 1/2/3 switch looks while choosing an art direction.
+	add_child(LookSwitcher.new())
 	impacts = ImpactAudio.new()
 	add_child(impacts)
 

@@ -1,5 +1,5 @@
 extends Node
-## Renders the itch.io cover (630x500): the title on a plain night background
+## Renders the itch.io cover (630x500): the title on a plain white background
 ## with five marbles in a row below it, each pulling a different face, the
 ## middle one winking. Needs a real window (no --headless).
 ## Run: Godot --path . --resolution 1260x1000 res://tests/shoot_cover.tscn
@@ -10,7 +10,7 @@ const TITLE := "Losing My\nMarbles!"
 const TITLE_SIZE: int = 300
 ## Lifts the title from dead centre; with the row below, the pair sits centred.
 const TITLE_RAISE: float = 340.0
-const BACKGROUND := Color(0.11, 0.08, 0.2)
+const BACKGROUND := Color(1.0, 1.0, 1.0)
 const FOV: float = 30.0
 ## Camera distance from the row, and how far above it the camera sits
 ## (looking straight ahead, so the row lands low in the frame).

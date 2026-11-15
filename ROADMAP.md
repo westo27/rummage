@@ -24,7 +24,7 @@ Tick items off as they land. Tom decides the order inside each phase.
 - [ ] Fix what the playtest found.
 - [ ] More life in the creatures beyond the eyes (squash/stretch, lean,
       startled jump), if the eyes weren't enough.
-- [ ] Design call: tip-but-not-lift heavy things (wardrobe gate needs an exception).
+- [x] Design call: tip-but-not-lift heavy things (wardrobe gate needs an exception).
 - [ ] Clue quality: do tells and ping beat checking every bin?
 - [ ] Trapdoor under the rug opens to a hidden space with something to find
       (Grace's idea).

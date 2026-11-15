@@ -23,6 +23,8 @@ func _run() -> void:
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
 	# These checks grab 7 kg crates, heavier than the 4 kg start.
 	_beam.lift_limit = 10.0
+	# These hold crates in the air, so let the beam lift furniture (see check_drag).
+	Game.tune.max_lift_mass = 1000.0
 	await _wait(1.0)
 	_check("silent when the beam isn't holding anything",
 		not _beam._hum.playing and not _beam._strain.playing, "")

@@ -440,6 +440,12 @@ creatures are catchable before the bed, 19 before the wardrobe:
 - the 60 kg **bed** unlocks at **14** catches (exactly 60 kg)
 - the 80 kg **wardrobe** (was 115) unlocks at **19** catches (exactly 80 kg)
 
+**Furniture is drag and tip only** (over `max_lift_mass`, 3 kg), so throwing
+it about can't heap up the room. The beam's upward pull on it is capped at
+`drag_lift_share` (0.7) of its weight: pulled by an edge it tips on the far
+edge, but it never leaves the floor, and Throw just lets go. The lift limit
+above still decides which furniture you can grab at all.
+
 The beam reaches **4 m** (was 7), for grabbing and catching, so you have to
 walk up to things.
 
@@ -499,6 +505,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage2 | settling, grab, hold, throw speeds, walls stop held objects, swing-fling, beam arc, too-heavy latch |
 | check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority, gate sums |
 | check_stage4 | ping range and cooldown, both gates, wardrobe off the doorway, side room, win, timer, marble bag (one ball per catch, none escape), restart |
+| check_drag | furniture tips and drags but never leaves the floor or gets thrown; books still lift; the bed tips up |
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |

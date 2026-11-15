@@ -66,6 +66,15 @@ extends Resource
 ## catches, the 60 kg bed at 14 caught (60 kg) and the 80 kg wardrobe at 19
 ## (80 kg).
 @export var lift_per_capture: float = 4.0
+## Props heavier than this (kg) are furniture: the beam only drags and tips
+## them. It can't raise one clear of the floor or throw it, so the room
+## doesn't end up in a heap. The lift limit still decides which ones it can
+## grab at all.
+@export var max_lift_mass: float = 3.0
+## The most the beam pulls upward on furniture, as a share of its weight.
+## Tipping something up by one edge takes about half; lifting it clear takes
+## all of it.
+@export_range(0.0, 1.0) var drag_lift_share: float = 0.7
 
 @export_group("Creatures")
 ## Running speed while fleeing, m/s.

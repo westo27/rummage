@@ -99,6 +99,8 @@ func _load() -> void:
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
 	# Every prop liftable, so this test doesn't depend on the gate sums.
 	_beam.lift_limit = 1000.0
+	# Lifts a crate in the air, so let the beam lift furniture (see check_drag).
+	Game.tune.max_lift_mass = 1000.0
 	await _wait(1.0)
 
 

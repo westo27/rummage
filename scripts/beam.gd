@@ -378,6 +378,12 @@ func _push_point_to_velocity(point: Vector3, wanted: Vector3) -> void:
 		Vector3(0.0, inv_mass, 0.0) - turn.y,
 		Vector3(0.0, 0.0, inv_mass) - turn.z)
 	var impulse: Vector3 = k.inverse() * change
+	# Furniture: cap the upward pull below its weight, so the floor always
+	# carries some of it. Pulled by an edge it pivots on the far edge and
+	# tips; it never comes up off the floor.
+	if is_drag_only(held):
+		var weight: float = held.mass * -state.total_gravity.y
+		impulse.y = minf(impulse.y, weight * Game.tune.drag_lift_share * state.step)
 
 	# What that push does: it changes the velocity by impulse / mass and the
 	# spin by I⁻¹ · (r × impulse). Applied by setting the velocities directly
@@ -390,7 +396,11 @@ func _push_point_to_velocity(point: Vector3, wanted: Vector3) -> void:
 	# push can't put it back. The grab point drifts a hair as a result, which
 	# the next tick corrects.
 	held.linear_velocity = linear
-	held.angular_velocity = angular * (1.0 - Game.tune.held_spin_damping)
+	# Furniture rests on the floor rather than dangling, and the damping would
+	# fight a tip.
+	if not is_drag_only(held):
+		angular *= 1.0 - Game.tune.held_spin_damping
+	held.angular_velocity = angular
 
 
 ## Letting go just stops driving the object; it keeps whatever velocity it had,
@@ -404,6 +414,11 @@ func _release() -> void:
 
 
 func _throw() -> void:
+	# Furniture isn't thrown, just let go of.
+	if is_drag_only(held):
+		_release()
+		_grab_armed = false
+		return
 	var speed: float = Game.tune.throw_speed_base / (1.0 + held.mass / Game.tune.throw_speed_mass_scale)
 	held.linear_velocity = _forward() * speed
 	var prop: Prop = held
@@ -450,6 +465,11 @@ func _update_aim_state() -> void:
 		_state = state
 		_detail = detail
 		aim_changed.emit(state, detail)
+
+
+## Furniture, which the beam drags and tips but never lifts or throws.
+func is_drag_only(prop: Prop) -> bool:
+	return prop.mass > Game.tune.max_lift_mass
 
 
 func _can_lift(prop: Prop) -> bool:

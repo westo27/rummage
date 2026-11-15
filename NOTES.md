@@ -84,24 +84,23 @@ a root node and a script.
   win screen's card.
 - **The marble bag** (`scripts/marble_bag.gd`, `scripts/bag_marble.gd`) sits
   in the HUD's bottom-right corner. Each catch drops a ball in that
-  creature's colour, with eyes, into a drawstring bag where it rolls and
+  creature's colour, with eyes, into a clear bag where it rolls and
   piles up. It's a SubViewport with its own 2D physics world, so the balls
   can't touch the 3D game. One function, `_outline()`, gives the bag's shape
   for both drawing and the walls the balls hit, so the two always match.
   The balls are glass marbles like the menu text
   (`shaders/glass_marble.gdshader`: smoky glass, white edge light, a swirl in
-  the creature's colour, bubbles), with the eyes drawn plain on top. The tag
-  and the bow are glass too (smoky tag with cream marble-text count, coral
-  glass cord and bead knot). Balls clack like glass marbles when they land and knock together
+  the creature's colour, bubbles), with the eyes drawn plain on top. The bag
+  is clear film: faint fill, fine white edges, reflections and creases, a
+  gathered neck. No bow, no tag. Balls clack like glass marbles when they land and knock together
   (`Tones.clack`: a bright crack with a very short two-pitch glass ring,
   three takes; you picked it from five in `tests/render_clacks.tscn`).
   Catches made close together queue up and drop 0.16 s apart. The neck
   loosens while balls go in, and the bag squashes a little when each lands.
   To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`
   (21): all 25 currently fill a little over half of it.
-- **The catch counter is the glass tag** hanging from the bag's bow ("12 /
-  25"). There's no separate counter on screen. The tag swings on a spring
-  when a ball lands. Tests read it through `Hud.caught_text()`.
+- **No number on screen for catches**: the marbles in the bag are the
+  counter. The bag still keeps the count for tests (`Hud.caught_text()`).
 - **On winning, the bag moves onto the win card** beside your time.
   `reparent()` carries its whole subtree, physics world included, so any
   balls still queued keep dropping in there.
@@ -186,7 +185,7 @@ than the creature squeaks.
 ## The catch
 
 Your choices: the creature is sucked into the beam, with sparkles, a suction
-slurp and the bag's tag bouncing. (Three styles were built and compared in
+slurp. (Three styles were built and compared in
 play; the other two, flying into the bag and popping on the spot, were
 removed.)
 
@@ -203,8 +202,6 @@ removed.)
 - **Slurp** (`Tones.slurp()`): noise through a resonance sweeping upward,
   with a bubbly wobble, ending in a little plop. `tests/render_knocks.tscn`
   also saves it as `catch_slurp.wav`.
-- **Tag bounce**: the bag's tag hops and grows for a moment, and swings,
-  whenever the count goes up.
 
 ## The beam's look and the bloom
 
@@ -382,10 +379,9 @@ child up past your bedtime". So it's night.
   the `pixel_texels` shader global (Project Settings > Shader Globals) and
   `shaders/pixel_art.gdshaderinc`.
   The marble bag is not pixelated (you asked for it to stay smooth).
-  The bag is shown at half size (`MarbleBag.DISPLAY_SIZE`; drawn and
+  The bag is shown at 0.75 size (`MarbleBag.DISPLAY_SIZE`; drawn and
   simulated in `VIEW_SIZE` coordinates via `size_2d_override`) with no
-  shadow under it. The tag's count is drawn crisp on top of the viewport
-  (`_draw_tag_text`), so it stays readable at that size.
+  shadow under it.
   Menus, buttons and the in-game HUD stay crisp (they're on higher layers).
   `tests/shoot_pixel.tscn` renders it off and at a few sizes.
 - **The window** is a hole cut in the wall with a pane of invisible
@@ -480,7 +476,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
-| check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles, slurp and tag hop; one ball in the bag; sparkles clean up |
+| check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles and slurp; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
 | check_room | a ball thrown hard at the window stays in the room; wooden props are matte; the bedside lamp stands on its table; the drawer rests shut, slides out when the table stops suddenly and home when shoved back, and can be grabbed |
 | check_lamp | the lamp hangs still; a thrown book swings it and its light; it stays on its cord; it settles; the beam can't grab it |

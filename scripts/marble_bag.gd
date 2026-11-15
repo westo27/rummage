@@ -1,33 +1,36 @@
 class_name MarbleBag
 extends SubViewportContainer
-## A drawstring bag in the corner of the HUD. Every creature you catch drops
-## into it as a glass marble with eyes (BagMarble) and piles up with the others, like
-## a bag of marbles.
+## A clear drawstring bag in the corner of the HUD. Every creature you catch
+## drops into it as a glass marble with eyes (BagMarble) and piles up with the
+## others, like a bag of marbles.
 ##
 ## It's a little world of its own. A SubViewport renders its own scene and,
 ## importantly, has its own 2D physics space, so the marbles can tumble about
 ## without touching the 3D game. The SubViewportContainer shows that render
-## as an ordinary UI element, anchored like any other Control.
+## as an ordinary UI element, anchored like any other Control. Its background
+## is transparent, so the room shows through the bag.
 ##
 ## Drawing order inside the viewport, back to front:
-##   _back     the inside of the bag (dark), and the far rim of the opening
+##   _back     the far side of the bag (a faint film) and the far rim of the
+##             opening
 ##   _marbles  the balls
-##   _front    the see-through net body, the gathered neck, the flared top
-##             (whose near rim hides a ball as it drops in), and the bow
+##   _front    the near side: a faint film, light along the edges and a
+##             reflection, the gathered neck and the flared top (whose near
+##             rim covers a ball as it drops in)
 ##
 ## The bag's shape is one function, _outline(), used both for drawing and for
 ## the walls the marbles collide with, so the two can't disagree.
 
 const VIEW_SIZE := Vector2(360.0, 470.0)
 ## How big it's shown on screen. The bag is drawn (and its physics runs) in
-## VIEW_SIZE coordinates and scaled down to this.
-const DISPLAY_SIZE := VIEW_SIZE * 0.5
+## VIEW_SIZE coordinates and scaled to this.
+const DISPLAY_SIZE := VIEW_SIZE * 0.75
 const CENTRE_X: float = 180.0
-## Where the neck (the drawstring) sits, and how tall the body below it is.
+## Where the neck sits, and how tall the body below it is.
 const NECK_Y: float = 158.0
 const BODY_HEIGHT: float = 290.0
 const BODY_HALF_WIDTH: float = 150.0
-## Half the neck's width when tied, and when loosened to let a ball in.
+## Half the neck's width when gathered shut, and when loosened to let a ball in.
 const NECK_CLOSED: float = 46.0
 const NECK_OPEN: float = 76.0
 ## How far above the neck the flared top reaches, and how far it flares out.
@@ -38,46 +41,30 @@ const FRILL_FLARE: float = 30.0
 const DROP_INTERVAL: float = 0.16
 ## How long the neck stays loose after the last drop.
 const OPEN_HOLD: float = 0.55
-## The tag hangs angled a little to the right of straight down (radians), on
-## a string this long, and is this big.
-const TAG_REST_ANGLE: float = -0.32
-const TAG_STRING: float = 42.0
-const TAG_SIZE := Vector2(136.0, 72.0)
-const TAG_FONT_SIZE: int = 36
-## The tag and the bow are glass, like the marbles and the menu text: smoky
-## see-through glass with white light along the edges.
-const SMOKE_TOP := Color(0.27, 0.30, 0.38, 0.86)
-const SMOKE_BOTTOM := Color(0.12, 0.13, 0.18, 0.9)
-const EDGE_LIGHT := Color(1.0, 1.0, 1.0, 0.9)
 
-const FABRIC := Color(0.82, 0.66, 0.44)
-const FABRIC_DARK := Color(0.52, 0.37, 0.22)
-const INSIDE := Color(0.20, 0.13, 0.08)
-const STITCH := Color(0.34, 0.22, 0.12)
+## The clear film: barely there at the top, a little cloudier at the bottom
+## where it's seen at more of a slant.
+const FILM_TOP := Color(0.85, 0.93, 1.0, 0.05)
+const FILM_BOTTOM := Color(0.75, 0.86, 0.97, 0.14)
+## Light along the edges and in the reflections.
+const LIGHT := Color(1.0, 1.0, 1.0)
 
 var _viewport: SubViewport
 var _back: Node2D
 var _marbles: Node2D
 var _front: Node2D
-var _text: Control
 
-## 0 = tied shut, 1 = loosened. Eased toward its target every frame.
+## 0 = gathered shut, 1 = loosened. Eased toward its target every frame.
 var _open: float = 0.0
 var _open_hold_left: float = 0.0
 var _queue: Array[Color] = []
 var _next_drop_in: float = 0.0
 var _squash: Tween
 
-## The paper tag hanging from the bow, showing "caught / total". This is the
-## game's catch counter; there's no separate one in the corner.
+## The catch count. Nothing on screen shows it (the bag's marbles are the
+## count); tests read it through Hud.caught_text().
 var _caught: int = 0
 var _total: int = 0
-## How far the tag has swung from where it hangs at rest, and how fast it's
-## swinging. A ball landing in the bag knocks it; a spring brings it back.
-var _tag_swing: float = 0.0
-var _tag_swing_speed: float = 0.0
-## The tag's hop when the count goes up: 1 at the start, easing to 0.
-var _tag_hop: float = 0.0
 
 
 func _ready() -> void:
@@ -93,7 +80,7 @@ func _ready() -> void:
 	_viewport.transparent_bg = true
 	_viewport.disable_3d = true
 	_viewport.size = Vector2i(DISPLAY_SIZE)
-	# Draws the whole VIEW_SIZE world into the smaller render.
+	# Draws the whole VIEW_SIZE world into the render, whatever its size.
 	_viewport.size_2d_override = Vector2i(VIEW_SIZE)
 	_viewport.size_2d_override_stretch = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -110,18 +97,6 @@ func _ready() -> void:
 	_front.draw.connect(_draw_front)
 	_viewport.add_child(_front)
 
-	# The tag's count, on top of the viewport's picture rather than in it.
-	# Drawn at full screen resolution, so it stays readable at the bag's size.
-	_text = Control.new()
-	_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_text.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_text.draw.connect(_draw_tag_text)
-	# Glass letters, like the menus' text.
-	UiStyle.marble(_text)
-	add_child(_text)
-	# Whenever the bag redraws (the tag swings, the count changes), so does it.
-	_front.draw.connect(_text.queue_redraw)
-
 	_build_walls()
 
 
@@ -130,19 +105,14 @@ func drop(color: Color) -> void:
 	_queue.append(color)
 
 
-## Sets the number written on the tag.
+## Remembers the catch count.
 func set_count(caught: int, total: int) -> void:
-	if caught > _caught:
-		# A new catch: the tag hops and swings.
-		_tag_hop = 1.0
-		_tag_swing_speed += 2.5 * (1.0 if randf() < 0.5 else -1.0)
 	_caught = caught
 	_total = total
-	_front.queue_redraw()
 
 
-## What the tag says, e.g. "12 / 25".
-func tag_text() -> String:
+## The count as text, e.g. "12 / 25".
+func count_text() -> String:
 	return "%d / %d" % [_caught, _total]
 
 
@@ -175,16 +145,6 @@ func _process(delta: float) -> void:
 		_back.queue_redraw()
 		_front.queue_redraw()
 
-	# The tag swings on a damped spring: pulled back toward rest in
-	# proportion to how far out it is, slowed by a little friction.
-	if _tag_hop > 0.0:
-		_tag_hop = maxf(_tag_hop - delta * 3.0, 0.0)
-		_front.queue_redraw()
-	if absf(_tag_swing) > 0.001 or absf(_tag_swing_speed) > 0.001:
-		_tag_swing_speed += (-38.0 * _tag_swing - 3.5 * _tag_swing_speed) * delta
-		_tag_swing += _tag_swing_speed * delta
-		_front.queue_redraw()
-
 
 func _spawn_marble(color: Color) -> void:
 	var marble := BagMarble.new()
@@ -201,8 +161,6 @@ func _spawn_marble(color: Color) -> void:
 ## springing back. Harder landings squash it more.
 func _on_marble_landed(speed: float) -> void:
 	var amount: float = clampf(speed / 500.0, 0.25, 1.0)
-	# Knock the tag so it swings.
-	_tag_swing_speed += randf_range(1.5, 3.0) * amount * (1.0 if randf() < 0.5 else -1.0)
 	if _squash != null and _squash.is_valid():
 		_squash.kill()
 	_squash = create_tween()
@@ -270,51 +228,62 @@ func _mouth() -> Array:
 	return [Vector2(CENTRE_X, NECK_Y - FRILL_HEIGHT), Vector2(neck + FRILL_FLARE, 11.0 + 5.0 * _open)]
 
 
+## A point on the bag's edge `t` of the way down (0 = neck, 1 = bottom), on
+## the left (side -1) or right (side 1), pulled `inset` of the way to the middle.
+func _edge_point(t: float, side: float, neck: float, inset: float = 0.0) -> Vector2:
+	return Vector2(CENTRE_X + side * _half_width(t, neck) * (1.0 - inset), NECK_Y + t * BODY_HEIGHT)
+
+
 func _draw_back() -> void:
 	var outline: PackedVector2Array = _outline(_open)
-	# The inside of the bag, seen through the net.
-	_back.draw_polygon(outline, UiStyle.vertical_ramp(outline,
-		Rect2(0.0, NECK_Y, VIEW_SIZE.x, BODY_HEIGHT), INSIDE.lightened(0.15), INSIDE))
-	# The far side of the opening: the dark hole and its back rim.
+	var body := Rect2(0.0, NECK_Y, VIEW_SIZE.x, BODY_HEIGHT)
+	# The far side of the bag, seen through the near side.
+	_back.draw_polygon(outline, UiStyle.vertical_ramp(outline, body, FILM_TOP, FILM_BOTTOM))
+	# The opening: a faint shadow inside, and the far rim catching the light.
 	var mouth: Array = _mouth()
-	var hole: PackedVector2Array = _ellipse(mouth[0], mouth[1], 0.0, TAU)
-	_back.draw_colored_polygon(hole, INSIDE.darkened(0.3))
-	_back.draw_polyline(_ellipse(mouth[0], mouth[1], PI, TAU), FABRIC_DARK, 4.0, true)
+	_back.draw_colored_polygon(_ellipse(mouth[0], mouth[1], 0.0, TAU), Color(0.0, 0.02, 0.05, 0.12))
+	_back.draw_polyline(_ellipse(mouth[0], mouth[1], PI, TAU), Color(LIGHT, 0.4), 2.0, true)
 
 
 func _draw_front() -> void:
 	var outline: PackedVector2Array = _outline(_open)
 	var neck: float = lerpf(NECK_CLOSED, NECK_OPEN, _open)
+	var body := Rect2(0.0, NECK_Y, VIEW_SIZE.x, BODY_HEIGHT)
 
-	# Net body: a thin wash of fabric, darker toward the bottom, then a
-	# diagonal mesh clipped to the bag's shape.
-	_front.draw_polygon(outline, UiStyle.vertical_ramp(outline,
-		Rect2(0.0, NECK_Y, VIEW_SIZE.x, BODY_HEIGHT),
-		Color(FABRIC, 0.18), Color(FABRIC_DARK, 0.42)))
-	var mesh_colour := Color(STITCH, 0.45)
-	for i in range(-14, 22):
-		var x: float = i * 24.0
-		for line: PackedVector2Array in [
-			PackedVector2Array([Vector2(x, NECK_Y), Vector2(x + BODY_HEIGHT, NECK_Y + BODY_HEIGHT)]),
-			PackedVector2Array([Vector2(x, NECK_Y), Vector2(x - BODY_HEIGHT, NECK_Y + BODY_HEIGHT)]),
-		]:
-			# Keeps only the parts of the line that are inside the bag.
-			for piece in Geometry2D.intersect_polyline_with_polygon(line, outline):
-				_front.draw_polyline(piece, mesh_colour, 2.0, true)
+	# The near side: the same faint film.
+	_front.draw_polygon(outline, UiStyle.vertical_ramp(outline, body, FILM_TOP, FILM_BOTTOM))
 
-	# A soft sheen down the left side, so the net reads as round, not flat.
-	var sheen := PackedVector2Array()
-	for i in 13:
-		var t: float = 0.12 + 0.7 * float(i) / 12.0
-		sheen.append(Vector2(CENTRE_X - _half_width(t, neck) * 0.72, NECK_Y + t * BODY_HEIGHT))
-	_front.draw_polyline(sheen, Color(1.0, 1.0, 1.0, 0.16), 10.0, true)
+	# Edges: a soft glow and a fine bright line, where the film turns away
+	# from you and you see more of it.
+	_front.draw_polyline(outline, Color(LIGHT, 0.07), 12.0, true)
+	_front.draw_polyline(outline, Color(LIGHT, 0.4), 2.0, true)
 
-	# Seam round the body.
-	_front.draw_polyline(outline, STITCH, 5.0, true)
+	# Reflections: a long soft streak down the left (the light's side), a fine
+	# bright line inside it, and a short one high on the right.
+	var streak := PackedVector2Array()
+	var line := PackedVector2Array()
+	for i in 17:
+		var t: float = lerpf(0.14, 0.8, float(i) / 16.0)
+		streak.append(_edge_point(t, -1.0, neck, 0.2))
+		line.append(_edge_point(t, -1.0, neck, 0.27))
+	_front.draw_polyline(streak, Color(LIGHT, 0.12), 16.0, true)
+	_front.draw_polyline(line.slice(2, 12), Color(LIGHT, 0.45), 2.5, true)
+	var right := PackedVector2Array()
+	for i in 7:
+		right.append(_edge_point(lerpf(0.22, 0.42, float(i) / 6.0), 1.0, neck, 0.16))
+	_front.draw_polyline(right, Color(LIGHT, 0.3), 3.0, true)
+
+	# Soft creases running down from the gathered neck.
+	for f: float in [-0.55, -0.15, 0.3, 0.65]:
+		var crease := PackedVector2Array()
+		for i in 7:
+			var t: float = lerpf(0.02, 0.32, float(i) / 6.0)
+			crease.append(Vector2(CENTRE_X + f * _half_width(t, neck) * 0.85, NECK_Y + t * BODY_HEIGHT))
+		_front.draw_polyline(crease, Color(LIGHT, 0.12), 2.0, true)
 
 	# The flared top: from the neck up to the near rim of the opening. Its top
 	# edge is the front half of the mouth's ellipse, so a ball dropping in
-	# disappears behind it.
+	# passes behind it.
 	var mouth: Array = _mouth()
 	var rim: PackedVector2Array = _ellipse(mouth[0], mouth[1], 0.0, PI)
 	var neck_right := Vector2(CENTRE_X + neck + 2.0, NECK_Y - 4.0)
@@ -323,160 +292,35 @@ func _draw_front() -> void:
 	# neck. draw_polygon would try to triangulate the whole shape and give up
 	# on the thin slivers at each end; draw_primitive draws a four-point
 	# piece directly as two triangles, with no checks to fail.
-	var light: Color = FABRIC.lightened(0.12)
+	var film_top := Color(LIGHT, 0.14)
 	for i in rim.size() - 1:
 		var t0: float = float(i) / (rim.size() - 1)
 		var t1: float = float(i + 1) / (rim.size() - 1)
 		_front.draw_primitive(
 			PackedVector2Array([rim[i], rim[i + 1], neck_right.lerp(neck_left, t1), neck_right.lerp(neck_left, t0)]),
-			PackedColorArray([light, light, FABRIC, FABRIC]), PackedVector2Array())
-	var frill := PackedVector2Array([neck_right])
-	frill.append_array(rim)
-	frill.append(neck_left)
+			PackedColorArray([film_top, film_top, FILM_TOP, FILM_TOP]), PackedVector2Array())
 	# Gathers: folds running from the neck up to the rim.
 	for i in 5:
 		var f: float = lerpf(-0.7, 0.7, float(i) / 4.0)
 		_front.draw_line(Vector2(CENTRE_X + neck * f, NECK_Y - 6.0),
 			mouth[0] + Vector2(mouth[1].x * f, mouth[1].y * sqrt(1.0 - f * f) - 2.0),
-			Color(FABRIC_DARK, 0.6), 2.0, true)
-	var closed_frill: PackedVector2Array = frill.duplicate()
-	closed_frill.append(frill[0])
-	_front.draw_polyline(closed_frill, STITCH, 4.0, true)
+			Color(LIGHT, 0.18), 2.0, true)
+	_front.draw_polyline(rim, Color(LIGHT, 0.55), 2.5, true)
+	_front.draw_line(rim[0], neck_right, Color(LIGHT, 0.35), 2.0, true)
+	_front.draw_line(rim[rim.size() - 1], neck_left, Color(LIGHT, 0.35), 2.0, true)
 
-	# The gathered neck band, with pleats.
-	var band := Rect2(CENTRE_X - neck - 10.0, NECK_Y - 14.0, (neck + 10.0) * 2.0, 26.0)
-	var band_points: PackedVector2Array = UiStyle.rounded_points(band, 12.0)
-	_front.draw_polygon(band_points, UiStyle.vertical_ramp(band_points, band, FABRIC, FABRIC_DARK))
-	for i in 7:
-		var x: float = lerpf(band.position.x + 10.0, band.end.x - 10.0, float(i) / 6.0)
-		_front.draw_line(Vector2(x, band.position.y + 4.0), Vector2(x, band.end.y - 4.0),
-			Color(STITCH, 0.5), 2.0, true)
-
-	var knot := Vector2(CENTRE_X + neck * 0.35, NECK_Y)
-	# Tag before bow, so the knot covers the end of the tag's string.
-	_draw_tag(knot)
-	_draw_bow(knot)
-
-
-## A luggage-style paper tag on a string from the knot, with the catch count
-## written on it. Drawn in its own rotated frame, with the knot at the origin
-## and the tag hanging straight down, then turned by its swing angle.
-func _draw_tag(knot: Vector2) -> void:
-	# The hop: up and bigger, then back, over about a third of a second.
-	var hop: float = sin(_tag_hop * PI)
-	_front.draw_set_transform(knot + Vector2(0.0, -10.0 * hop), TAG_REST_ANGLE + _tag_swing,
-		Vector2.ONE * (1.0 + 0.3 * hop))
-	var top: float = TAG_STRING
-	var half: float = TAG_SIZE.x * 0.5
-	var clip: float = 16.0  # the cut-off top corners
-	var hole := Vector2(0.0, top + 14.0)
-
-	# A soft shadow on the bag behind it.
-	var shadow := PackedVector2Array([
-		Vector2(-half + clip, top), Vector2(half - clip, top), Vector2(half, top + clip),
-		Vector2(half, top + TAG_SIZE.y), Vector2(-half, top + TAG_SIZE.y), Vector2(-half, top + clip)])
-	var shadow_offset := Vector2(4.0, 6.0)
-	for i in shadow.size():
-		shadow[i] += shadow_offset
-	_front.draw_colored_polygon(shadow, Color(0.0, 0.0, 0.0, 0.22))
-
-	_front.draw_line(Vector2.ZERO, hole, STITCH, 3.0, true)
-
-	var card := PackedVector2Array([
-		Vector2(-half + clip, top), Vector2(half - clip, top), Vector2(half, top + clip),
-		Vector2(half, top + TAG_SIZE.y), Vector2(-half, top + TAG_SIZE.y), Vector2(-half, top + clip)])
-	# Smoky glass, lighter at the top.
-	_front.draw_polygon(card, UiStyle.vertical_ramp(card,
-		Rect2(-half, top, TAG_SIZE.x, TAG_SIZE.y), SMOKE_TOP, SMOKE_BOTTOM))
-	# A sheen over the top half.
-	var sheen := PackedVector2Array([
-		Vector2(-half + clip + 4.0, top + 5.0), Vector2(half - clip - 4.0, top + 5.0),
-		Vector2(half - 5.0, top + clip + 2.0), Vector2(half - 5.0, top + TAG_SIZE.y * 0.45),
-		Vector2(-half + 5.0, top + TAG_SIZE.y * 0.45), Vector2(-half + 5.0, top + clip + 2.0)])
-	_front.draw_colored_polygon(sheen, Color(1.0, 1.0, 1.0, 0.1))
-	# Edge light: a dark outer line so it stands off the bag, white just inside
-	# it (brightest along the top and left, facing the light), and a faint line
-	# further in for the far side of the glass.
-	var edge: PackedVector2Array = card.duplicate()
-	edge.append(card[0])
-	_front.draw_polyline(edge, Color(0.05, 0.06, 0.1, 0.8), 5.0, true)
-	_front.draw_polyline(edge, Color(EDGE_LIGHT, 0.55), 2.5, true)
-	_front.draw_polyline(PackedVector2Array([card[5], card[0], card[1]]), EDGE_LIGHT, 3.0, true)
-	_front.draw_polyline(PackedVector2Array([card[4], card[5]]), EDGE_LIGHT, 3.0, true)
-	var inner := PackedVector2Array()
-	for point in edge:
-		inner.append(point.lerp(Vector2(0.0, top + TAG_SIZE.y * 0.5), 0.1))
-	_front.draw_polyline(inner, Color(1.0, 1.0, 1.0, 0.2), 1.5, true)
-
-	# The hole, a glass ring with the string looped through it.
-	_front.draw_circle(hole, 8.0, Color(0.05, 0.06, 0.1, 0.8))
-	_front.draw_arc(hole, 6.5, 0.0, TAU, 16, Color(EDGE_LIGHT, 0.5), 2.0, true)
-	_front.draw_arc(hole, 6.5, PI * 0.9, PI * 1.6, 8, EDGE_LIGHT, 2.5, true)
-	_front.draw_arc(hole + Vector2(0.0, -2.0), 6.0, PI * 0.1, PI * 0.9, 10, STITCH, 2.5, true)
-
-	_front.draw_set_transform(Vector2.ZERO, 0.0)
-
-
-## The count on the tag. Drawn by _text, outside the SubViewport, so it stays
-## crisp at full screen resolution when the bag is shrunk. Uses
-## the same frame as _draw_tag, scaled from bag coordinates to on-screen ones.
-func _draw_tag_text() -> void:
-	var k: float = DISPLAY_SIZE.x / VIEW_SIZE.x
-	var neck: float = lerpf(NECK_CLOSED, NECK_OPEN, _open)
-	var knot := Vector2(CENTRE_X + neck * 0.35, NECK_Y)
-	var hop: float = sin(_tag_hop * PI)
-	_text.draw_set_transform((knot + Vector2(0.0, -10.0 * hop)) * k, TAG_REST_ANGLE + _tag_swing,
-		Vector2.ONE * (1.0 + 0.3 * hop))
-	var text: String = tag_text()
-	var font: Font = UiStyle.font(700)
-	var size: int = roundi(TAG_FONT_SIZE * k)
-	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-	var baseline: float = (TAG_STRING + TAG_SIZE.y - 13.0) * k
-	UiStyle.set_marble_line(_text, baseline, size)
-	_text.draw_string(font, Vector2(-width * 0.5, baseline), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, size, UiStyle.CREAM)
-
-
-## The drawstring: a glass cord across the neck tied in a bow, which droops a
-## little when the neck is loosened. Each piece is a dark edge, a coral core
-## and a thin white line of light along its upper side.
-func _draw_bow(knot: Vector2) -> void:
-	var cord: Color = UiStyle.CORAL.darkened(0.12)
-	var cord_dark := Color(0.08, 0.06, 0.1)
-	var shine := Color(1.0, 1.0, 1.0, 0.75)
-	var neck: float = lerpf(NECK_CLOSED, NECK_OPEN, _open)
-	var across_from := Vector2(CENTRE_X - neck - 10.0, NECK_Y)
-	var across_to := Vector2(CENTRE_X + neck + 10.0, NECK_Y)
-	_front.draw_line(across_from, across_to, cord_dark, 8.0, true)
-	_front.draw_line(across_from, across_to, cord, 5.0, true)
-	_front.draw_line(across_from + Vector2(2.0, -1.5), across_to + Vector2(-2.0, -1.5), shine, 1.5, true)
-	var droop: float = 6.0 * _open
-	for side: float in [-1.0, 1.0]:
-		# A loop each side of the knot.
-		var loop_centre := knot + Vector2(18.0 * side, -8.0 + droop)
-		var loop: PackedVector2Array = _ellipse(loop_centre, Vector2(17.0, 10.0), 0.0, TAU)
-		loop.append(loop[0])
-		_front.draw_polyline(loop, cord_dark, 9.0, true)
-		_front.draw_polyline(loop, cord, 5.0, true)
-		# Light on the top of the loop.
-		_front.draw_polyline(_ellipse(loop_centre + Vector2(0.0, -1.5), Vector2(15.0, 8.0), PI * 1.15, PI * 1.85),
-			shine, 1.5, true)
-		# A tail hanging down, curving outward.
-		var tail := PackedVector2Array()
-		for i in 7:
-			var t: float = float(i) / 6.0
-			tail.append(knot + Vector2(side * (4.0 + 16.0 * t * t), 6.0 + 40.0 * t + droop))
-		_front.draw_polyline(tail, cord_dark, 8.0, true)
-		_front.draw_polyline(tail, cord, 4.5, true)
-		var tail_shine := PackedVector2Array()
-		for point in tail.slice(0, 4):
-			tail_shine.append(point + Vector2(-1.5 * side, 0.0))
-		_front.draw_polyline(tail_shine, shine, 1.2, true)
-	# The knot: a little glass bead.
-	_front.draw_circle(knot, 9.0, cord_dark)
-	_front.draw_circle(knot, 7.0, cord)
-	_front.draw_arc(knot, 5.5, PI * 1.0, PI * 1.6, 8, shine, 2.0, true)
-	_front.draw_circle(knot + Vector2(-2.5, -3.0), 1.6, Color.WHITE)
+	# The gathered neck: a narrow band where the film bunches up, so it's a
+	# little whiter, with a bright line along its top.
+	var band := Rect2(CENTRE_X - neck - 6.0, NECK_Y - 10.0, (neck + 6.0) * 2.0, 16.0)
+	var band_points: PackedVector2Array = UiStyle.rounded_points(band, 8.0)
+	_front.draw_polygon(band_points, UiStyle.vertical_ramp(band_points, band,
+		Color(LIGHT, 0.3), Color(0.8, 0.88, 0.96, 0.18)))
+	_front.draw_line(band.position + Vector2(8.0, 2.0), Vector2(band.end.x - 8.0, band.position.y + 2.0),
+		Color(LIGHT, 0.6), 2.0, true)
+	for i in 6:
+		var x: float = lerpf(band.position.x + 12.0, band.end.x - 12.0, float(i) / 5.0)
+		_front.draw_line(Vector2(x, band.position.y + 4.0), Vector2(x, band.end.y - 3.0),
+			Color(LIGHT, 0.2), 1.5, true)
 
 
 ## Points along an ellipse from angle `from` to `to` (radians, 0 = right,

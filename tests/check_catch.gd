@@ -1,6 +1,6 @@
 extends Node
 ## Headless check for the catch: the creature is sucked into the beam's hand,
-## stretching toward it, with sparkles, the slurp and the tag hop, and ends
+## stretching toward it, with sparkles and the slurp, and ends
 ## as one ball in the bag. Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_catch.tscn
 
@@ -62,7 +62,6 @@ func _run() -> void:
 	await get_tree().process_frame
 	_check("the beam goes once it's caught", not _beam._beam_mesh.visible, "")
 	await get_tree().physics_frame
-	_check("the tag hops", _hud._bag._tag_hop > 0.0, "%.2f" % _hud._bag._tag_hop)
 
 	# Listen for the ball clacking as it lands in the bag.
 	var clacked: bool = false

@@ -14,7 +14,7 @@ extends CanvasLayer
 @onready var _ping_label: Label = $PingLabel
 
 ## The drawstring bag in the bottom-right corner that caught creatures drop
-## into. The paper tag on its bow is the catch counter. See marble_bag.gd.
+## into. Its marbles are the only catch counter on screen. See marble_bag.gd.
 var _bag: MarbleBag
 ## The win screen, built in code by _build_win_screen: a dimmed backdrop with a
 ## glossy card holding the bag, the heading, the time and two pills. Named
@@ -158,14 +158,14 @@ func set_lift_limit(kg: float) -> void:
 	_lift_label.text = "Lift: %.0f kg" % kg
 
 
-## The catch count lives on the bag's paper tag.
+## The bag keeps the catch count (nothing on screen shows the number).
 func set_caught(caught: int, total: int) -> void:
 	_bag.set_count(caught, total)
 
 
 ## What the catch counter currently says, e.g. "12 / 25". For tests.
 func caught_text() -> String:
-	return _bag.tag_text()
+	return _bag.count_text()
 
 
 func set_time(seconds: float) -> void:

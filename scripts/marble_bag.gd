@@ -1,7 +1,7 @@
 class_name MarbleBag
 extends SubViewportContainer
 ## A drawstring bag in the corner of the HUD. Every creature you catch drops
-## into it as a ball with eyes (BagMarble) and piles up with the others, like
+## into it as a glass marble with eyes (BagMarble) and piles up with the others, like
 ## a bag of marbles.
 ##
 ## It's a little world of its own. A SubViewport renders its own scene and,
@@ -44,8 +44,11 @@ const TAG_REST_ANGLE: float = -0.32
 const TAG_STRING: float = 42.0
 const TAG_SIZE := Vector2(136.0, 72.0)
 const TAG_FONT_SIZE: int = 36
-const PAPER := Color(0.98, 0.94, 0.84)
-const PAPER_SHADE := Color(0.88, 0.81, 0.66)
+## The tag and the bow are glass, like the marbles and the menu text: smoky
+## see-through glass with white light along the edges.
+const SMOKE_TOP := Color(0.27, 0.30, 0.38, 0.86)
+const SMOKE_BOTTOM := Color(0.12, 0.13, 0.18, 0.9)
+const EDGE_LIGHT := Color(1.0, 1.0, 1.0, 0.9)
 
 const FABRIC := Color(0.82, 0.66, 0.44)
 const FABRIC_DARK := Color(0.52, 0.37, 0.22)
@@ -108,38 +111,18 @@ func _ready() -> void:
 	_viewport.add_child(_front)
 
 	# The tag's count, on top of the viewport's picture rather than in it.
-	# Its own filter and no material, so the pixel style doesn't reach it.
+	# Drawn at full screen resolution, so it stays readable at the bag's size.
 	_text = Control.new()
 	_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_text.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_text.draw.connect(_draw_tag_text)
+	# Glass letters, like the menus' text.
+	UiStyle.marble(_text)
 	add_child(_text)
 	# Whenever the bag redraws (the tag swings, the count changes), so does it.
 	_front.draw.connect(_text.queue_redraw)
 
 	_build_walls()
-
-	Game.settings.pixel_filter_changed.connect(_apply_pixel_style)
-	_apply_pixel_style()
-
-
-## Matches the pixel filter: stretch_shrink renders the SubViewport at a
-## fraction of its size and scales it back up, keeping the drawing and the
-## physics in the same coordinates. Nearest filtering keeps the texels square;
-## the shader gives its pixels hard edges like the 3D, and the same dither
-## when Graphics > Dither is on.
-func _apply_pixel_style() -> void:
-	var size: int = Game.settings.pixel_ui_size()
-	stretch_shrink = size
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if size > 1 else CanvasItem.TEXTURE_FILTER_PARENT_NODE
-	if size > 1:
-		if material == null:
-			var shader_material := ShaderMaterial.new()
-			shader_material.shader = preload("res://shaders/pixel_bag.gdshader")
-			material = shader_material
-		(material as ShaderMaterial).set_shader_parameter("dither", Game.settings.pixel_dither)
-	else:
-		material = null
 
 
 ## Queues a ball of this colour to drop into the bag.
@@ -402,22 +385,40 @@ func _draw_tag(knot: Vector2) -> void:
 	var card := PackedVector2Array([
 		Vector2(-half + clip, top), Vector2(half - clip, top), Vector2(half, top + clip),
 		Vector2(half, top + TAG_SIZE.y), Vector2(-half, top + TAG_SIZE.y), Vector2(-half, top + clip)])
+	# Smoky glass, lighter at the top.
 	_front.draw_polygon(card, UiStyle.vertical_ramp(card,
-		Rect2(-half, top, TAG_SIZE.x, TAG_SIZE.y), PAPER, PAPER_SHADE))
+		Rect2(-half, top, TAG_SIZE.x, TAG_SIZE.y), SMOKE_TOP, SMOKE_BOTTOM))
+	# A sheen over the top half.
+	var sheen := PackedVector2Array([
+		Vector2(-half + clip + 4.0, top + 5.0), Vector2(half - clip - 4.0, top + 5.0),
+		Vector2(half - 5.0, top + clip + 2.0), Vector2(half - 5.0, top + TAG_SIZE.y * 0.45),
+		Vector2(-half + 5.0, top + TAG_SIZE.y * 0.45), Vector2(-half + 5.0, top + clip + 2.0)])
+	_front.draw_colored_polygon(sheen, Color(1.0, 1.0, 1.0, 0.1))
+	# Edge light: a dark outer line so it stands off the bag, white just inside
+	# it (brightest along the top and left, facing the light), and a faint line
+	# further in for the far side of the glass.
 	var edge: PackedVector2Array = card.duplicate()
 	edge.append(card[0])
-	_front.draw_polyline(edge, Color(STITCH, 0.8), 2.5, true)
+	_front.draw_polyline(edge, Color(0.05, 0.06, 0.1, 0.8), 5.0, true)
+	_front.draw_polyline(edge, Color(EDGE_LIGHT, 0.55), 2.5, true)
+	_front.draw_polyline(PackedVector2Array([card[5], card[0], card[1]]), EDGE_LIGHT, 3.0, true)
+	_front.draw_polyline(PackedVector2Array([card[4], card[5]]), EDGE_LIGHT, 3.0, true)
+	var inner := PackedVector2Array()
+	for point in edge:
+		inner.append(point.lerp(Vector2(0.0, top + TAG_SIZE.y * 0.5), 0.1))
+	_front.draw_polyline(inner, Color(1.0, 1.0, 1.0, 0.2), 1.5, true)
 
-	# Reinforced hole, with the string looped through it.
-	_front.draw_circle(hole, 9.0, PAPER_SHADE.darkened(0.15))
-	_front.draw_circle(hole, 4.5, INSIDE)
+	# The hole, a glass ring with the string looped through it.
+	_front.draw_circle(hole, 8.0, Color(0.05, 0.06, 0.1, 0.8))
+	_front.draw_arc(hole, 6.5, 0.0, TAU, 16, Color(EDGE_LIGHT, 0.5), 2.0, true)
+	_front.draw_arc(hole, 6.5, PI * 0.9, PI * 1.6, 8, EDGE_LIGHT, 2.5, true)
 	_front.draw_arc(hole + Vector2(0.0, -2.0), 6.0, PI * 0.1, PI * 0.9, 10, STITCH, 2.5, true)
 
 	_front.draw_set_transform(Vector2.ZERO, 0.0)
 
 
 ## The count on the tag. Drawn by _text, outside the SubViewport, so it stays
-## crisp at full screen resolution when the bag is shrunk or pixelated. Uses
+## crisp at full screen resolution when the bag is shrunk. Uses
 ## the same frame as _draw_tag, scaled from bag coordinates to on-screen ones.
 func _draw_tag_text() -> void:
 	var k: float = DISPLAY_SIZE.x / VIEW_SIZE.x
@@ -430,18 +431,25 @@ func _draw_tag_text() -> void:
 	var font: Font = UiStyle.font(700)
 	var size: int = roundi(TAG_FONT_SIZE * k)
 	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
-	_text.draw_string(font, Vector2(-width * 0.5, (TAG_STRING + TAG_SIZE.y - 13.0) * k), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, size, UiStyle.INK)
+	var baseline: float = (TAG_STRING + TAG_SIZE.y - 13.0) * k
+	UiStyle.set_marble_line(_text, baseline, size)
+	_text.draw_string(font, Vector2(-width * 0.5, baseline), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, size, UiStyle.CREAM)
 
 
-## The drawstring: a cord across the neck tied in a bow, which droops a little
-## when the neck is loosened.
+## The drawstring: a glass cord across the neck tied in a bow, which droops a
+## little when the neck is loosened. Each piece is a dark edge, a coral core
+## and a thin white line of light along its upper side.
 func _draw_bow(knot: Vector2) -> void:
 	var cord: Color = UiStyle.CORAL.darkened(0.12)
-	var cord_dark: Color = cord.darkened(0.3)
+	var cord_dark := Color(0.08, 0.06, 0.1)
+	var shine := Color(1.0, 1.0, 1.0, 0.75)
 	var neck: float = lerpf(NECK_CLOSED, NECK_OPEN, _open)
-	_front.draw_line(Vector2(CENTRE_X - neck - 10.0, NECK_Y), Vector2(CENTRE_X + neck + 10.0, NECK_Y),
-		cord, 6.0, true)
+	var across_from := Vector2(CENTRE_X - neck - 10.0, NECK_Y)
+	var across_to := Vector2(CENTRE_X + neck + 10.0, NECK_Y)
+	_front.draw_line(across_from, across_to, cord_dark, 8.0, true)
+	_front.draw_line(across_from, across_to, cord, 5.0, true)
+	_front.draw_line(across_from + Vector2(2.0, -1.5), across_to + Vector2(-2.0, -1.5), shine, 1.5, true)
 	var droop: float = 6.0 * _open
 	for side: float in [-1.0, 1.0]:
 		# A loop each side of the knot.
@@ -450,6 +458,9 @@ func _draw_bow(knot: Vector2) -> void:
 		loop.append(loop[0])
 		_front.draw_polyline(loop, cord_dark, 9.0, true)
 		_front.draw_polyline(loop, cord, 5.0, true)
+		# Light on the top of the loop.
+		_front.draw_polyline(_ellipse(loop_centre + Vector2(0.0, -1.5), Vector2(15.0, 8.0), PI * 1.15, PI * 1.85),
+			shine, 1.5, true)
 		# A tail hanging down, curving outward.
 		var tail := PackedVector2Array()
 		for i in 7:
@@ -457,8 +468,15 @@ func _draw_bow(knot: Vector2) -> void:
 			tail.append(knot + Vector2(side * (4.0 + 16.0 * t * t), 6.0 + 40.0 * t + droop))
 		_front.draw_polyline(tail, cord_dark, 8.0, true)
 		_front.draw_polyline(tail, cord, 4.5, true)
-	_front.draw_circle(knot, 8.0, cord_dark)
-	_front.draw_circle(knot + Vector2(-1.0, -1.0), 6.0, cord)
+		var tail_shine := PackedVector2Array()
+		for point in tail.slice(0, 4):
+			tail_shine.append(point + Vector2(-1.5 * side, 0.0))
+		_front.draw_polyline(tail_shine, shine, 1.2, true)
+	# The knot: a little glass bead.
+	_front.draw_circle(knot, 9.0, cord_dark)
+	_front.draw_circle(knot, 7.0, cord)
+	_front.draw_arc(knot, 5.5, PI * 1.0, PI * 1.6, 8, shine, 2.0, true)
+	_front.draw_circle(knot + Vector2(-2.5, -3.0), 1.6, Color.WHITE)
 
 
 ## Points along an ellipse from angle `from` to `to` (radians, 0 = right,

@@ -145,14 +145,6 @@ func apply_pixel_filter() -> void:
 	pixel_filter_changed.emit()
 
 
-## How many UI design units (Project Settings > Display > Window size) make
-## one chunky pixel, so UI drawn in the style matches the 3D's pixels:
-## design height / rows. 1 when off.
-func pixel_ui_size() -> int:
-	var design_height: float = ProjectSettings.get_setting("display/window/size/viewport_height")
-	return maxi(1, roundi(design_height / pixel_rows())) if pixel_filter else 1
-
-
 ## Puts the lighting setting into effect. The renderer-wide parts (shadow
 ## filtering, anti-aliasing, shadow resolution) apply straight away; the
 ## parts that live in a level (its lamps and its WorldEnvironment) apply to

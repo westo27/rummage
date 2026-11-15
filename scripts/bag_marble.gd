@@ -1,11 +1,14 @@
 class_name BagMarble
 extends RigidBody2D
-## One caught creature in the HUD's marble bag: a ball in the creature's
-## colour, with eyes. It's a real 2D physics body, so it rolls, bounces and
-## settles on the pile, which is why the eyes end up at odd angles.
+## One caught creature in the HUD's marble bag: a glass marble like the menu
+## text, with a swirl in the creature's colour, and eyes. It's a real 2D
+## physics body, so it rolls, bounces and settles on the pile, which is why
+## the eyes end up at odd angles.
 ##
-## The shading and the shine are drawn counter-rotated, so the light always
-## comes from the top left of the screen while the eyes turn with the ball.
+## The glass (shaders/glass_marble.gdshader) is drawn by a child node, since
+## a material covers everything its node draws and the eyes should stay
+## plain. The light always comes from the top left of the screen while the
+## swirl and eyes turn with the ball.
 
 ## Emitted the first time it hits anything (the bag or another marble), with
 ## how fast it was going. The bag uses it to squash.
@@ -21,11 +24,16 @@ const CLACK_QUIETER_DB: float = 20.0
 
 var color: Color = Color.WHITE
 
+const GLASS_SHADER: Shader = preload("res://shaders/glass_marble.gdshader")
+
 var _has_landed: bool = false
 ## Speed on the previous physics tick. By the time body_entered fires the
 ## collision has already slowed it, so the speed just before is the useful one.
 var _last_speed: float = 0.0
 var _voice: AudioStreamPlayer
+var _glass: Node2D
+var _face: Node2D
+var _glass_material: ShaderMaterial
 
 
 func _ready() -> void:
@@ -47,6 +55,19 @@ func _ready() -> void:
 	max_contacts_reported = 4
 	body_entered.connect(_on_body_entered)
 
+	# Each ball has its own material: its colour, swirl and spin differ.
+	_glass_material = ShaderMaterial.new()
+	_glass_material.shader = GLASS_SHADER
+	_glass_material.set_shader_parameter("tint", color)
+	_glass_material.set_shader_parameter("seed", randf())
+	_glass = Node2D.new()
+	_glass.material = _glass_material
+	_glass.draw.connect(_draw_glass)
+	add_child(_glass)
+	_face = Node2D.new()
+	_face.draw.connect(_draw_face)
+	add_child(_face)
+
 	_voice = AudioStreamPlayer.new()
 	_voice.stream = Tones.clack(0)
 	add_child(_voice)
@@ -57,9 +78,11 @@ func _physics_process(_delta: float) -> void:
 
 
 func _process(_delta: float) -> void:
-	# _draw only re-runs when asked, and the shading depends on rotation.
+	# The glass quad is drawn counter-rotated, so it's redrawn as the ball
+	# turns. (The face turns with the node by itself.)
 	if not sleeping:
-		queue_redraw()
+		_glass_material.set_shader_parameter("spin", rotation)
+		_glass.queue_redraw()
 
 
 func _on_body_entered(_body: Node) -> void:
@@ -80,30 +103,21 @@ func _on_body_entered(_body: Node) -> void:
 		landed.emit(_last_speed)
 
 
-func _draw() -> void:
-	paint(self, color, RADIUS, rotation)
-
-
-## Draws a ball with eyes on any canvas item, at its origin. `spin` is how
-## far the item is turned: the eyes turn with it, while the shading and shine
-## are turned back so the light stays at the top left of the screen. Shared
-## with the ball that flies into the bag (flying_ball.gd).
-static func paint(ci: CanvasItem, tint: Color, r: float, spin: float) -> void:
-	# Body and shading, fixed to the screen so the light doesn't spin.
-	ci.draw_set_transform(Vector2.ZERO, -spin)
-	ci.draw_circle(Vector2.ZERO, r, tint.darkened(0.35))
-	ci.draw_circle(Vector2(-0.06, -0.09) * r, r * 0.88, tint)
-	ci.draw_circle(Vector2(-0.15, -0.24) * r, r * 0.58, tint.lightened(0.18))
-
-	# Eyes, which turn with the ball.
-	ci.draw_set_transform(Vector2.ZERO, 0.0)
+## Draws the face: eyes that turn with the ball. The glass body is drawn by
+## _glass (a child with the glass_marble shader) underneath.
+func _draw_face() -> void:
 	for side: float in [-1.0, 1.0]:
-		var eye := Vector2(0.36 * side, -0.18) * r
-		ci.draw_circle(eye, r * 0.27, Color.WHITE)
-		ci.draw_circle(eye + Vector2(0.0, 0.07) * r, r * 0.13, Color(0.05, 0.05, 0.06))
+		var eye := Vector2(0.36 * side, -0.18) * RADIUS
+		_face.draw_circle(eye, RADIUS * 0.27, Color.WHITE)
+		_face.draw_circle(eye + Vector2(0.0, 0.07) * RADIUS, RADIUS * 0.13, Color(0.05, 0.05, 0.06))
 
-	# Shine on top of everything, back in screen space.
-	ci.draw_set_transform(Vector2.ZERO, -spin)
-	ci.draw_circle(Vector2(-0.36, -0.48) * r, r * 0.22, Color(1.0, 1.0, 1.0, 0.7))
-	ci.draw_circle(Vector2(-0.2, -0.63) * r, r * 0.1, Color(1.0, 1.0, 1.0, 0.85))
-	ci.draw_set_transform(Vector2.ZERO, 0.0)
+
+## The glass body: one quad over the ball, kept upright on screen so the
+## shader's light stays at the top left. The shader turns the swirl by `spin`.
+func _draw_glass() -> void:
+	_glass.draw_set_transform(Vector2.ZERO, -rotation)
+	var r: float = RADIUS
+	_glass.draw_primitive(
+		PackedVector2Array([Vector2(-r, -r), Vector2(r, -r), Vector2(r, r), Vector2(-r, r)]),
+		PackedColorArray([Color.WHITE]),
+		PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]))

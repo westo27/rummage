@@ -88,14 +88,18 @@ a root node and a script.
   piles up. It's a SubViewport with its own 2D physics world, so the balls
   can't touch the 3D game. One function, `_outline()`, gives the bag's shape
   for both drawing and the walls the balls hit, so the two always match.
-  Balls clack like glass marbles when they land and knock together
+  The balls are glass marbles like the menu text
+  (`shaders/glass_marble.gdshader`: smoky glass, white edge light, a swirl in
+  the creature's colour, bubbles), with the eyes drawn plain on top. The tag
+  and the bow are glass too (smoky tag with cream marble-text count, coral
+  glass cord and bead knot). Balls clack like glass marbles when they land and knock together
   (`Tones.clack`: a bright crack with a very short two-pitch glass ring,
   three takes; you picked it from five in `tests/render_clacks.tscn`).
   Catches made close together queue up and drop 0.16 s apart. The neck
   loosens while balls go in, and the bag squashes a little when each lands.
   To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`
   (21): all 25 currently fill a little over half of it.
-- **The catch counter is the paper tag** hanging from the bag's bow ("12 /
+- **The catch counter is the glass tag** hanging from the bag's bow ("12 /
   25"). There's no separate counter on screen. The tag swings on a spring
   when a ball lands. Tests read it through `Hud.caught_text()`.
 - **On winning, the bag moves onto the win card** beside your time.
@@ -372,16 +376,12 @@ child up past your bedtime". So it's night.
   a saving: the 3D still renders at full resolution.
   **Graphics > Dither** (off by default) adds the old colour limit: 16 shades
   per channel with a 4x4 Bayer dither (`shaders/dither.gdshaderinc`), on the
-  3D and the bag. Off, there's no colour limit.
+  3D. Off, there's no colour limit.
   While it's on, the wallpaper, floor, rug and pictures snap to a texel grid
   (`Settings.PIXEL_TEXELS_PER_METRE`, 32; the wallpaper uses twice that) via
   the `pixel_texels` shader global (Project Settings > Shader Globals) and
   `shaders/pixel_art.gdshaderinc`.
-  The marble bag follows it (`MarbleBag._apply_pixel_style`, on
-  `Settings.pixel_filter_changed`): its SubViewport renders at 1/n size
-  (`stretch_shrink` plus `size_2d_override`, or only its corner draws) and
-  `shaders/pixel_bag.gdshader` makes its edges hard (on/off alpha, dithered
-  when Dither is on).
+  The marble bag is not pixelated (you asked for it to stay smooth).
   The bag is shown at half size (`MarbleBag.DISPLAY_SIZE`; drawn and
   simulated in `VIEW_SIZE` coordinates via `size_2d_override`) with no
   shadow under it. The tag's count is drawn crisp on top of the viewport

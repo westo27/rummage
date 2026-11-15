@@ -73,13 +73,14 @@ func _run() -> void:
 	var steady_bend: float = _arc_bend()
 	_check("beam arc is nearly straight when object keeps up", steady_bend < 0.06, "bend %.3f m" % steady_bend)
 
-	# --- Throw: speed = 16 / (1 + 7/6) = 7.38 m/s ---
+	# --- Throw: speed = base / (1 + mass / scale) ---
 	_aim_at(Vector3(3.0, 1.5, -3.0))
 	await _wait(0.5)
 	_press("throw")
 	await _wait(0.02)
 	var throw_speed: float = crate.linear_velocity.length()
-	_check("crate throw speed about 7.4 m/s", absf(throw_speed - 7.38) < 0.6, "%.2f m/s" % throw_speed)
+	var expected: float = Game.tune.throw_speed_base / (1.0 + crate.mass / Game.tune.throw_speed_mass_scale)
+	_check("crate throw speed about %.1f m/s" % expected, absf(throw_speed - expected) < 0.6, "%.2f m/s" % throw_speed)
 	await _wait(0.2)
 	_check("still holding grab button does not re-grab thrown crate", _beam.held == null, "held=%s" % _beam.held)
 	_release("grab")
@@ -137,9 +138,14 @@ func _run() -> void:
 	_check("beam arc bends while the object lags a swing", swing_bend > 0.1, "bend %.3f m" % swing_bend)
 	_check("arc bows toward the aim direction", _arc_bows_toward_aim(), "")
 	_release("grab")
+	# Two ticks: the beam lets go on the first.
 	await get_tree().physics_frame
-	_check("release keeps swing velocity", book.linear_velocity.length() > 3.0,
-		"%.2f m/s" % book.linear_velocity.length())
+	await get_tree().physics_frame
+	# It keeps only part of the fastest the beam ever moves it.
+	var most: float = Game.tune.hold_speed_base / (1.0 + book.mass / Game.tune.hold_speed_mass_scale) 		* Game.tune.release_speed_keep
+	_check("release keeps some swing velocity", book.linear_velocity.length() > 1.0
+		and book.linear_velocity.length() < most + 0.3,
+		"%.2f m/s, at most %.2f" % [book.linear_velocity.length(), most])
 	await _wait(1.0)
 
 	# --- Too heavy: the bed (60 kg) against a 10 kg limit ---

@@ -42,6 +42,10 @@ const KNOCK_COOLDOWN: float = 0.07
 const QUIET_AFTER_LOAD: float = 1.2
 
 var is_held: bool = false
+## Where it stood when the beam first took hold of it. Furniture can only be
+## dragged a short way from here (Game.tune.drag_range).
+var home: Vector3
+var _has_home: bool = false
 ## For a moving part (a drawer, a door): the furniture it's jointed to.
 var part_of: Prop = null
 ## How many held parts are pinning this furniture down (see plant()), and
@@ -145,6 +149,9 @@ func _make_aura() -> MeshInstance3D:
 ## Called by the beam when it picks this object up.
 func start_hold(holder: PhysicsBody3D) -> void:
 	is_held = true
+	if not _has_home:
+		home = global_position
+		_has_home = true
 	freeze = false
 	axis_lock_angular_x = false
 	axis_lock_angular_z = false

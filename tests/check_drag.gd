@@ -36,46 +36,48 @@ func _run() -> void:
 	_check("the crate is drag-only", _beam.is_drag_only(crate), "%.1f kg" % crate.mass)
 	_aim_at(crate.global_position + Vector3(0.0, 1.5, 0.0))
 	var lowest_ever: float = -INF
+	var most_tilt: float = 0.0
 	for i in 90:
 		await get_tree().physics_frame
 		lowest_ever = maxf(lowest_ever, _lowest_point(crate))
+		most_tilt = maxf(most_tilt, rad_to_deg(crate.global_basis.y.angle_to(Vector3.UP)))
 	_check("pulled up, it never comes clear of the floor", lowest_ever < 0.04, "lowest corner rose to %.3f m" % lowest_ever)
+	_check("it rocks up on its far edge", most_tilt > 5.0, "tilt %.0f°" % most_tilt)
+	_check("but no further than the tip limit", most_tilt < Game.tune.max_tip_degrees + 4.0, "tilt %.0f°" % most_tilt)
 	_release("grab")
+	await _wait(0.05)
+	var let_go_at: Vector3 = crate.global_position
 	await _wait(1.0)
+	var drift: float = Vector2(crate.global_position.x - let_go_at.x, crate.global_position.z - let_go_at.z).length()
+	_check("letting go of furniture doesn't send it sliding", drift < 0.15, "drifted %.2f m" % drift)
+	var settled: float = rad_to_deg(crate.global_basis.y.angle_to(Vector3.UP))
+	_check("and it settles back upright", settled < 3.0, "tilt %.0f°" % settled)
 
-	# --- Grabbed by its top edge and pulled toward you, it topples ---
-	await _place(crate, Vector3(3.0, 0.3, -0.75))
-	_aim_at(Vector3(3.0, 0.57, -0.5))
-	await _wait(0.1)
-	_press("grab")
-	await _wait(0.1)
-	_aim_at(Vector3(3.0, 0.0, 0.3))
-	await _wait(1.5)
-	var tilt: float = rad_to_deg(crate.global_basis.y.angle_to(Vector3.UP))
-	_check("pulled by its top edge, it topples", tilt > 45.0, "tilt %.0f°" % tilt)
-	_release("grab")
-	await _wait(0.5)
+	# --- Dragged a long way, it slides slowly and stops at the end of its tether ---
 	_aim_at(crate.global_position)
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.1)
-
-	# --- Dragging it along the floor works ---
-	_aim_at(crate.global_position)
-	await _wait(0.6)
-	var before: Vector3 = crate.global_position
-	_aim_at(crate.global_position + Vector3(1.2, 0.0, 0.0))
-	await _wait(1.0)
-	var slid: float = Vector2(crate.global_position.x - before.x, crate.global_position.z - before.z).length()
-	_check("it drags across the floor", slid > 0.3, "slid %.2f m" % slid)
+	var start := Vector3(3.0, 0.05, 1.45)
+	var top_speed: float = 0.0
+	for i in 240:
+		_player.global_position = start.lerp(start + Vector3(-3.0, 0.0, 0.0), minf((i + 1) / 180.0, 1.0))
+		_aim_at(crate.global_position)
+		await get_tree().physics_frame
+		top_speed = maxf(top_speed, Vector2(crate.linear_velocity.x, crate.linear_velocity.z).length())
+	var from_home: float = Vector2(crate.global_position.x - crate.home.x, crate.global_position.z - crate.home.z).length()
+	_check("it drags across the floor", from_home > 0.8, "%.2f m from home" % from_home)
+	_check("but only so far from home", from_home < Game.tune.drag_range + 0.2, "%.2f m from home" % from_home)
+	_check("and slowly", top_speed < Game.tune.drag_speed + 0.4, "top %.2f m/s" % top_speed)
 
 	# --- Throwing furniture just lets go ---
 	_press("throw")
 	await _wait(0.05)
 	_check("throw lets go of it", _beam.held == null, "held=%s" % _beam.held)
-	_check("and doesn't fling it", crate.linear_velocity.length() < 1.5, "%.2f m/s" % crate.linear_velocity.length())
+	_check("and doesn't fling it", crate.linear_velocity.length() < 0.5, "%.2f m/s" % crate.linear_velocity.length())
 	_release("grab")
 	await _wait(0.5)
+	_player.global_position = start
 
 	# --- A book still lifts ---
 	var book: Prop = props.get_node("FloorPileA_5")

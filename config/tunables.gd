@@ -39,11 +39,14 @@ extends Resource
 ## Held object velocity = (distance from hold point) × this. Higher = snappier.
 @export var hold_stiffness: float = 12.0
 ## Held top speed = hold_speed_base / (1 + mass / hold_speed_mass_scale).
-@export var hold_speed_base: float = 14.0
+@export var hold_speed_base: float = 9.0
 @export var hold_speed_mass_scale: float = 8.0
 ## Throw speed = throw_speed_base / (1 + mass / throw_speed_mass_scale).
-@export var throw_speed_base: float = 16.0
+@export var throw_speed_base: float = 10.0
 @export var throw_speed_mass_scale: float = 6.0
+## Share of its speed a held thing keeps when you let go, so a swing tosses it
+## a little way rather than across the room.
+@export_range(0.0, 1.0) var release_speed_keep: float = 0.5
 ## Closest the hold point gets to the camera (plus the object's own hold_radius).
 @export var min_hold_distance: float = 0.9
 ## Metres the hold point moves per mouse-wheel notch.
@@ -75,6 +78,14 @@ extends Resource
 ## Tipping something up by one edge takes about half; lifting it clear takes
 ## all of it.
 @export_range(0.0, 1.0) var drag_lift_share: float = 0.7
+## Furniture's top speed in the beam (m/s): heavy things shuffle, not whizz.
+@export var drag_speed: float = 0.9
+## How far furniture can be dragged from where it stood when first grabbed (m).
+## Far enough to get the wardrobe off the doorway, not to rearrange the room.
+@export var drag_range: float = 1.5
+## Furniture tips this far (degrees) and no further, so it rocks up on an edge
+## but never falls over.
+@export var max_tip_degrees: float = 12.0
 
 @export_group("Creatures")
 ## Running speed while fleeing, m/s.

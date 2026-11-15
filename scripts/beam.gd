@@ -194,7 +194,7 @@ func _physics_process(delta: float) -> void:
 		if _grab_armed:
 			_drive_held()
 		else:
-			_release()
+			_let_go()
 
 	if held == null:
 		# Creatures are checked first, and only if nothing is found do we look
@@ -347,8 +347,25 @@ func _drive_held() -> void:
 		_grab_armed = false  # need a fresh click to grab again
 		return
 	var top_speed: float = Game.tune.hold_speed_base / (1.0 + held.mass / Game.tune.hold_speed_mass_scale)
+	if is_drag_only(held):
+		top_speed = minf(top_speed, Game.tune.drag_speed)
 	var wanted: Vector3 = (error * Game.tune.hold_stiffness).limit_length(top_speed)
+	if is_drag_only(held):
+		wanted = _keep_near_home(wanted)
 	_push_point_to_velocity(point, wanted)
+
+
+## Furniture at the end of its tether: the part of `wanted` that would take
+## it further from home is dropped, so it stops there but can come back.
+func _keep_near_home(wanted: Vector3) -> Vector3:
+	var away := Vector3(held.global_position.x - held.home.x, 0.0, held.global_position.z - held.home.z)
+	if away.length() < Game.tune.drag_range:
+		return wanted
+	var out: Vector3 = away.normalized()
+	var outward: float = wanted.dot(out)
+	if outward > 0.0:
+		wanted -= out * outward
+	return wanted
 
 
 ## Gives the held object the one push (impulse), applied at `point`, that makes
@@ -397,14 +414,31 @@ func _push_point_to_velocity(point: Vector3, wanted: Vector3) -> void:
 	# the next tick corrects.
 	held.linear_velocity = linear
 	# Furniture rests on the floor rather than dangling, and the damping would
-	# fight a tip.
-	if not is_drag_only(held):
+	# fight a tip. Instead it's stopped from tipping past max_tip_degrees: any
+	# spin that would tip it further is taken off.
+	if is_drag_only(held):
+		var up: Vector3 = held.global_basis.y
+		if rad_to_deg(up.angle_to(Vector3.UP)) >= Game.tune.max_tip_degrees:
+			var tip_axis: Vector3 = Vector3.UP.cross(up).normalized()
+			angular -= tip_axis * maxf(angular.dot(tip_axis), 0.0)
+	else:
 		angular *= 1.0 - Game.tune.held_spin_damping
 	held.angular_velocity = angular
 
 
-## Letting go just stops driving the object; it keeps whatever velocity it had,
-## which is what makes swing-and-release flings work.
+## Letting go of the button. A light thing keeps some of its speed, so a swing
+## tosses it a little way; furniture just stops where it is.
+func _let_go() -> void:
+	if is_drag_only(held):
+		held.linear_velocity = Vector3.ZERO
+		held.angular_velocity = Vector3.ZERO
+	else:
+		held.linear_velocity *= Game.tune.release_speed_keep
+		held.angular_velocity *= Game.tune.release_speed_keep
+	_release()
+
+
+## Stops driving the object; it keeps whatever velocity it has.
 func _release() -> void:
 	held.end_hold()
 	held = null

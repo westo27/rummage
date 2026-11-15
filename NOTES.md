@@ -446,6 +446,12 @@ it about can't heap up the room. The beam's upward pull on it is capped at
 edge, but it never leaves the floor, and Throw just lets go. The lift limit
 above still decides which furniture you can grab at all.
 
+**Restrained, like Elebits.** Furniture shuffles at `drag_speed` (0.9 m/s),
+tips at most `max_tip_degrees` (12°), stops dead when let go, and can't go
+more than `drag_range` (1.5 m) from where it stood when first grabbed
+(`Prop.home`). Light things: hold speed 9 (was 14), throw 10 (was 16), and
+letting go keeps `release_speed_keep` (half) of their speed.
+
 The beam reaches **4 m** (was 7), for grabbing and catching, so you have to
 walk up to things.
 
@@ -505,7 +511,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage2 | settling, grab, hold, throw speeds, walls stop held objects, swing-fling, beam arc, too-heavy latch |
 | check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority, gate sums |
 | check_stage4 | ping range and cooldown, both gates, wardrobe off the doorway, side room, win, timer, marble bag (one ball per catch, none escape), restart |
-| check_drag | furniture tips and drags but never leaves the floor or gets thrown; books still lift; the bed tips up |
+| check_drag | furniture rocks (within the tip limit) and drags slowly on a short tether, never leaves the floor or gets thrown; books still lift; the bed tips up |
 | check_floor_clutter | the player wades through clutter and is blocked by crates |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |

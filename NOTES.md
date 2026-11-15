@@ -333,7 +333,9 @@ child up past your bedtime". So it's night.
   wall's shadow limits it to the window's shape, so the frame's cross shows
   on the floor. The rest of the room is lit only by a dim, cool blue fill
   (the environment's ambient light, 0.08), which is what reads as night. Soft
-  shadowing in corners and under furniture comes from SSAO.
+  shadowing in corners and under furniture comes from SSAO (intensity 2.4,
+  power 1.8, detail 2.0 for tight contact shading under props, light affect
+  0.25 so it still shows inside lamp pools).
   Darker, moodier pass: lamps 0.55 with steeper falloff (attenuation 1.7) so
   they make pools of light, dimmer shade and bulb glow, moonlight 1.8 with
   blurred edges, exposure 0.85, wider shadow softness (light size 0.3, 0.45
@@ -382,8 +384,8 @@ child up past your bedtime". So it's night.
   bedroom with the lamps swinging (`tests/bench_gpu.tscn` re-measures):
   | Level | GPU per frame | What it does |
   |---|---|---|
-  | High | 2.3 ms | lamp size 0.45 so shadows soften with distance; Ultra filtering; TAA; shadow atlas 4096 |
-  | Medium (default) | 1.2 ms | lamp size 0.3, Medium filtering, TAA, atlas 4096 |
+  | High | 2.3 ms | lamp size 0.45 so shadows soften with distance; Ultra filtering; TAA; SSAO High, full res; shadow atlas 4096 |
+  | Medium (default) | 1.2 ms | lamp size 0.3, Medium filtering, TAA, SSAO Medium half res, atlas 4096 |
   | Low | 0.56 ms | no lamp size, a plain even shadow blur, no SSAO, FXAA instead of TAA, atlas 4096 |
   It applies straight away, including from the pause menu, and is saved
   with the other settings. New players start on Medium; your own saved

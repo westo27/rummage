@@ -26,7 +26,8 @@ const VOLUME_STEP: int = 5
 ## most of the game's GPU cost (see tests/bench_gpu.tscn), so this is the
 ## one quality setting.
 ##   HIGH    soft shadows that blur more the further they fall (the lamp has
-##           a size), filtered at Ultra, with TAA to smooth their grain
+##           a size), filtered at Ultra, with TAA to smooth their grain;
+##           High-quality full-resolution SSAO
 ##   MEDIUM  the same with a smaller lamp and Medium filtering: about a third
 ##           cheaper, still soft
 ##   LOW     shadows given a plain, even blur instead, no corner shading
@@ -161,6 +162,11 @@ func apply_lighting(scene: Node = null) -> void:
 	viewport.use_taa = not low
 	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if low else Viewport.SCREEN_SPACE_AA_DISABLED
 	viewport.positional_shadow_atlas_size = 4096
+	# SSAO quality is global (all environments). High samples more, at full
+	# resolution; Medium is Godot's default (half resolution). Low turns it off below.
+	RenderingServer.environment_set_ssao_quality(
+		RenderingServer.ENV_SSAO_QUALITY_HIGH if high else RenderingServer.ENV_SSAO_QUALITY_MEDIUM,
+		not high, 0.5, 2, 50.0, 300.0)
 	if scene == null:
 		return
 	for lamp: PendantLamp in tree.get_nodes_in_group("lamps"):

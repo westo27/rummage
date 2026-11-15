@@ -68,6 +68,10 @@ const BUMP_REACH: float = 0.4
 ## Cowering creatures bob up and down happily: this high (m), this often (Hz).
 const BOUNCE_HEIGHT: float = 0.021
 const BOUNCE_RATE: float = 1.8
+## Landing from a fall faster than this (m/s) gives two quick little bounces,
+## the first this high (m), the second a third of that.
+const LAND_MIN_SPEED: float = 0.6
+const LAND_BOUNCE: float = 0.012
 ## How quickly a stopped creature rolls back upright to look at you (per s).
 const SETTLE_RATE: float = 6.0
 ## While hidden, it now and then peeks out at you: this often, for this long.
@@ -126,6 +130,7 @@ var _escape_left: float = 0.0
 ## not every tick of rolling along a wall.
 var _touching: Dictionary = {}
 var _clack_voice: AudioStreamPlayer3D
+var _land_tween: Tween
 
 @onready var _visual: Node3D = $Visual
 @onready var _eyes: CreatureEyes = $Visual/Eyes
@@ -415,6 +420,8 @@ func capture(toward: Vector3) -> void:
 	_set_catchable(false)
 	collision_layer = 0
 	collision_mask = 0
+	if _land_tween != null:
+		_land_tween.kill()  # or it fights the flight to the hand
 	# Sparkles where it was caught. Added to the room rather than to the
 	# creature, so they outlive it.
 	CatchSparkles.burst(get_parent(), _visual.global_position + Vector3.UP * 0.05, body_color)
@@ -487,6 +494,20 @@ func hop() -> void:
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_visual, "position:y", 0.08, 0.1)
 	tween.tween_property(_visual, "position:y", 0.0, 0.12)
+
+
+## Two short, slight bounces of the ball on landing; harder landings a touch
+## higher. Only the visual moves, so the body stays on the floor.
+func _land_bounce(fall_speed: float) -> void:
+	if _land_tween != null and _land_tween.is_valid():
+		_land_tween.kill()
+	var h: float = LAND_BOUNCE * clampf(fall_speed / 2.0, 0.6, 1.4)
+	_land_tween = create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	_land_tween.set_trans(Tween.TRANS_QUAD)
+	_land_tween.tween_property(_visual, "position:y", h, 0.06).set_ease(Tween.EASE_OUT)
+	_land_tween.tween_property(_visual, "position:y", 0.0, 0.06).set_ease(Tween.EASE_IN)
+	_land_tween.tween_property(_visual, "position:y", h * 0.35, 0.04).set_ease(Tween.EASE_OUT)
+	_land_tween.tween_property(_visual, "position:y", 0.0, 0.04).set_ease(Tween.EASE_IN)
 
 
 ## Under something low (the bed): bounce up into its underside twice, and the
@@ -689,10 +710,13 @@ func _move(direction: Vector3, speed: float, delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= Game.tune.gravity * delta
 	var before: Vector3 = global_position
+	var was_airborne: bool = not is_on_floor()
 	# move_and_slide changes velocity as it slides, so keep the speed going in.
 	var moving: Vector3 = velocity
 	move_and_slide()
 	_react_to_bumps(moving)
+	if was_airborne and is_on_floor() and -moving.y > LAND_MIN_SPEED:
+		_land_bounce(-moving.y)
 	# Roll like a marble: turn the ball (eyes and all) about the axis that's
 	# sideways to its travel, by the distance covered over its radius.
 	var travelled: Vector3 = global_position - before

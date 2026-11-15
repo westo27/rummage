@@ -38,6 +38,11 @@ Run only the suites the change touches; the full set once before committing.
 - `tests/bench_gpu.tscn` measures GPU cost per graphics setting.
 - `tests/render_knocks.tscn` / `render_clacks.tscn` save sounds as WAVs.
 
+## Ideas
+**IDEAS.md** is Tom's quick-capture inbox. When Tom says "add an idea", append it
+to Inbox. "Sort my ideas" means moving Inbox items into the sections, asking about
+unclear ones. Don't act on ideas unless Tom asks.
+
 ## Parked (do after the playtest unless Tom says otherwise)
 - Playtest build: Windows export (Tom downloads export templates first),
   then 3–5 players.

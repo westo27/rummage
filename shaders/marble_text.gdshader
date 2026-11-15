@@ -21,6 +21,9 @@ uniform float drift = 0.0;
 // A steady drift on top, in radians per second, for headings that always flow.
 // TIME keeps running while the game is paused, so the pause menu flows too.
 uniform float drift_speed = 0.0;
+// 1 shows the swirls. Only titles and headings turn them on; other text is
+// plain glass so it reads easily.
+uniform float swirls = 0.0;
 
 // VERTEX is in the node's own coordinates in vertex(); the fragment step gets
 // it interpolated per pixel through these varyings.
@@ -93,9 +96,9 @@ void fragment() {
 		vec3 col = smoke * mix(1.2, 0.8, g.y);
 
 		// Swirls floating inside, glowing a little where they cross.
-		float s1 = ribbon(g, r, 0.10) * detail;
-		float s2 = ribbon(g, r + 0.37, 0.07) * detail;
-		float s3 = ribbon(g, r + 0.71, 0.04) * detail;
+		float s1 = ribbon(g, r, 0.10) * detail * swirls;
+		float s2 = ribbon(g, r + 0.37, 0.07) * detail * swirls;
+		float s3 = ribbon(g, r + 0.71, 0.04) * detail * swirls;
 		col = mix(col, swirl_color.rgb, s1 * 0.85);
 		col = mix(col, swirl_color_2.rgb, s2 * 0.85);
 		col = mix(col, swirl_color_3.rgb * 1.2, s3 * 0.9);

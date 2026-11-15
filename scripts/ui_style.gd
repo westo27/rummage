@@ -305,10 +305,12 @@ static func marble(item: CanvasItem) -> void:
 const HEADING_DRIFT: float = 0.25
 
 
-## Sets a marble label's swirls drifting slowly and forever.
+## Makes a marble label a title: swirls inside, drifting slowly and forever.
+## Other marble text has no swirls.
 static func set_marble_drift(item: CanvasItem, speed: float = HEADING_DRIFT) -> void:
 	var m := item.material as ShaderMaterial
 	if m != null:
+		m.set_shader_parameter("swirls", 1.0)
 		m.set_shader_parameter("drift_speed", speed)
 
 

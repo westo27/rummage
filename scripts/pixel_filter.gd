@@ -30,7 +30,6 @@ func set_rows(rows: float) -> void:
 	_material.set_shader_parameter("target_rows", rows)
 
 
-## Off draws full colour: no 16-shade limit, no dither.
-func set_colour_limit(on: bool) -> void:
-	_material.set_shader_parameter("levels", 16.0 if on else 256.0)
-	_material.set_shader_parameter("spread", 0.5 if on else 0.0)
+func set_dither(on: bool) -> void:
+	_material.set_shader_parameter("dither", on)
+

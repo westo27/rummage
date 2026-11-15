@@ -4,7 +4,7 @@ extends CanvasLayer
 ## compared. Doesn't save to the settings file; the Graphics menu takes over
 ## again as soon as it's touched. Remove once a look is chosen.
 ##   1 = filter off (smooth, Wii-like)
-##   2 = smooth pixels at 270p (no dither, no texel snap)
+##   2 = smooth pixels at 270p (no texel snap)
 ##   3 = smooth pixels at 360p
 ##   4 = rim light and gloss on/off (on top of any of the above)
 ##   5 = edge rounding filter on/off (edge_round.gd)
@@ -57,7 +57,6 @@ func set_look(title: String, filter: bool, strength: int) -> void:
 	Game.settings.pixel_filter = filter
 	Game.settings.pixel_strength = strength
 	Game.settings.apply_pixel_filter()
-	Game.pixel_filter.set_colour_limit(false)
 	# No texel snapping on surfaces (apply_pixel_filter just turned it on).
 	RenderingServer.global_shader_parameter_set("pixel_texels", 0.0)
 	_show(title)

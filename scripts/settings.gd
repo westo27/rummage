@@ -45,9 +45,12 @@ var invert_look: bool = false
 ## Medium by default, so the game runs well on most machines out of the box.
 var lighting: Lighting = Lighting.MEDIUM
 ## Graphics > Pixel filter: the chunky low-resolution look (see pixel_filter.gd).
-## Off by default (full resolution); strength is how big the pixels are.
-var pixel_filter: bool = false
+## On by default; strength is how big the pixels are.
+var pixel_filter: bool = true
 var pixel_strength: int = 3
+## Graphics > Dither: limits the pixel filter's colours to a few shades with a
+## checkered dither between them. Off by default.
+var pixel_dither: bool = false
 
 var _loaded_from_disk: bool = false
 
@@ -77,6 +80,7 @@ func load_from_disk() -> void:
 	pixel_filter = bool(cfg.get_value("graphics", "pixel_filter", pixel_filter))
 	pixel_strength = clampi(int(cfg.get_value("graphics", "pixel_strength", pixel_strength)),
 		PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
+	pixel_dither = bool(cfg.get_value("graphics", "pixel_dither", pixel_dither))
 	_loaded_from_disk = true
 
 
@@ -88,6 +92,7 @@ func save() -> void:
 	cfg.set_value("graphics", "lighting", lighting)
 	cfg.set_value("graphics", "pixel_filter", pixel_filter)
 	cfg.set_value("graphics", "pixel_strength", pixel_strength)
+	cfg.set_value("graphics", "pixel_dither", pixel_dither)
 	cfg.save(PATH)
 
 
@@ -134,6 +139,7 @@ const PIXEL_TEXELS_PER_METRE: float = 32.0
 func apply_pixel_filter() -> void:
 	Game.pixel_filter.visible = pixel_filter
 	Game.pixel_filter.set_rows(pixel_rows())
+	Game.pixel_filter.set_dither(pixel_dither)
 	RenderingServer.global_shader_parameter_set("pixel_texels",
 		PIXEL_TEXELS_PER_METRE if pixel_filter else 0.0)
 	pixel_filter_changed.emit()

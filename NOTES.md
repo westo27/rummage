@@ -372,10 +372,11 @@ child up past your bedtime". So it's night.
   −100 under the Game autoload; its shader (`shaders/pixel_filter.gdshader`)
   point-samples the screen in whole-pixel blocks, so only the 3D is
   pixelated and the HUD and menus stay crisp. Size n makes the screen
-  1080/(n+1) blocks tall (default 3 = 270). Off by default (full res). It's a look, not
+  1080/(n+1) blocks tall (default 3 = 270). On by default. It's a look, not
   a saving: the 3D still renders at full resolution.
-  It also limits colours to 16 shades per channel with a 4x4 Bayer dither
-  per block (`levels`, `spread` in the shader: lower spread = flatter bands).
+  **Graphics > Dither** (off by default) adds the old colour limit: 16 shades
+  per channel with a 4x4 Bayer dither (`shaders/dither.gdshaderinc`), on the
+  3D and the bag. Off, there's no colour limit.
   While it's on, the wallpaper, floor, rug and pictures snap to a texel grid
   (`Settings.PIXEL_TEXELS_PER_METRE`, 32; the wallpaper uses twice that) via
   the `pixel_texels` shader global (Project Settings > Shader Globals) and
@@ -383,8 +384,8 @@ child up past your bedtime". So it's night.
   The marble bag follows it (`MarbleBag._apply_pixel_style`, on
   `Settings.pixel_filter_changed`): its SubViewport renders at 1/n size
   (`stretch_shrink` plus `size_2d_override`, or only its corner draws) and
-  `shaders/pixel_bag.gdshader` gives the same dither, with dithered on/off
-  alpha. The dither itself is shared in `shaders/dither.gdshaderinc`.
+  `shaders/pixel_bag.gdshader` makes its edges hard (on/off alpha, dithered
+  when Dither is on).
   The bag is shown at half size (`MarbleBag.DISPLAY_SIZE`; drawn and
   simulated in `VIEW_SIZE` coordinates via `size_2d_override`) with no
   shadow under it. The tag's count is drawn crisp on top of the viewport

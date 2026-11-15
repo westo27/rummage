@@ -126,7 +126,8 @@ func _ready() -> void:
 ## Matches the pixel filter: stretch_shrink renders the SubViewport at a
 ## fraction of its size and scales it back up, keeping the drawing and the
 ## physics in the same coordinates. Nearest filtering keeps the texels square;
-## the shader limits and dithers the colours like the 3D.
+## the shader gives its pixels hard edges like the 3D, and the same dither
+## when Graphics > Dither is on.
 func _apply_pixel_style() -> void:
 	var size: int = Game.settings.pixel_ui_size()
 	stretch_shrink = size
@@ -136,6 +137,7 @@ func _apply_pixel_style() -> void:
 			var shader_material := ShaderMaterial.new()
 			shader_material.shader = preload("res://shaders/pixel_bag.gdshader")
 			material = shader_material
+		(material as ShaderMaterial).set_shader_parameter("dither", Game.settings.pixel_dither)
 	else:
 		material = null
 

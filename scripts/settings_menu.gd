@@ -47,6 +47,7 @@ func _ready() -> void:
 	column.add_child(_build_row("lighting", "Lighting"))
 	column.add_child(_build_row("pixel", "Pixel filter"))
 	column.add_child(_build_row("pixel_strength", "Pixel size"))
+	column.add_child(_build_row("dither", "Dither"))
 
 	var spacer2 := Control.new()
 	spacer2.custom_minimum_size = Vector2(0.0, 40.0)
@@ -137,6 +138,9 @@ func _adjust(key: String, by: int) -> void:
 		"pixel_strength":
 			Game.settings.adjust_pixel_strength(by)
 			Game.settings.apply_pixel_filter()
+		"dither":
+			Game.settings.pixel_dither = not Game.settings.pixel_dither
+			Game.settings.apply_pixel_filter()
 	_refresh()
 
 
@@ -147,6 +151,7 @@ func _refresh() -> void:
 	(_value_labels["lighting"] as Label).text = Settings.LIGHTING_NAMES[Game.settings.lighting]
 	(_value_labels["pixel"] as Label).text = "On" if Game.settings.pixel_filter else "Off"
 	(_value_labels["pixel_strength"] as Label).text = str(Game.settings.pixel_strength)
+	(_value_labels["dither"] as Label).text = "On" if Game.settings.pixel_dither else "Off"
 
 
 func _unhandled_input(event: InputEvent) -> void:

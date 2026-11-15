@@ -7,6 +7,8 @@ extends CanvasLayer
 ##   2 = smooth pixels at 270p (no dither, no texel snap)
 ##   3 = smooth pixels at 360p
 ##   4 = rim light and gloss on/off (on top of any of the above)
+## Starts on 3 with 4 on, reapplied each time a scene loads (this overrides
+## the saved Graphics > Pixel filter while the tool exists).
 
 var _label: Label
 var _hide_at: float = 0.0
@@ -24,6 +26,17 @@ func _init() -> void:
 	_label.add_theme_font_size_override("font_size", 36)
 	_label.visible = false
 	add_child(_label)
+
+
+func _ready() -> void:
+	get_tree().scene_changed.connect(_apply_defaults)
+	_apply_defaults()
+
+
+func _apply_defaults() -> void:
+	set_look("", true, 2)
+	set_wii_finish(true)
+	_label.visible = false
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

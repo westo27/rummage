@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+[ext_resource type="Script" path="res://scripts/rounded_box_mesh.gd" id="2_round"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_wood"]
 albedo_color = Color(0.82, 0.58, 0.34, 1)
@@ -11,38 +12,54 @@ albedo_color = Color(0.97, 0.94, 0.86, 1)
 [sub_resource type="StandardMaterial3D" id="Mat_duvet"]
 albedo_color = Color(0.84, 0.24, 0.4, 1)
 
-[sub_resource type="BoxMesh" id="Mesh_leg"]
+[sub_resource type="PrimitiveMesh" id="Mesh_leg"]
+script = ExtResource("2_round")
 size = Vector3(0.08, 0.2, 0.08)
+radius = 0.02
 
 [sub_resource type="BoxShape3D" id="Shape_leg"]
 size = Vector3(0.08, 0.2, 0.08)
 
-[sub_resource type="BoxMesh" id="Mesh_frame"]
+[sub_resource type="PrimitiveMesh" id="Mesh_frame"]
+script = ExtResource("2_round")
 size = Vector3(2.08, 0.12, 0.96)
+radius = 0.035
 
-[sub_resource type="BoxMesh" id="Mesh_mattress"]
+[sub_resource type="PrimitiveMesh" id="Mesh_mattress"]
+script = ExtResource("2_round")
 size = Vector3(1.98, 0.18, 0.9)
+radius = 0.07
 
 [sub_resource type="BoxShape3D" id="Shape_base"]
 size = Vector3(2.08, 0.3, 0.96)
 
-[sub_resource type="BoxMesh" id="Mesh_duvet"]
+[sub_resource type="PrimitiveMesh" id="Mesh_duvet"]
+script = ExtResource("2_round")
 size = Vector3(1.4, 0.07, 0.94)
+radius = 0.03
 
-[sub_resource type="BoxMesh" id="Mesh_drape"]
+[sub_resource type="PrimitiveMesh" id="Mesh_drape"]
+script = ExtResource("2_round")
 size = Vector3(1.4, 0.2, 0.02)
+radius = 0.01
 
-[sub_resource type="BoxMesh" id="Mesh_head"]
+[sub_resource type="PrimitiveMesh" id="Mesh_head"]
+script = ExtResource("2_round")
 size = Vector3(0.06, 0.78, 0.96)
+radius = 0.028
 
 [sub_resource type="BoxShape3D" id="Shape_head"]
 size = Vector3(0.06, 0.78, 0.96)
 
-[sub_resource type="BoxMesh" id="Mesh_head_top"]
+[sub_resource type="PrimitiveMesh" id="Mesh_head_top"]
+script = ExtResource("2_round")
 size = Vector3(0.06, 0.12, 0.6)
+radius = 0.028
 
-[sub_resource type="BoxMesh" id="Mesh_foot"]
+[sub_resource type="PrimitiveMesh" id="Mesh_foot"]
+script = ExtResource("2_round")
 size = Vector3(0.06, 0.5, 0.96)
+radius = 0.028
 
 [sub_resource type="BoxShape3D" id="Shape_foot"]
 size = Vector3(0.06, 0.5, 0.96)

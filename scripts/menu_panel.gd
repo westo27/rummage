@@ -33,6 +33,14 @@ extends BaseButton
 ## Font size of a bare label at rest; it grows by BARE_GROW when pointed at.
 const BARE_FONT_SIZE: int = 112
 const BARE_GROW: float = 0.12
+## How fast a pointed-at bare label's swirls drift, in radians per second.
+## Slow on purpose: a lazy flow rather than a spin.
+const DRIFT_SPEED: float = 0.7
+
+## How far the swirls have drifted. Added up a frame at a time (rather than
+## TIME * speed in the shader) so easing the speed in and out never makes
+## them jump.
+var _drift: float = 0.0
 
 var _lift: float = 0.0
 var _sink: float = 0.0
@@ -91,6 +99,18 @@ func _process(delta: float) -> void:
 	_sink = lerpf(_sink, 1.0 if button_pressed else 0.0, clampf(delta * 22.0, 0.0, 1.0))
 	queue_redraw()
 	_text.queue_redraw()
+	if bare:
+		# Grow by scaling the whole text node, not by changing the font size:
+		# the shader picks each letter's swirls from where the letter sits in
+		# the node's own pixels, and a new font size moves every letter, which
+		# made the swirls jump about. Drawn at the largest size and scaled
+		# down, so it's never blurry.
+		_text.size = size
+		_text.pivot_offset = size * 0.5
+		var grow: float = 1.0 + BARE_GROW * _lift - 0.05 * _sink
+		_text.scale = Vector2.ONE * grow / (1.0 + BARE_GROW)
+		_drift += delta * DRIFT_SPEED * _lift
+		(_text.material as ShaderMaterial).set_shader_parameter("drift", _drift)
 
 
 func _draw() -> void:
@@ -127,8 +147,7 @@ func _draw_text() -> void:
 	var font: Font = UiStyle.font(700)
 
 	if bare:
-		# Pushed in reads as the words shrinking back a touch.
-		var fs: int = roundi(BARE_FONT_SIZE * (1.0 + BARE_GROW * _lift - 0.05 * _sink))
+		var fs: int = roundi(BARE_FONT_SIZE * (1.0 + BARE_GROW))
 		var w: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		var at := Vector2((size.x - w) * 0.5, (size.y + fs * UiStyle.CAP_HEIGHT) * 0.5)
 		UiStyle.set_marble_line(_text, at.y, fs)

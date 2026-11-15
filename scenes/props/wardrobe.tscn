@@ -12,12 +12,6 @@ albedo_color = Color(0.78, 0.53, 0.31, 1)
 [sub_resource type="StandardMaterial3D" id="Mat_inner"]
 albedo_color = Color(0.55, 0.36, 0.2, 1)
 
-[sub_resource type="BoxMesh" id="Mesh_Back"]
-size = Vector3(0.03, 2.1, 1.8)
-
-[sub_resource type="BoxShape3D" id="Shape_Back"]
-size = Vector3(0.03, 2.1, 1.8)
-
 [sub_resource type="BoxMesh" id="Mesh_SideA"]
 size = Vector3(0.6, 2.1, 0.03)
 
@@ -64,17 +58,6 @@ collision_mask = 7
 mass = 80.0
 script = ExtResource("1_wardrobe")
 hold_radius = 1.2
-keep_upright_until_grabbed = true
-frozen_until_grabbed = true
-
-[node name="Back" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.285, 0, 0)
-material_override = SubResource("Mat_wood")
-mesh = SubResource("Mesh_Back")
-
-[node name="BackShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.285, 0, 0)
-shape = SubResource("Shape_Back")
 
 [node name="SideA" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.885)

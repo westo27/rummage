@@ -19,12 +19,23 @@ func _run() -> void:
 	# priority when one flees in front of a target, so take them out.
 	_main.get_node("MainRoomCreatures").free()
 	get_tree().root.add_child(_main)
+	# Light test crates (tests/fixtures): the room's own props are either
+	# fixed furniture or odd shapes, and these checks want a plain box.
+	var cratea_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	cratea_fixture.name = "CrateA"
+	_main.get_node("MainRoomProps").add_child(cratea_fixture)
+	cratea_fixture.global_position = Vector3(2.4, 0.3, 0.5)
+	var crated_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	crated_fixture.name = "CrateD"
+	_main.get_node("MainRoomProps").add_child(crated_fixture)
+	crated_fixture.global_position = Vector3(3.2, 0.3, 0.5)
+	var cratee_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	cratee_fixture.name = "CrateE"
+	_main.get_node("MainRoomProps").add_child(cratee_fixture)
+	cratee_fixture.global_position = Vector3(4.0, 0.3, 0.5)
 	_player = _main.get_node("Player")
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
-	# These checks grab 7 kg crates, heavier than the 4 kg start.
 	_beam.lift_limit = 10.0
-	# These hold crates in the air, so let the beam lift furniture (see check_drag).
-	Game.tune.max_lift_mass = 1000.0
 	var props: Node = _main.get_node("MainRoomProps")
 
 	# --- Everything settles where it was placed (no exploding stacks) ---
@@ -148,42 +159,45 @@ func _run() -> void:
 		"%.2f m/s, at most %.2f" % [book.linear_velocity.length(), most])
 	await _wait(1.0)
 
-	# --- Too heavy: the bed (60 kg) against a 10 kg limit ---
-	var bed: Prop = props.get_node("Bed")
-	var bed_start: Vector3 = bed.global_position
-	_player.global_position = Vector3(2.55, 0.05, 0.6)
-	_aim_at(bed.global_position)
+	# --- Too heavy: a crate against a lowered limit ---
+	# Nothing in the rooms is too heavy for the starting lift, so lower it.
+	_beam.lift_limit = 1.0
+	var heavy: Prop = props.get_node("CrateD")
+	await _place(heavy, Vector3(2.55, 0.3, -0.6))
+	var heavy_start: Vector3 = heavy.global_position
+	_player.global_position = Vector3(2.55, 0.05, 1.2)
+	_aim_at(heavy.global_position)
 	await _wait(0.1)
-	_check("aiming at bed shows TOO_HEAVY", _beam._state == Beam.AimState.TOO_HEAVY, "detail='%s'" % _beam._detail)
+	_check("aiming at it shows TOO_HEAVY", _beam._state == Beam.AimState.TOO_HEAVY, "detail='%s'" % _beam._detail)
 	_press("grab")
 	await _wait(0.05)
-	_check("bed is not grabbed", _beam.held == null, "held=%s" % _beam.held)
-	_check("bed shudders", bed._shudder_left > 0.0, "")
+	_check("it is not grabbed", _beam.held == null, "held=%s" % _beam.held)
+	_check("it shudders", heavy._shudder_left > 0.0, "")
 	_check("red reject beam is shown", _beam._beam_mesh.visible, "")
 	await _wait(0.8)
-	_check("red beam stays latched while button held", _beam._beam_mesh.visible and _beam._rejected == bed, "")
-	_check("bed keeps shuddering while button held", bed._shudder_left > 0.0, "")
-	# Look away to a crate while still holding: must stay latched, not grab the crate.
-	_aim_at(props.get_node("CrateD").global_position)
+	_check("red beam stays latched while button held", _beam._beam_mesh.visible and _beam._rejected == heavy, "")
+	_check("it keeps shuddering while button held", heavy._shudder_left > 0.0, "")
+	# Look away to another crate while still holding: must stay latched, not grab it.
+	_aim_at(props.get_node("CrateA").global_position)
 	await _wait(0.2)
-	_check("looking away keeps the latch (no sweep-grab)", _beam.held == null and _beam._rejected == bed,
+	_check("looking away keeps the latch (no sweep-grab)", _beam.held == null and _beam._rejected == heavy,
 		"held=%s" % _beam.held)
 	_check("crosshair stays TOO_HEAVY while latched", _beam._state == Beam.AimState.TOO_HEAVY, "state=%s" % _beam._state)
 	_release("grab")
 	await _wait(0.05)
 	await get_tree().process_frame
 	_check("releasing the button drops the red beam", not _beam._beam_mesh.visible and _beam._rejected == null, "")
-	_aim_at(bed.global_position)
+	_aim_at(heavy.global_position)
 	await _wait(0.05)
-	_check("shudder does not move the bed body", bed.global_position.distance_to(bed_start) < 0.01,
-		"moved %.3f" % bed.global_position.distance_to(bed_start))
+	_check("shudder does not move the body", heavy.global_position.distance_to(heavy_start) < 0.01,
+		"moved %.3f" % heavy.global_position.distance_to(heavy_start))
 
-	# --- Raising the lift limit lets the bed be grabbed ---
-	_beam.add_lift(55.0)
+	# --- Raising the lift limit lets it be grabbed ---
+	_beam.add_lift(5.0)
 	await _wait(0.05)
 	_press("grab")
 	await _wait(0.1)
-	_check("with 65 kg lift the bed can be grabbed", _beam.held == bed, "held=%s" % _beam.held)
+	_check("with more lift it can be grabbed", _beam.held == heavy, "held=%s" % _beam.held)
 	_release("grab")
 	await _wait(0.5)
 

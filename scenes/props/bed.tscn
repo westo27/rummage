@@ -54,7 +54,6 @@ mass = 60.0
 script = ExtResource("1_prop")
 hold_radius = 1.2
 impact_material = 2
-keep_upright_until_grabbed = true
 
 [node name="Frame" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0)

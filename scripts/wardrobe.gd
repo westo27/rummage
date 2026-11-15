@@ -7,8 +7,8 @@ extends Prop
 ## than flapping. (A hinge motor, as the drawer uses for friction, locks a
 ## Jolt hinge solid, so it isn't used here.)
 ##
-## It's frozen in place until the beam first lifts it (frozen_until_grabbed,
-## set in the scene), so yanking a door can't drag it off the doorway early.
+## It has no back: it stands in front of the box-room doorway, so opening the
+## doors and walking in takes you through to the box room.
 
 ## How far each door can swing open.
 const DOOR_SWING: float = deg_to_rad(110.0)

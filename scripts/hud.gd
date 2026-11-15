@@ -57,6 +57,9 @@ func _ready() -> void:
 		label.add_theme_color_override("font_color", UiStyle.CREAM)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		UiStyle.marble_label(label)
+	# Furniture is fixed and everything else is light, so there's no lift
+	# limit worth showing.
+	_lift_label.visible = false
 	_build_bag()
 	_build_hint()
 	# Built after the bag, so the win screen's dimming covers it.

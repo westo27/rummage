@@ -32,7 +32,7 @@ func _run() -> void:
 		["pillow", load("res://scenes/props/pillow.tscn"), Basis.IDENTITY, true],
 		["bin on its side", load("res://scenes/props/bin.tscn"), Basis(Vector3.FORWARD, PI / 2.0), true],
 		["pile of 5 books", null, flat, true],
-		["crate", load("res://scenes/props/crate.tscn"), Basis.IDENTITY, false],
+		["bedside table", load("res://scenes/props/bedside_table.tscn"), Basis.IDENTITY, false],
 	]
 	for c: Array in cases:
 		await _try_case(c[0], c[1], c[2], c[3])

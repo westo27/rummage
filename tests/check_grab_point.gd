@@ -50,31 +50,10 @@ func _run() -> void:
 	await _wait(2.5)
 	_check("lifted by a corner, it hangs tilted", crate.global_basis.y.dot(Vector3.UP) < 0.8,
 		"up·Y %.2f" % crate.global_basis.y.dot(Vector3.UP))
-	_release("grab")
-
-	# --- Grab the bookcase near its top and pull down: it topples ---
-	await _load()
-	var bookcase: Prop = _main.get_node("MainRoomProps/Bookcase")  # against the west wall
-	_player.global_position = Vector3(-3.5, 0.05, 0.15)
-	_aim_at(Vector3(-4.7, 1.78, 0.15))
-	await _wait(0.1)
-	_press("grab")
-	await _wait(0.1)
-	_check("grabbed the bookcase near its top", _beam.held == bookcase and _beam._grab_local.y > 0.6,
-		"held=%s local=%s" % [_beam.held, _beam._grab_local])
 	_check("the beam ends at the grab point, not the middle",
 		_beam_end().distance_to(_beam.grab_point()) < 0.05,
 		"%.3f m away" % _beam_end().distance_to(_beam.grab_point()))
-	# The top is above a child's eyes, so aiming down alone mostly pushes it
-	# into the floor: reel the beam in as well, drawing the top towards you.
-	_aim_at(Vector3(-4.1, 0.0, 0.15))
-	_beam._hold_distance = 0.8
-	await _wait(2.5)
 	_release("grab")
-	await _wait(1.0)
-	_check("pulled down by its top, the bookcase falls over",
-		bookcase.global_basis.y.dot(Vector3.UP) < 0.5,
-		"up·Y %.2f" % bookcase.global_basis.y.dot(Vector3.UP))
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
@@ -95,12 +74,16 @@ func _load() -> void:
 		await get_tree().process_frame
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(_main)
+	# Light test crates (tests/fixtures): the room's own props are either
+	# fixed furniture or odd shapes, and these checks want a plain box.
+	var cratea_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	cratea_fixture.name = "CrateA"
+	_main.get_node("MainRoomProps").add_child(cratea_fixture)
+	cratea_fixture.global_position = Vector3(2.4, 0.3, 0.5)
 	_player = _main.get_node("Player")
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
 	# Every prop liftable, so this test doesn't depend on the gate sums.
 	_beam.lift_limit = 1000.0
-	# Lifts a crate in the air, so let the beam lift furniture (see check_drag).
-	Game.tune.max_lift_mass = 1000.0
 	await _wait(1.0)
 
 

@@ -1,8 +1,6 @@
 [gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/props/book.tscn" id="book"]
-[ext_resource type="PackedScene" path="res://scenes/props/crate.tscn" id="crate"]
-[ext_resource type="PackedScene" path="res://scenes/props/small_box.tscn" id="small_box"]
 [ext_resource type="PackedScene" path="res://scenes/props/pillow.tscn" id="pillow"]
 [ext_resource type="PackedScene" path="res://scenes/props/ball.tscn" id="ball"]
 [ext_resource type="PackedScene" path="res://scenes/props/bookcase.tscn" id="bookcase"]
@@ -244,23 +242,14 @@ mass = 0.79
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -2.6925, 0.879, -0.0537)
 mass = 0.85
 
-[node name="CrateA" parent="." instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 0.3, -1.8)
+[node name="ToyBinA" parent="." instance=ExtResource("bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 0.18, -1.8)
 
-[node name="CrateD" parent="." instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 0.302, -1.75)
+[node name="BeanbagCorner" parent="." instance=ExtResource("beanbag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.25, -1.55)
 
-[node name="CrateE" parent="." instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 0.904, -1.75)
-
-[node name="BoxStack_Low1" parent="." instance=ExtResource("small_box")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.55, 0.2, -1.85)
-
-[node name="BoxStack_Low2" parent="." instance=ExtResource("small_box")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1, 0.2, -1.85)
-
-[node name="BoxStack_Mid1" parent="." instance=ExtResource("small_box")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.32, 0.6, -1.85)
+[node name="PlayroomBag" parent="." instance=ExtResource("school_bag")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 0.192, -1.95)
 
 [node name="PillowL" parent="." instance=ExtResource("pillow")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.79, 0.565, -1.98)

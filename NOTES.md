@@ -39,7 +39,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 └─ Tutorial             scripts/tutorial.gd: the landing lesson
 ```
 
-- Each prop type is its own scene in `scenes/props/` (book, crate, bin, small_box,
+- Each prop type is its own scene in `scenes/props/` (book, bin,
   pillow, ball, bookcase, table, bed, bedside_table, bedside_lamp, toy_block, wardrobe,
   and the small household things listed under "The house"): a `RigidBody3D` with
   `scripts/prop.gd` and box/sphere meshes plus matching collision shapes.
@@ -162,7 +162,7 @@ Your choices: real knocks, a sound per material, placed in 3D, and quieter
 than the creature squeaks.
 
 - **Materials.** Each prop scene sets `impact_material` (Prop's export):
-  paper (books, small boxes), wood (crates, bookcase, table, wardrobe; the
+  paper (books, shoe boxes), wood (bookcase, table, wardrobe; the
   default), soft (pillows, bed), rubber (balls), plastic (bins).
 - **The sounds** are recipes in `Tones.KNOCK_RECIPES`, with no steady
   musical tones (an earlier version had them, and a pile of things falling
@@ -280,13 +280,13 @@ its light onto the room, and a cosy bloom over everything.
 Three real-size rooms (the old 12 × 10 m room didn't read
 as a real room). Ceilings stay 3 m. Plan: `tests/shoot_rooms.tscn` renders
 each room (needs a window).
-- **Playroom** (x -5.1..-0.1, 5 × 4.5 m), through the landing door: toy-box crates (a stacked pair in the north-west
-  corner), the bookcase on the west wall, a beanbag, the play table on the
-  rug over the trapdoor, a small box stack, two bins. Planks.
+- **Playroom** (x -5.1..-0.1, 5 × 4.5 m), through the landing door: a beanbag in the north-west
+  corner, a toy bin, a school bag by the north wall, the bookcase on the west
+  wall, a beanbag, the play table on the rug over the trapdoor, two bins. Planks.
 - **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a doorway at z=0: the bed
   under the window, bedside table, chest of drawers, the wardrobe in front
   of the box-room door, a desk and chair, a laundry bin. Teal carpet.
-- **Box room** (x 5.3..8.3, 3 × 2.8 m) behind the wardrobe.
+- **Box room** (x 5.3..8.3, 3 × 2.8 m), reached through the wardrobe.
 - The "main room" layout files hold the playroom and bedroom together; the
   "side room" ones are the box room.
 - New props: `desk.tscn` (10 kg), `chair.tscn` (3 kg), `chest_of_drawers.tscn`
@@ -307,7 +307,7 @@ warm cream and citrus, lamp light, and above all cosy, "as if you're a
 child up past your bedtime". So it's night.
 
 - **The bedroom.** The bed under the window took the
-  sofa's place and its job (60 kg gate, four creatures underneath), with
+  sofa's place (four creatures underneath, found by crouching and looking), with
   two pillows and a bedside table. The table's lamp is its own 1.2 kg
   prop (`bedside_lamp.tscn`, a shadowless glow). The table's drawer is a
   1 kg prop of its own on a `Generic6DOFJoint3D` (DrawerRunner) that only
@@ -352,7 +352,7 @@ child up past your bedtime". So it's night.
   twinkle, a moon, clouds drifting past lit silver near the moon). The side
   room has a teal carpet.
 - **Props** are warm cream and citrus: a honey-wood bed with a raspberry duvet, raspberry books, lime
-  bins, toy-box crates in mixed colours, orange boxes and balls, honey-wood
+  bins, orange balls, honey-wood
   furniture. Each is one `albedo_color` line in its scene.
 - **Finish** (`Main._apply_prop_finish`) follows each prop's impact
   material: matte wood (roughness 0.72), flat fabric and paper, soft satin
@@ -432,25 +432,20 @@ they're look rather than feel: the shudder amount (prop.gd), the beam ribbon
 width (beam.gd), the catch lock-on (`CATCH_ASSIST_DEGREES` 10°, or within
 `CATCH_ASSIST_RADIUS` 0.3 m of the aim line, in beam.gd: nearest the crosshair wins).
 
-**You start weak: 4 kg, plus 4 kg per catch** (Grace's playtest: work up to
-it). At first only books, balls, bins, pillows and small boxes lift. 15
-creatures are catchable before the bed, 19 before the wardrobe:
-- crates, the table and the bedside table unlock at **1** catch (8 kg), the
-  bookcase at **2** (12 kg)
-- the 60 kg **bed** unlocks at **14** catches (exactly 60 kg)
-- the 80 kg **wardrobe** (was 115) unlocks at **19** catches (exactly 80 kg)
+**Furniture is fixed** (`Prop.is_furniture`): anything over
+`player_push_max_mass` (3 kg) that isn't a jointed part is a frozen static
+body, and the beam ignores it like a wall. You search in and under
+furniture: drawers and wardrobe doors still open, and the creatures under the
+bed are found by crouching and looking (`Creature.reveal_when_spotted`: in
+clear view, crouched, within 2.5 m and 30° of the middle of the view; the
+bed itself doesn't block the look). Everything else
+weighs under the 4 kg starting lift, so the lift no longer grows
+(`lift_per_capture` 0) and the HUD doesn't show it. The toy-box crates and
+small boxes are gone (a light crate lives on in `tests/fixtures/` for beam
+tests).
 
-**Furniture is drag and tip only** (over `max_lift_mass`, 3 kg), so throwing
-it about can't heap up the room. The beam's upward pull on it is capped at
-`drag_lift_share` (0.7) of its weight: pulled by an edge it tips on the far
-edge, but it never leaves the floor, and Throw just lets go. The lift limit
-above still decides which furniture you can grab at all.
-
-**Restrained, like Elebits.** Furniture shuffles at `drag_speed` (0.9 m/s),
-tips at most `max_tip_degrees` (12°), stops dead when let go, and can't go
-more than `drag_range` (1.5 m) from where it stood when first grabbed
-(`Prop.home`). Light things: hold speed 9 (was 14), throw 10 (was 16), and
-letting go keeps `release_speed_keep` (half) of their speed.
+**Restrained, like Elebits.** Light things: hold speed 9 (was 14), throw 10
+(was 16), and letting go keeps `release_speed_keep` (half) of their speed.
 
 The beam reaches **4 m** (was 7), for grabbing and catching, so you have to
 walk up to things.
@@ -467,7 +462,7 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 |---|---|---|---|
 | 1 world | 1 | walls, floors (CSG) | |
 | 2 player | 2 | the player capsule | |
-| 3 props | 4 | props over 3 kg: crates, table, bedside table, bookcase, bed, wardrobe | block the player |
+| 3 props | 4 | furniture (over 3 kg, fixed) and the wardrobe doors | block the player |
 | 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | marks it catchable (the beam aims with a lock-on cone) |
 | 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and kicks them |
 | 6 rug | 32 | the rug | meets only the floor; the beam can aim at it |
@@ -509,22 +504,22 @@ The headless checks live in `tests/`, one scene each. Run one with:
 |---|---|
 | check_stage1 | movement speeds, walls, doorway, gravity 14, fall reset |
 | check_stage2 | settling, grab, hold, throw speeds, walls stop held objects, swing-fling, beam arc, too-heavy latch |
-| check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority, gate sums |
-| check_stage4 | ping range and cooldown, both gates, wardrobe off the doorway, side room, win, timer, marble bag (one ball per catch, none escape), restart |
-| check_drag | furniture rocks (within the tip limit) and drags slowly on a short tether, never leaves the floor or gets thrown; books still lift; the bed tips up |
-| check_floor_clutter | the player wades through clutter and is blocked by crates |
+| check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority |
+| check_stage4 | ping range and cooldown, spotting the bed creatures, side room, win, timer, marble bag (one ball per catch, none escape), restart |
+| check_furniture | furniture is fixed and the beam ignores it; drawers, doors, bins and the chair still grab; crouching and looking finds the bed creatures; you walk through the wardrobe into the box room |
+| check_floor_clutter | the player wades through clutter and is blocked by furniture |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
-| check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the bookcase pulled down by its top falls over; the beam ends at the grab point |
+| check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the beam ends at the grab point |
 | check_tutorial | you start on the landing behind a door that holds you in; hints follow grab, throw, ping, find, catch; the catch opens the door and you can walk through |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles and slurp; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
-| check_room | a ball thrown hard at the window stays in the room; wooden props are matte; the bedside lamp stands on its table; the drawer rests shut, slides out when the table stops suddenly and home when shoved back, and can be grabbed |
+| check_room | a ball thrown hard at the window stays in the room; wooden props are matte; the bedside lamp stands on its table; the drawer rests shut and can be grabbed, and yanking it leaves the fixed table put |
 | check_lamp | the lamp hangs still; a thrown book swings it and its light; it stays on its cord; it settles; the beam can't grab it |
 | check_beam_sound | silent when idle; the whirr fades in on grabbing, rises and swells when swung, settles, fades out on letting go; crackle only while straining; both loop; quieter than squeaks |
-| check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the bed and balls get their materials; the bed thuds lower than a pillow; knocks stay below squeak volume |
+| check_impacts | the room settles silently; a dropped crate knocks as wood from where it landed; gentle set-downs and resting are silent; books, the beanbag and balls get their materials; the beanbag thuds lower than a pillow; knocks stay below squeak volume |
 
 They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 
@@ -562,9 +557,8 @@ A hollow cupboard (`scripts/wardrobe.gd`) with two 3.5 kg doors, each a
 Prop on a `HingeJoint3D` that swings outward up to 110°. Grab a door and
 pull. Two creatures (InWardrobe1/2) hide inside; opening a door reveals
 them. Door damping (`HINGE_DAMP`) stands in for stiff hinges, because a
-hinge motor locks a Jolt hinge solid. The wardrobe is frozen (static) until
-the beam first lifts it (`Prop.frozen_until_grabbed`), so pulling a door
-can't drag it off the doorway before its gate.
+hinge motor locks a Jolt hinge solid. It has no back and stands in front of
+the box-room doorway: open both doors and walk through.
 
 ## Pictures
 
@@ -646,7 +640,7 @@ picks the nearest spot on the far side of one, as seen from the player's head.
 Spots the player can see, spots against a wall, and spots within startle range
 of the player all lose. "Can see" means a ray from the head to the creature's
 middle and top is blocked by a wall, prop or clutter, so a flat book doesn't
-count as cover but a bin or crate does. The spot is re-aimed every tick while
+count as cover but a bin or bag does. The spot is re-aimed every tick while
 it runs, so if you move, it heads for the new far side. The constants are at
 the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
 
@@ -660,12 +654,10 @@ the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
   way it can end up in plain view.
 
 - You can only catch a creature you can see: its middle or its top must be
-  in clear view past walls and furniture. One cowering behind a box or a
-  wardrobe door can't be caught through it, and the click grabs the box.
+  in clear view past walls and furniture. One cowering behind a bin or a
+  wardrobe door can't be caught through it, and the click grabs the bin.
 - The player pushes clutter like a snowplough: anything dead ahead gets shoved
   until it reaches a wall.
-- Creatures under the bed ignore jolts and things flying past (so the gate
-  can't be skipped by pelting the bed), but a book slid *under* the bed can
-  still startle them.
-- The bed and wardrobe can't tip over until they've been lifted once.
+- Creatures under the bed ignore jolts and things flying past (you find them
+  by looking), but a book slid *under* the bed can still startle them.
 - If a creature falls out of the world it reappears in the playroom–bedroom doorway.

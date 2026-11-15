@@ -32,10 +32,10 @@ func _run() -> void:
 	await _frames(30)
 	for view: Array in VIEWS:
 		if view[0] == "room_box":
-			# Slide the wardrobe aside so the box room shows through its door.
-			var wardrobe := main.get_node("MainRoomProps/Wardrobe") as RigidBody3D
-			wardrobe.freeze = true
-			wardrobe.global_position += Vector3(0, 0, 1.2)
+			# Hide the wardrobe doors, as if flung open, so the box room shows
+			# through the wardrobe.
+			for door_name in ["DoorA", "DoorB"]:
+				(main.get_node("MainRoomProps/Wardrobe/" + door_name) as Node3D).visible = false
 		player.global_position = view[1]
 		player.reset_physics_interpolation()
 		_look(player, head, view[2])

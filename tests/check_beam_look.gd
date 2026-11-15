@@ -18,9 +18,14 @@ func _ready() -> void:
 func _run() -> void:
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(_main)
+	# Light test crates (tests/fixtures): the room's own props are either
+	# fixed furniture or odd shapes, and these checks want a plain box.
+	var cratea_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	cratea_fixture.name = "CrateA"
+	_main.get_node("MainRoomProps").add_child(cratea_fixture)
+	cratea_fixture.global_position = Vector3(2.4, 0.3, 0.5)
 	_player = _main.get_node("Player")
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
-	# These checks grab 7 kg crates, heavier than the 4 kg start.
 	_beam.lift_limit = 10.0
 	await _wait(1.0)
 
@@ -68,10 +73,15 @@ func _run() -> void:
 		"%s held=%s rejected=%s catching=%s" % [_visibility(), _beam.held, _beam._rejected, _beam._catching])
 	_check("letting go: the aura goes", crate._aura != null and not crate._aura.visible, "")
 
-	# --- Straining against the bed ---
-	var bed: Prop = _main.get_node("MainRoomProps/Bed")
-	_player.global_position = Vector3(2.85, 0.05, 0.55)
-	_aim_at(bed.global_position + Vector3(0.0, 0.35, 0.3))
+	# --- Straining against something too heavy ---
+	# Nothing in the rooms is too heavy for the starting lift, so lower it.
+	_beam.lift_limit = 1.0
+	var heavy: Prop = crate
+	crate.global_position = Vector3(3.0, 0.3, -0.6)
+	crate.sleeping = false
+	_player.global_position = Vector3(3.0, 0.05, 1.5)
+	await _wait(0.5)
+	_aim_at(crate.global_position)
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.3)
@@ -79,10 +89,10 @@ func _run() -> void:
 	# would read the beam before it has redrawn.
 	await get_tree().process_frame
 	await get_tree().process_frame
-	_check("straining: latched onto the bed", _beam._rejected == bed, "%s" % _beam._rejected)
+	_check("straining: latched on", _beam._rejected == heavy, "%s" % _beam._rejected)
 	_check("straining: everything shows", _all_parts_visible(), _visibility())
 	_check("straining: it's red", _beam.beam_color().is_equal_approx(Beam.STRAIN_COLOR), "")
-	_check("straining: the bed wears a red aura", _aura_on(bed, Beam.STRAIN_COLOR), "")
+	_check("straining: it wears a red aura", _aura_on(heavy, Beam.STRAIN_COLOR), "")
 	_check("straining: agitated",
 		is_equal_approx(_beam._beam_material.get_shader_parameter("agitation"), 1.0), "")
 	_release("grab")
@@ -92,7 +102,7 @@ func _run() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check("letting go of the strain: everything goes", not _any_part_visible(), _visibility())
-	_check("letting go of the strain: the aura goes", not bed._aura.visible, "")
+	_check("letting go of the strain: the aura goes", not heavy._aura.visible, "")
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

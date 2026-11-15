@@ -34,13 +34,12 @@ func _run() -> void:
 	_main.get_node("MainRoomCreatures").free()
 	_main.get_node("MainRoomProps").free()
 	get_tree().root.add_child(_main)
-	var crate := (load("res://scenes/props/crate.tscn") as PackedScene).instantiate() as Prop
+	var crate := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
 	_main.add_child(crate)
 	crate.global_position = Vector3(4.6, 0.3, -0.9)
 	_player = _main.get_node("Player")
 	_camera = _main.get_node("Player/Head/Camera3D")
 	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
-	beam.lift_limit = 10.0  # the crate is heavier than the 4 kg start
 	await _wait_physics(0.5)
 
 	# Grab a crate so we can watch a held object too.

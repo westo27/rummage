@@ -19,12 +19,15 @@ func _ready() -> void:
 func _run() -> void:
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(_main)
+	# Light test crates (tests/fixtures): the room's own props are either
+	# fixed furniture or odd shapes, and these checks want a plain box.
+	var cratea_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	cratea_fixture.name = "CrateA"
+	_main.get_node("MainRoomProps").add_child(cratea_fixture)
+	cratea_fixture.global_position = Vector3(2.4, 0.3, 0.5)
 	_player = _main.get_node("Player")
 	_beam = _main.get_node("Player/Head/Camera3D/Beam")
-	# These checks grab 7 kg crates, heavier than the 4 kg start.
 	_beam.lift_limit = 10.0
-	# These hold crates in the air, so let the beam lift furniture (see check_drag).
-	Game.tune.max_lift_mass = 1000.0
 	await _wait(1.0)
 	_check("silent when the beam isn't holding anything",
 		not _beam._hum.playing and not _beam._strain.playing, "")
@@ -78,14 +81,18 @@ func _run() -> void:
 	await _wait(1.0)
 	_check("letting go fades the whirr away", not _beam._hum.playing, "gain %.4f" % _beam._hum_gain)
 
-	# --- Strain against the bed: crackle, and only then ---
-	var bed: Prop = _main.get_node("MainRoomProps/Bed")
-	_player.global_position = Vector3(2.85, 0.05, 0.55)
-	_aim_at(bed.global_position + Vector3(0.0, 0.35, 0.3))
+	# --- Strain against something too heavy: crackle, and only then ---
+	# Nothing in the rooms is too heavy for the starting lift, so lower it.
+	_beam.lift_limit = 1.0
+	crate.global_position = Vector3(3.0, 0.3, -0.6)
+	crate.sleeping = false
+	_player.global_position = Vector3(3.0, 0.05, 1.5)
+	await _wait(0.5)
+	_aim_at(crate.global_position)
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.5)
-	_check("straining against the bed crackles", _beam._rejected == bed and _beam._strain.playing, "")
+	_check("straining against something too heavy crackles", _beam._rejected == crate and _beam._strain.playing, "")
 	_check("no whirr while straining", not _beam._hum.playing, "")
 	_release("grab")
 	await _wait(1.0)

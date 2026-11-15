@@ -25,9 +25,11 @@ enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 @export var drawer_index: int = 0
 
 ## When false, only moving the covering object reveals this creature; flying
-## objects bouncing nearby don't. Used under the bed so its gate can't be
-## skipped by throwing things at it.
+## objects bouncing nearby don't.
 @export var reveal_on_knock: bool = true
+## Found by being seen: for hiding places nothing can be lifted off, like under
+## the bed. Crouch down nearby and look at it, and it's found.
+@export var reveal_when_spotted: bool = false
 
 const LAYER_CREATURES: int = 8
 const LAYER_CLUTTER: int = 16
@@ -86,6 +88,10 @@ const ESCAPE_SECONDS: float = 1.0
 ## When found: eyes wide with surprise, then a cheeky squint as it bolts.
 const STARTLED_SECONDS: float = 0.35
 const CHEEKY_SECONDS: float = 0.6
+## Spotting (reveal_when_spotted): within this distance of the player's eye
+## (m), and this close to the middle of the view (degrees).
+const SPOT_DISTANCE: float = 2.5
+const SPOT_DEGREES: float = 30.0
 ## How far a drawer must be pulled out (m) before a creature in it pops out:
 ## far enough that it's clear of the furniture above.
 const DRAWER_REVEAL_OUT: float = 0.2
@@ -231,7 +237,7 @@ func _update_hidden(delta: float) -> void:
 		if not _covers_recorded:
 			_record_covers(COVER_RADIUS_HIDDEN)
 			_covers_recorded = true
-		elif _is_disturbed():
+		elif _is_disturbed() or (reveal_when_spotted and _is_spotted()):
 			_reveal()
 			return
 
@@ -689,6 +695,32 @@ func _stands_on_floor(prop: Prop) -> bool:
 		1 | MASK_PROPS, [prop.get_rid()])
 	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
 	return not hit.is_empty() and not (hit.collider is Prop)
+
+
+## True when the player is crouched, close by and looking right at this
+## creature, with nothing in the way but what it's hiding under (the bed's
+## frame would otherwise block the low view under it).
+func _is_spotted() -> bool:
+	var camera: Camera3D = get_viewport().get_camera_3d()
+	var player := _player() as CollisionObject3D
+	if camera == null or player == null or player.get("crouch") == null or player.get("crouch") < 0.5:
+		return false
+	var eye: Vector3 = camera.global_position
+	var to_me: Vector3 = global_position - eye
+	if to_me.length() > SPOT_DISTANCE:
+		return false
+	if (-camera.global_basis.z).angle_to(to_me) > deg_to_rad(SPOT_DEGREES):
+		return false
+	var ignore: Array[RID] = [player.get_rid()]
+	for prop: Prop in _covers:
+		if is_instance_valid(prop):
+			ignore.append(prop.get_rid())
+	var space := get_world_3d().direct_space_state
+	for spot: Vector3 in [global_position, global_position + Vector3.UP * TOP_OFFSET]:
+		var query := PhysicsRayQueryParameters3D.create(eye, spot, MASK_SIGHT, ignore)
+		if space.intersect_ray(query).is_empty():
+			return true
+	return false
 
 
 ## Where the player sees from (their head), or a point high in the room.

@@ -68,16 +68,16 @@ func _run() -> void:
 	_check("the marble lands back where it was", absf(bumper._visual.position.y) < 0.002, "y %.3f" % bumper._visual.position.y)
 	_check("bumping the bed doesn't reveal it", bumper.state == Creature.State.HIDDEN, "")
 
-	# --- Lifting a crate reveals what's under it; it flees away from the player ---
+	# --- Lifting a bin reveals what's in it; it flees away from the player ---
 	# The creature will run west into the playroom; park the play table in the
 	# box room so it doesn't run under it and out of sight.
 	var table := _props.get_node("Table") as RigidBody3D
 	table.global_position = Vector3(6.8, 0.39, 0.0)
-	# Crate and creature move together to the bedroom floor, lined up with the
+	# Bin and creature move together to the bedroom floor, lined up with the
 	# doorway so the creature has a long run west into the playroom.
-	var crate: Prop = _props.get_node("CrateA")
-	var under: Creature = _creatures.get_node("UnderCrateA")
-	crate.global_position = Vector3(2.0, 0.3, -0.3)
+	var crate: Prop = _props.get_node("ToyBinA")
+	var under: Creature = _creatures.get_node("InToyBinA")
+	crate.global_position = Vector3(2.0, 0.18, -0.3)
 	under.global_position = Vector3(2.0, 0.09, -0.3)
 	under._covers = {crate: crate.global_transform}
 	_player.global_position = Vector3(3.9, 0.05, -0.3)
@@ -86,11 +86,11 @@ func _run() -> void:
 	var start_gap: float = _flat_distance(under.global_position, _player.global_position)
 	_press("grab")
 	await _wait(0.3)
-	_check("grabbing the crate reveals the creature", under.state == Creature.State.FLEEING, "state=%s" % under.state)
+	_check("grabbing the bin reveals the creature", under.state == Creature.State.FLEEING, "state=%s" % under.state)
 	_check("found, its eyes go wide (or already squint cheekily)",
 		under._eyes.mood in [CreatureEyes.Mood.WIDE, CreatureEyes.Mood.SQUINT], "mood=%s" % under._eyes.mood)
 	_check("revealed creature can be aimed at", under._pick_zone.collision_layer == 8, "")
-	_aim_at(Vector3(2.0, 2.0, -0.3))  # lift the crate up out of the way
+	_aim_at(Vector3(2.0, 2.0, -0.3))  # lift the bin up out of the way
 	# Watch its "up" while it runs: rolling like a marble tips it right over.
 	var most_tipped: float = 0.0
 	var most_glanced: float = 0.0
@@ -109,7 +109,6 @@ func _run() -> void:
 	await _wait(0.5)
 
 	# --- Capture: track the creature with the crosshair and click ---
-	var lift_before: float = _beam.lift_limit
 	# Walk after it: it has run further than the beam reaches.
 	var toward: Vector3 = (_player.global_position - under.global_position) * Vector3(1, 0, 1)
 	_player.global_position = Vector3(under.global_position.x, 0.05, under.global_position.z) \
@@ -124,28 +123,23 @@ func _run() -> void:
 	await _wait(0.5)
 	_release("grab")
 	_check("clicking catches the creature", not is_instance_valid(under), "")
-	_check("catching raises lift by 4 kg", is_equal_approx(_beam.lift_limit, lift_before + 4.0),
-		"%.1f -> %.1f" % [lift_before, _beam.lift_limit])
 	var hud_text: String = (_main.get_node("HUD") as Hud).caught_text()
 	_check("bag tag shows caught count", hud_text == "1 / 26", "'%s'" % hud_text)
-	_check("capture didn't grab the crate behind it", _beam.held == null, "held=%s" % _beam.held)
+	_check("capture didn't grab the bin behind it", _beam.held == null, "held=%s" % _beam.held)
 
-	# --- Chaos reveals: a thrown book hitting a crate scares out its creature ---
-	var crate_b: Prop = _props.get_node("CrateD")  # bottom of the stack in the playroom's corner
-	var under_b: Creature = _creatures.get_node("UnderCrateD")
+	# --- Chaos reveals: a thrown book hitting a bag scares out the creature behind ---
+	var crate_b: Prop = _props.get_node("PlayroomBag")  # against the playroom's north wall
+	var under_b: Creature = _creatures.get_node("BehindPlayroomBag")
 	var book: Prop = _props.get_node("FloorPileB_4")
-	# Take the top crate off the stack first, so the knock isn't damped by its weight.
-	_props.get_node("CrateE").global_position = Vector3(3.0, 0.3, 0.6)
-	await _wait(0.2)
 	book.global_position = crate_b.global_position + Vector3(0, 0.1, 0.85)
 	book.linear_velocity = Vector3(0, 0, -8.0)
 	await _wait(0.6)
-	_check("thrown book knocking a crate reveals its creature", under_b.state != Creature.State.HIDDEN,
+	_check("thrown book knocking the bag reveals its creature", under_b.state != Creature.State.HIDDEN,
 		"state=%s" % under_b.state)
 	await _wait(1.0)
 	var out_by: float = _flat_distance(under_b.global_position, crate_b.global_position)
-	_check("creature escapes from under the knocked crate", out_by > 0.6,
-		"%.2f m from crate centre (crate half-width 0.3)" % out_by)
+	_check("creature escapes from behind the knocked bag", out_by > 0.6,
+		"%.2f m from the bag" % out_by)
 
 	# --- Revealed creatures end up cowering somewhere, still inside the room ---
 	await _wait(Game.tune.flee_time_max + Game.tune.seek_time + 0.5)
@@ -172,14 +166,14 @@ func _run() -> void:
 	_check("shelf creature drops to the floor", shelf_creature.global_position.y < 0.3,
 		"y=%.2f" % shelf_creature.global_position.y)
 
-	# --- Bed creatures ignore knocks; only moving the bed reveals them ---
+	# --- Bed creatures ignore knocks; only spotting them reveals them ---
 	var bed: Prop = _props.get_node("Bed")
-	var bed_creature: Creature = _creatures.get_node("UnderBed2")
-	var crate_f: Prop = _props.get_node("CrateE")
+	var crate_f: Prop = _props.get_node("Bin02")
 	crate_f.global_position = Vector3(2.32, 0.35, -0.45)
 	crate_f.linear_velocity = Vector3(0, 0, -7.0)
+	_player.global_position = Vector3(-2.6, 0.05, 1.5)  # well away, so nothing is spotted
 	await _wait(0.8)
-	_check("a crate thrown at the bed doesn't reveal bed creatures", _count_under_bed_hidden() == 4,
+	_check("a bin thrown at the bed doesn't reveal bed creatures", _count_under_bed_hidden() == 4,
 		"%d of 4 still hidden; bed moved %.3f m" % [_count_under_bed_hidden(), bed.global_position.distance_to(Vector3(2.55, 0.302, -1.75))])
 
 	# --- Aim priority: creature at the bed's edge, crosshair on the bed ---
@@ -194,14 +188,6 @@ func _run() -> void:
 	await _wait(0.05)
 	_check("creature beside the bed wins the aim over the bed", _beam._state == Beam.AimState.CREATURE,
 		"state=%s" % _beam._state)
-
-	# --- Gate arithmetic from the tunables ---
-	var start: float = Game.tune.start_lift_limit
-	var per: float = Game.tune.lift_per_capture
-	_check("bed (60 kg) needs 14 caught", start + per * 13 < 60.0 and start + per * 14 >= 60.0,
-		"13 -> %.0f kg, 14 -> %.0f kg" % [start + per * 13, start + per * 14])
-	_check("wardrobe (80 kg) needs 19 caught", start + per * 18 < 80.0 and start + per * 19 >= 80.0,
-		"18 -> %.0f kg, 19 -> %.0f kg" % [start + per * 18, start + per * 19])
 
 	# --- Cowering: a happy bounce, not a shiver, and it rolls upright to look at you ---
 	var cower: Creature = _creatures.get_node("UnderBin03")

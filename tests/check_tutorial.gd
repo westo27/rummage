@@ -44,8 +44,8 @@ func _run() -> void:
 	Input.action_release("move_forward")
 	_check("the shut door stops you", _player.global_position.z > 2.25, "z=%.2f" % _player.global_position.z)
 
-	# Grab the box, then throw it.
-	var box: Prop = _main.get_node("Landing/LessonBox")
+	# Grab the teddy, then throw it.
+	var box: Prop = _main.get_node("Landing/LessonTeddy")
 	_player.global_position = Vector3(-2.6, 0.05, 5.2)
 	_player.reset_physics_interpolation()
 	await _wait(0.2)
@@ -53,7 +53,7 @@ func _run() -> void:
 	await _wait(0.1)
 	_press("grab")
 	await _wait(0.3)
-	_check("the box is grabbed", _beam.held == box, "held=%s" % _beam.held)
+	_check("the teddy is grabbed", _beam.held == box, "held=%s" % _beam.held)
 	await _wait(0.6)
 	_check("hint moves on to throwing", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.THROW], "'%s'" % _hud.hint_text())
 	_press("throw")

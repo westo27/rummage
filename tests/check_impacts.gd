@@ -15,6 +15,12 @@ func _ready() -> void:
 func _run() -> void:
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(_main)
+	# Light test crates (tests/fixtures): the room's own props are either
+	# fixed furniture or odd shapes, and these checks want a plain box.
+	var cratea_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	cratea_fixture.name = "CrateA"
+	_main.get_node("MainRoomProps").add_child(cratea_fixture)
+	cratea_fixture.global_position = Vector3(2.4, 0.3, 0.5)
 	await _wait(2.0)
 	_check("the room settles in silence", Game.impacts.log.is_empty(),
 		"%d knocks" % Game.impacts.log.size())
@@ -49,7 +55,7 @@ func _run() -> void:
 	var before: int = Game.impacts.log.size()
 	await _wait(1.5)
 	_check("resting things stay silent", Game.impacts.log.size() == before,
-		"%d new knocks" % (Game.impacts.log.size() - before))
+		"%d new knocks: %s" % [Game.impacts.log.size() - before, Game.impacts.log.slice(before)])
 
 	# --- Materials and pitch ---
 	# Moved to open floor first, so they land on the floor and nothing else.
@@ -58,26 +64,19 @@ func _run() -> void:
 	var book_knock: Dictionary = await _drop(book, 1.5)
 	_check("a book sounds like paper", not book_knock.is_empty()
 		and book_knock.material == Tones.ImpactMaterial.PAPER, "%s" % book_knock)
-	# The pillows stay put when the bed is raised, so clear them away or the
-	# bed lands on them.
-	for i in 2:
-		var pillow_out: Prop = _main.get_node("MainRoomProps/Pillow" + ["L", "R"][i])
-		pillow_out.global_position = Vector3(3.0 + i * 0.6, 0.1, 0.9)
-	await _wait(0.5)
-	var bed_knock: Dictionary = await _drop(_main.get_node("MainRoomProps/Bed"), 0.6)
-	_check("the bed sounds soft", not bed_knock.is_empty()
-		and bed_knock.material == Tones.ImpactMaterial.SOFT, "%s" % bed_knock)
-	_check("the bed lands with a proper thud, not a whisper",
-		not bed_knock.is_empty() and bed_knock.db > Game.tune.impact_max_db - 12.0,
-		"%.1f dB" % bed_knock.get("db", -99.0))
 	# Pitch scales within a material: the same soft thump, lower for the
 	# heavier thing. (Across materials each has its own natural pitch.)
+	var beanbag: Prop = _main.get_node("MainRoomProps/Beanbag")
+	beanbag.global_position = Vector3(3.6, 0.3, 0.9)
+	var beanbag_knock: Dictionary = await _drop(beanbag, 0.8)
 	var pillow: Prop = _main.get_node("MainRoomProps/PillowL")
 	pillow.global_position = Vector3(2.2, 0.1, 0.9)
 	var pillow_knock: Dictionary = await _drop(pillow, 1.5)
-	_check("the bed thuds lower than a pillow", not pillow_knock.is_empty()
-		and not bed_knock.is_empty() and bed_knock.pitch < pillow_knock.pitch * 0.7,
-		"pillow %.2f, bed %.2f" % [pillow_knock.get("pitch", 0.0), bed_knock.get("pitch", 0.0)])
+	_check("a beanbag sounds soft", not beanbag_knock.is_empty()
+		and beanbag_knock.material == Tones.ImpactMaterial.SOFT, "%s" % beanbag_knock)
+	_check("the beanbag thuds lower than a pillow", not pillow_knock.is_empty()
+		and not beanbag_knock.is_empty() and beanbag_knock.pitch < pillow_knock.pitch,
+		"pillow %.2f, beanbag %.2f" % [pillow_knock.get("pitch", 0.0), beanbag_knock.get("pitch", 0.0)])
 	var ball: Prop = _main.get_node("MainRoomProps/BallFloor")
 	ball.global_position = Vector3(2.6, 0.15, 0.0)
 	var ball_knock: Dictionary = await _drop(ball, 1.5)

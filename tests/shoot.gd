@@ -30,6 +30,12 @@ func _run() -> void:
 
 	var main: Node = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(main)
+	# Light test crates (tests/fixtures): the room's own props are either
+	# fixed furniture or odd shapes, and these checks want a plain box.
+	var cratea_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
+	cratea_fixture.name = "CrateA"
+	main.get_node("MainRoomProps").add_child(cratea_fixture)
+	cratea_fixture.global_position = Vector3(2.4, 0.3, 0.5)
 	get_tree().current_scene = main
 	# Ignore the real mouse while rendering, so it can't swing the camera.
 	main.get_node("Player").set_process_unhandled_input(false)

@@ -64,28 +64,9 @@ extends Resource
 @export_group("Lift")
 ## Heaviest mass (kg) the beam can lift at the start.
 @export var start_lift_limit: float = 4.0
-## Added to the lift limit per creature caught. With 21 creatures in the main
-## room and a 4 kg start: crates, tables and the bookcase unlock within two
-## catches, the 60 kg bed at 14 caught (60 kg) and the 80 kg wardrobe at 19
-## (80 kg).
-@export var lift_per_capture: float = 4.0
-## Props heavier than this (kg) are furniture: the beam only drags and tips
-## them. It can't raise one clear of the floor or throw it, so the room
-## doesn't end up in a heap. The lift limit still decides which ones it can
-## grab at all.
-@export var max_lift_mass: float = 3.0
-## The most the beam pulls upward on furniture, as a share of its weight.
-## Tipping something up by one edge takes about half; lifting it clear takes
-## all of it.
-@export_range(0.0, 1.0) var drag_lift_share: float = 0.7
-## Furniture's top speed in the beam (m/s): heavy things shuffle, not whizz.
-@export var drag_speed: float = 0.9
-## How far furniture can be dragged from where it stood when first grabbed (m).
-## Far enough to get the wardrobe off the doorway, not to rearrange the room.
-@export var drag_range: float = 1.5
-## Furniture tips this far (degrees) and no further, so it rocks up on an edge
-## but never falls over.
-@export var max_tip_degrees: float = 12.0
+## Added to the lift limit per creature caught. 0 now that furniture is fixed:
+## everything the beam can grab is under the starting limit.
+@export var lift_per_capture: float = 0.0
 
 @export_group("Creatures")
 ## Running speed while fleeing, m/s.

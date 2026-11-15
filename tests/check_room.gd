@@ -1,6 +1,6 @@
 extends Node
 ## Headless check for the room's new parts: the window holds things in, the
-## props are glossy, the bedside lamp stands on its table, and the table's
+## props are glossy, the bedside lamp stands on its table, the table's
 ## drawer and the chest's drawers slide out and back by physics, the wardrobe doors swing open, and
 ## pictures come off the wall to show what's behind, and the rug drags away
 ## to show a trapdoor. (How the room looks can only be judged in
@@ -52,7 +52,7 @@ func _run() -> void:
 		ball.global_position.z > -2.25, "z = %.2f (wall at -2.25)" % ball.global_position.z)
 
 	# --- Wooden props are matte ---
-	var crate_mesh := _main.get_node("MainRoomProps/CrateA").get_child(0) as MeshInstance3D
+	var crate_mesh := _main.get_node("MainRoomProps/Bookcase").find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
 	var crate_material := crate_mesh.material_override as StandardMaterial3D
 	_check("wooden props have a matte finish",
 		is_equal_approx(crate_material.roughness, 0.72) and not crate_material.clearcoat_enabled,
@@ -74,16 +74,6 @@ func _run() -> void:
 			inside += 1
 	_check("four blocks sit in the shut drawer", inside == 4, "%d inside" % inside)
 	_check("the drawer rests shut", absf(table.drawer_out()) < 0.005, "%.3f m out" % table.drawer_out())
-	# Shove the table forward along the floor: friction stops it, the drawer
-	# carries on and slides out.
-	table.linear_velocity = Vector3(0, 0, 3.0)
-	await _wait(1.0)
-	_check("stopping the table suddenly slides the drawer out", table.drawer_out() > 0.2,
-		"%.3f m out" % table.drawer_out())
-	_check("but no further than its stop", table.drawer_out() < 0.27, "%.3f m out" % table.drawer_out())
-	table.linear_velocity = Vector3(0, 0, -3.0)
-	await _wait(1.0)
-	_check("a shove the other way slides it home", table.drawer_out() < 0.02, "%.3f m out" % table.drawer_out())
 	# The drawer is a prop of its own: the beam can take hold of it.
 	var beam: Beam = _main.get_node("Player/Head/Camera3D/Beam")
 	var player := _main.get_node("Player") as Node3D
@@ -96,22 +86,11 @@ func _run() -> void:
 	beam._release()
 	await _wait(0.5)
 
-	# --- Lifting by the drawer: a table too heavy for you stays planted ---
+	# --- Yanking the drawer up doesn't lift the table: it's fixed furniture ---
 	var table_body := table as Prop
-	var saved_limit: float = beam.lift_limit
-	beam.lift_limit = 4.0  # enough for the 1 kg drawer, not the 8 kg table
 	var moved: float = await _yank_drawer(beam, player, table_body, drawer)
-	_check("a table too heavy to lift stays put when its drawer is yanked up", moved < 0.01,
-		"moved %.3f m" % moved)
-	_check("and isn't left frozen afterwards", not table_body.freeze, "freeze=%s" % table_body.freeze)
-	beam.lift_limit = 20.0  # strong enough now: the drawer drags the table along
-	moved = await _yank_drawer(beam, player, table_body, drawer)
-	_check("a table you could lift does come up with its drawer", moved > 0.05, "moved %.3f m" % moved)
-	beam.lift_limit = saved_limit
-	# Put the table back on its feet for what follows.
-	table_body.linear_velocity = Vector3.ZERO
-	table_body.angular_velocity = Vector3.ZERO
-	await _wait(1.0)
+	_check("yanking the drawer up leaves the table where it is", moved < 0.01, "moved %.3f m" % moved)
+	_check("and the table stays fixed afterwards", table_body.freeze, "freeze=%s" % table_body.freeze)
 
 	# --- Wardrobe doors swing on hinges; the wardrobe itself stays put ---
 	var wardrobe: Node = _main.get_node("MainRoomProps/Wardrobe")

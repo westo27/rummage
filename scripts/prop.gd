@@ -42,10 +42,10 @@ const KNOCK_COOLDOWN: float = 0.07
 const QUIET_AFTER_LOAD: float = 1.2
 
 var is_held: bool = false
-## Where it stood when the beam first took hold of it. Furniture can only be
-## dragged a short way from here (Game.tune.drag_range).
-var home: Vector3
-var _has_home: bool = false
+## Furniture: heavier than Game.tune.player_push_max_mass and not a jointed
+## part (a drawer, a door). It's fixed in place and the beam ignores it: you
+## search in and under furniture, you don't move it.
+var is_furniture: bool = false
 ## For a moving part (a drawer, a door): the furniture it's jointed to.
 var part_of: Prop = null
 ## How many held parts are pinning this furniture down (see plant()), and
@@ -102,6 +102,9 @@ func _ready() -> void:
 	contact_monitor = true
 	max_contacts_reported = 4
 	_knock_ready_at = _now() + QUIET_AFTER_LOAD
+	# Deferred: a piece of furniture marks its parts (part_of) in its own
+	# _ready, which runs after its children's.
+	_fix_if_furniture.call_deferred()
 	# _physics_process runs every tick once enabled. Most props sit still, so it
 	# stays off until a shudder or a player-collision check needs it.
 	set_physics_process(false)
@@ -149,9 +152,6 @@ func _make_aura() -> MeshInstance3D:
 ## Called by the beam when it picks this object up.
 func start_hold(holder: PhysicsBody3D) -> void:
 	is_held = true
-	if not _has_home:
-		home = global_position
-		_has_home = true
 	freeze = false
 	axis_lock_angular_x = false
 	axis_lock_angular_z = false
@@ -294,6 +294,16 @@ func _restore_player_collision_when_clear() -> void:
 		remove_collision_exception_with(_ignored_body)
 		_ignored_body.remove_collision_exception_with(self)
 		_ignored_body = null
+
+
+func _fix_if_furniture() -> void:
+	if mass <= Game.tune.player_push_max_mass or part_of != null:
+		return
+	is_furniture = true
+	# A frozen static body: immovable, but drawers and doors jointed to it
+	# still swing and slide.
+	freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+	freeze = true
 
 
 ## Light props go on the "clutter" layer, which the player's movement ignores

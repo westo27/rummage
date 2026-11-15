@@ -10,7 +10,7 @@ extends Node
 enum Step { GRAB, THROW, PING, FIND, CATCH, DONE }
 
 const HINTS: Dictionary = {
-	Step.GRAB: "Hold  Left Mouse  to grab the box",
+	Step.GRAB: "Hold  Left Mouse  to grab the teddy",
 	Step.THROW: "Holding it?  Right Mouse  or  F  throws",
 	Step.PING: "Something's hiding!  Press  Q  to ping",
 	Step.FIND: "Lift whatever squeaked",

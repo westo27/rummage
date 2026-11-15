@@ -26,7 +26,7 @@ func _run() -> void:
 	_check("26 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 26, "")
 	_check("4 of them in the box room", _main.get_node("SideRoomCreatures").get_child_count() == 4, "")
 	_check("bag tag shows 0 / 26", _hud.caught_text() == "0 / 26", "'%s'" % _hud.caught_text())
-	_check("HUD shows lift", _label("LiftLabel") == "Lift: 4 kg", "'%s'" % _label("LiftLabel"))
+	_check("HUD hides the lift limit", not (_hud.get_node("LiftLabel") as Label).visible, "")
 	_check("timer is counting up", _label("TimerLabel") != "0:00.0", "'%s'" % _label("TimerLabel"))
 	_check("HUD shows ping ready", _label("PingLabel").begins_with("Ping ready"), "'%s'" % _label("PingLabel"))
 
@@ -34,7 +34,7 @@ func _run() -> void:
 	_player.global_position = Vector3(-1.2, 0.05, 0.35)  # 1.2 m from the creature under Bin01
 	await _wait(0.1)
 	var near: Creature = _main.get_node("MainRoomCreatures/UnderBin01")  # (-1.2, 1.55)
-	var far: Creature = _main.get_node("SideRoomCreatures/BehindSideBoxes")  # (8.2, 0), ~9 m away
+	var far: Creature = _main.get_node("SideRoomCreatures/BehindSideBag")  # (8.2, 0), ~9 m away
 	_press("ping")
 	await _wait(0.2)
 	_check("ping: nearby hidden creature glows", near._glow.visible, "")
@@ -46,71 +46,21 @@ func _run() -> void:
 	await _wait(0.2)
 	_check("ping can't be used again during cooldown", not near._glow.visible, "")
 
-	# --- Gates: catch main-room creatures one by one (bed ones last) ---
-	var order: Array[Creature] = []
-	for c: Creature in _main.get_node("MainRoomCreatures").get_children():
-		if not c.name.begins_with("UnderBed"):
-			order.append(c)
-	for c: Creature in _main.get_node("MainRoomCreatures").get_children():
-		if c.name.begins_with("UnderBed"):
-			order.append(c)
-
-	var bed: Prop = _main.get_node("MainRoomProps/Bed")
-	var wardrobe: Prop = _main.get_node("MainRoomProps/Wardrobe")
-	await _catch(order.slice(0, 13))
-	_check("after 13 catches the bed is still too heavy", bed.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-	await _catch(order.slice(13, 14))
-	_check("after 14 catches the bed is liftable", bed.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-
-	# Actually lift the bed with the beam.
-	_player.global_position = Vector3(2.55, 0.05, 0.95)
-	_aim_at(bed.global_position)
-	await _wait(0.1)
-	_check("crosshair shows CAN_GRAB on the bed", _beam._state == Beam.AimState.CAN_GRAB, "state=%s" % _beam._state)
-	_press("grab")
-	await _wait(0.2)
-	_check("beam picks up the bed", _beam.held == bed, "held=%s" % _beam.held)
-	_aim_at(bed.global_position + Vector3(0, 1.2, 0))
-	await _wait(1.0)
-	_release("grab")
-	await _wait(0.3)
+	# --- Spot the bed creatures, then go through the wardrobe ---
+	# (check_furniture covers both in detail; here they're part of a full game.)
+	Input.action_press("crouch")
+	for i in 4:
+		var c := _main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature
+		_player.global_position = Vector3(c.global_position.x, 0.05, -0.2)
+		await _wait(0.6)
+		_aim_at(c.global_position)
+		await _wait(0.3)
+	Input.action_release("crouch")
 	var bed_hidden: int = 0
 	for i in 4:
 		if (_main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:
 			bed_hidden += 1
-	_check("lifting the bed reveals the creatures under it", bed_hidden == 0, "%d still hidden" % bed_hidden)
-
-	await _catch(order.slice(14, 18))
-	_check("after 18 catches the wardrobe is still too heavy", wardrobe.mass > _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-	await _catch(order.slice(18, 19))
-	_check("after 19 catches the wardrobe is liftable", wardrobe.mass <= _beam.lift_limit, "lift %.0f" % _beam.lift_limit)
-
-	# --- Drag the wardrobe off the doorway, then walk into the box room ---
-	_player.global_position = Vector3(2.7, 0.05, 0.0)
-	_aim_at(wardrobe.global_position)
-	await _wait(0.1)
-	_press("grab")
-	await _wait(0.2)
-	_check("beam picks up the wardrobe", _beam.held == wardrobe, "held=%s" % _beam.held)
-	# Back away west (walking, not teleporting, which would snap the beam),
-	# towing it into the middle of the room.
-	for i in 120:
-		_player.global_position = Vector3(2.7, 0.05, 0.0).lerp(Vector3(0.5, 0.05, 0.0), (i + 1) / 120.0)
-		await get_tree().physics_frame
-	await _wait(2.0)
-	_release("grab")
-	await _wait(1.0)
-	_check("wardrobe moved off the doorway", absf(wardrobe.global_position.z) > 1.2 or wardrobe.global_position.x < 3.8,
-		"pos=%s" % wardrobe.global_position)
-	_player.global_position = Vector3(4.4, 0.05, 0.0)
-	_player.rotation.y = -PI / 2.0
-	(_player.get_node("Head") as Node3D).rotation.x = 0.0
-	Input.action_press("move_forward")
-	await _wait(1.2)
-	Input.action_release("move_forward")
-	_check("player can walk into the box room", _player.global_position.x > 5.5,
-		"x=%.2f, wardrobe at %s, door B at %s" % [_player.global_position.x, wardrobe.global_position,
-		(wardrobe.get_node("DoorB") as Node3D).global_position])
+	_check("crouching and looking under the bed finds its creatures", bed_hidden == 0, "%d still hidden" % bed_hidden)
 
 	# --- Catch everything else: win screen, timer stops ---
 	var rest: Array[Creature] = []

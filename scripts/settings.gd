@@ -167,6 +167,7 @@ func apply_lighting(scene: Node = null) -> void:
 		# Light size makes shadows soften with distance; plain blur is the
 		# cheap stand-in on Low.
 		lamp.set_shadow_softness(0.45 if high else 0.3 if not low else 0.0, 6.0 if low else 3.0)
-	var world := scene.get_node_or_null("WorldEnvironment") as WorldEnvironment
+	# Searched for, because on the title screen the room sits a few levels down.
+	var world := scene.find_child("WorldEnvironment", true, false) as WorldEnvironment
 	if world != null:
 		world.environment.ssao_enabled = not low

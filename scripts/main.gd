@@ -18,8 +18,7 @@ func _ready() -> void:
 	# Gravity for rigid bodies lives on the physics "space" (the simulated world),
 	# not on each body. Setting it here means the value comes from tunables.tres
 	# instead of a second copy in Project Settings.
-	var space: RID = get_world_3d().space
-	PhysicsServer3D.area_set_param(space, PhysicsServer3D.AREA_PARAM_GRAVITY, Game.tune.gravity)
+	set_up_world(self)
 
 	# connect() subscribes a function to a signal: whenever the beam emits
 	# aim_changed, hud.set_aim is called with the same arguments.
@@ -34,7 +33,6 @@ func _ready() -> void:
 		_total_creatures += 1
 	_hud.set_caught(_caught, _total_creatures)
 
-	_apply_prop_finish()
 	# Graphics > Lighting, for this level's lamps and environment.
 	Game.settings.apply_lighting(self)
 
@@ -69,8 +67,16 @@ const FINISH: Dictionary = {
 }
 
 
-func _apply_prop_finish() -> void:
-	for prop: Prop in get_tree().get_nodes_in_group("props"):
+## Gravity and the prop finishes. Static so the title screen's backdrop
+## (title_backdrop.gd), which shows this scene without this script, can use it.
+static func set_up_world(scene: Node3D) -> void:
+	var space: RID = scene.get_world_3d().space
+	PhysicsServer3D.area_set_param(space, PhysicsServer3D.AREA_PARAM_GRAVITY, Game.tune.gravity)
+	_apply_prop_finish(scene.get_tree())
+
+
+static func _apply_prop_finish(tree: SceneTree) -> void:
+	for prop: Prop in tree.get_nodes_in_group("props"):
 		var finish: Array = FINISH[prop.impact_material]
 		for child in prop.get_children():
 			var mesh := child as MeshInstance3D

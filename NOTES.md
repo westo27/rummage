@@ -106,6 +106,13 @@ a root node and a script.
 - **On winning, the bag moves onto the win screen** beside your time.
   `reparent()` carries its whole subtree, physics world included, so any
   balls still queued keep dropping in there.
+- **The title's background** is the real house (`scripts/title_backdrop.gd`):
+  main.tscn loaded without the player, HUD, menus, lesson, ping or main.gd,
+  seen from the bedroom rug toward the bed with a slow drifting camera. A
+  stand-in "player" sits at the camera, so the four marbles under the bed
+  (turned to face it) peek and glint at you. The menu sits on the left over
+  a dark shade (`UiStyle.title_shade`); the whole room dims under Settings.
+  `tests/shoot_title.tscn` shoots four points along the drift.
 - **The mouse pointer** is the normal system arrow (the custom hand was removed).
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu, in three sections: Controls, Sound and Graphics. Each

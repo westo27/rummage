@@ -1,17 +1,10 @@
 extends Control
-## The title screen: the game's name and three clickable words (Play, Settings, Quit).
+## The title screen: the game's name and three clickable words (Play, Settings,
+## Quit) over the real bedroom at night (TitleBackdrop).
 ##
-## The background wash and the drifting blobs are drawn by this node itself
-## rather than by child nodes, because a parent draws before its children and
-## that's what puts them behind the panels.
-
-## How many creature-coloured blobs drift about behind the menu.
-const BLOB_COUNT: int = 14
-
-var _blob_positions: Array[Vector2] = []
-var _blob_velocities: Array[Vector2] = []
-var _blob_radii: Array[float] = []
-var _blob_colors: Array[Color] = []
+## The shade that keeps the words readable is drawn by this node itself, over
+## the 3D room (the canvas always draws over 3D) and under the menu, because a
+## parent draws before its children.
 
 var _panels: VBoxContainer
 var _hint: Label
@@ -24,24 +17,16 @@ func _ready() -> void:
 	get_tree().paused = false
 
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_make_blobs()
+	add_child(TitleBackdrop.new())
 	_build()
-
-
-func _make_blobs() -> void:
-	var area: Vector2 = Vector2(2560.0, 1440.0)
-	for i in BLOB_COUNT:
-		_blob_positions.append(Vector2(randf() * area.x, randf() * area.y))
-		# Slow drift, a few tens of pixels a second.
-		_blob_velocities.append(Vector2(randf_range(-26.0, 26.0), randf_range(-18.0, 18.0)))
-		_blob_radii.append(randf_range(40.0, 150.0))
-		var tint: Color = UiStyle.ACCENTS[i % UiStyle.ACCENTS.size()]
-		_blob_colors.append(Color(tint, randf_range(0.05, 0.12)))
 
 
 func _build() -> void:
 	var centre := CenterContainer.new()
+	# The left part of the screen only, so the room shows on the right.
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	centre.anchor_right = 0.42
+	centre.offset_right = 0.0
 	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(centre)
 
@@ -90,29 +75,12 @@ func _build() -> void:
 
 
 
-func _process(delta: float) -> void:
-	# Drift the blobs, bouncing them off the edges of the design area.
-	var area: Vector2 = Vector2(2560.0, 1440.0)
-	for i in _blob_positions.size():
-		var p: Vector2 = _blob_positions[i] + _blob_velocities[i] * delta
-		var v: Vector2 = _blob_velocities[i]
-		if p.x < -200.0 or p.x > area.x + 200.0:
-			v.x = -v.x
-		if p.y < -200.0 or p.y > area.y + 200.0:
-			v.y = -v.y
-		_blob_velocities[i] = v
-		_blob_positions[i] = p
-	queue_redraw()
-
-
 func _draw() -> void:
-	var screen := Rect2(Vector2.ZERO, size)
-	draw_texture_rect(UiStyle.gradient(), screen, false)
-	for i in _blob_positions.size():
-		draw_circle(_blob_positions[i], _blob_radii[i], _blob_colors[i])
-	# Over the blobs, so the edges of the screen fall away and the middle
-	# reads as lit.
-	draw_texture_rect(UiStyle.vignette(), screen, false)
+	if _settings != null:
+		# The settings page fills the middle, so dim the whole room behind it.
+		draw_rect(Rect2(Vector2.ZERO, size), Color(UiStyle.SHADE, 0.72))
+	else:
+		draw_texture_rect(UiStyle.title_shade(), Rect2(Vector2.ZERO, size), false)
 
 
 func _on_play() -> void:
@@ -128,12 +96,14 @@ func _on_settings() -> void:
 	_settings = SettingsMenu.new()
 	_settings.closed.connect(_on_settings_closed)
 	add_child(_settings)
+	queue_redraw()
 
 
 func _on_settings_closed() -> void:
 	_settings = null
 	_panels.visible = true
 	_hint.visible = true
+	queue_redraw()
 
 
 func _on_quit() -> void:

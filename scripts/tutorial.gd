@@ -10,13 +10,13 @@ extends Node
 enum Step { GRAB, THROW, PING, FIND, CATCH, DONE }
 
 const HINTS: Dictionary = {
-	Step.GRAB: "Hold  Left Mouse  to grab the teddy",
-	Step.THROW: "Holding it?  Right Mouse  or  F  throws",
+	Step.GRAB: "Hold  Left Mouse  to grab",
+	Step.THROW: "Right Mouse  or  F  to throw",
 	Step.PING: "Something's hiding!  Press  Q  to ping",
-	Step.FIND: "Lift whatever squeaked",
+	Step.FIND: "What was that?",
 	Step.CATCH: "Click it to catch it!",
 }
-const DONE_HINT: String = "The rest are hiding in the house"
+const DONE_HINT: String = "Go find them all!"
 ## How long the last hint stays up before fading.
 const DONE_HINT_TIME: float = 4.0
 ## The door swings into the playroom by this much, over this long.

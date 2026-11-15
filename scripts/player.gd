@@ -19,7 +19,19 @@ extends CharacterBody3D
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
 
+@onready var _body_shape: CollisionShape3D = $CollisionShape3D
+
+const STAND_HEIGHT: float = 1.7
+## Capsule height while crouched: just over the eyes.
+const CROUCH_HEIGHT: float = 1.0
+## How fast the crouch eases in and out (fraction per second).
+const CROUCH_EASE: float = 12.0
+
+## 0 standing, 1 fully crouched. Eased, so the camera dips rather than snaps.
+var crouch: float = 0.0
 var _start_transform: Transform3D
+## The standing capsule, for checking there's headroom before standing up.
+var _stand_query := PhysicsShapeQueryParameters3D.new()
 ## A capsule a little fatter than the player's own, used to find clutter we're
 ## walking into. Built once and reused every tick.
 var _kick_query := PhysicsShapeQueryParameters3D.new()
@@ -31,12 +43,20 @@ func _init() -> void:
 	capsule.height = 1.7
 	_kick_query.shape = capsule
 	_kick_query.collision_mask = 16  # the "clutter" layer
+	var standing := CapsuleShape3D.new()
+	standing.radius = 0.34  # a hair thinner, so touching a wall isn't "blocked"
+	standing.height = STAND_HEIGHT
+	_stand_query.shape = standing
 
 
 func _ready() -> void:
 	_start_transform = global_transform
 	# Lets creatures find the player with get_first_node_in_group("player").
 	add_to_group("player")
+	# The scene's capsule is a shared resource; give this body its own to resize.
+	_body_shape.shape = _body_shape.shape.duplicate()
+	_stand_query.collision_mask = collision_mask
+	_stand_query.exclude = [get_rid()]
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_place_camera(head.global_position)
 
@@ -89,7 +109,9 @@ func _physics_process(delta: float) -> void:
 	var input: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	# transform.basis turns "forward relative to me" into a world direction.
 	var direction: Vector3 = (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
+	_update_crouch(delta)
 	var speed: float = Game.tune.run_speed if Input.is_action_pressed("run") else Game.tune.walk_speed
+	speed = lerpf(speed, Game.tune.crouch_speed, crouch)
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 
@@ -103,6 +125,27 @@ func _physics_process(delta: float) -> void:
 	# camera. Put the camera at the exact physics position for that, rather than
 	# the in-between drawn position _process will use for the next frame.
 	_place_camera(head.global_position)
+
+
+## Hold to crouch. Letting go only stands you up once there's room overhead,
+## so you stay ducked under a table until you've crawled out.
+func _update_crouch(delta: float) -> void:
+	var want: float = 1.0 if Input.is_action_pressed("crouch") or not _room_to_stand() else 0.0
+	crouch = move_toward(crouch, want, CROUCH_EASE * delta * 0.5)
+	# Ease in/out curve on top of the linear move, so it starts and lands softly.
+	var t: float = smoothstep(0.0, 1.0, crouch)
+	var height: float = lerpf(STAND_HEIGHT, CROUCH_HEIGHT, t)
+	var capsule := _body_shape.shape as CapsuleShape3D
+	capsule.height = height
+	_body_shape.position.y = height * 0.5  # keep the feet on the floor
+	head.position.y = lerpf(Game.tune.stand_eye_height, Game.tune.crouch_eye_height, t)
+
+
+func _room_to_stand() -> bool:
+	if crouch <= 0.0:
+		return true
+	_stand_query.transform = global_transform.translated_local(Vector3(0.0, STAND_HEIGHT * 0.5 + 0.02, 0.0))
+	return get_world_3d().direct_space_state.intersect_shape(_stand_query, 1).is_empty()
 
 
 ## Light props ("clutter", see prop.gd) don't block the player's movement, so

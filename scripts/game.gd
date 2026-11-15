@@ -48,6 +48,8 @@ func _setup_input_map() -> void:
 	_add_key("move_left", KEY_A)
 	_add_key("move_right", KEY_D)
 	_add_key("run", KEY_SHIFT)
+	_add_key("crouch", KEY_C)
+	_add_key("crouch", KEY_CTRL)
 	_add_key("release_mouse", KEY_ESCAPE)
 	_add_key("restart", KEY_R)
 	_add_key("ping", KEY_Q)

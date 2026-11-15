@@ -9,7 +9,6 @@ extends CanvasLayer
 
 
 @onready var _crosshair: Crosshair = $Crosshair
-@onready var _aim_label: Label = $AimLabel
 @onready var _lift_label: Label = $LiftLabel
 @onready var _timer_label: Label = $TimerLabel
 @onready var _ping_label: Label = $PingLabel
@@ -33,7 +32,6 @@ var _play_again: MenuPanel
 ## screen. The look (font, colours, pill backgrounds) comes from UiStyle, the
 ## same place the menus get theirs.
 const READOUT_FONT_SIZE: int = 36
-const AIM_FONT_SIZE: int = 34
 const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
 ## Gap between the marble bag and the bottom-right corner of the screen.
@@ -51,9 +49,6 @@ func _ready() -> void:
 		label.add_theme_font_size_override("font_size", READOUT_FONT_SIZE)
 		label.add_theme_color_override("font_color", UiStyle.CREAM)
 		label.add_theme_constant_override("outline_size", 10)
-	_aim_label.add_theme_constant_override("outline_size", 10)
-	_aim_label.add_theme_font_override("font", UiStyle.font(600))
-	_aim_label.add_theme_font_size_override("font_size", AIM_FONT_SIZE)
 	_build_bag()
 	# Built after the bag, so the win screen's dimming covers it.
 	_build_win_screen()
@@ -154,10 +149,9 @@ func _build_win_screen() -> void:
 	column.add_child(hint)
 
 
-func set_aim(state: Beam.AimState, detail: String) -> void:
+## Only the crosshair shows the aim now; the text under it was removed.
+func set_aim(state: Beam.AimState, _detail: String) -> void:
 	_crosshair.set_state(state)
-	_aim_label.text = detail
-	_aim_label.modulate = Color(1, 0.35, 0.3) if state == Beam.AimState.TOO_HEAVY else Color(1, 1, 1, 0.8)
 
 
 func set_lift_limit(kg: float) -> void:

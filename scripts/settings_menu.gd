@@ -3,9 +3,8 @@ extends Control
 ## The settings page, shared by the title screen and the pause menu.
 ##
 ## Built in code rather than as a .tscn, because it's a list of near-identical
-## rows: a name, a minus panel, the current value, a plus panel. Steppers
-## instead of sliders so every control is the same big point-and-click panel
-## and nothing needs dragging.
+## rows: a name, a glass minus, the current value, a glass plus. Steppers
+## instead of sliders so nothing needs dragging.
 ##
 ## Changes apply immediately and are written to disk when the page closes.
 
@@ -32,6 +31,7 @@ func _ready() -> void:
 
 	var heading := UiStyle.label("Settings", 96, UiStyle.CREAM)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiStyle.set_marble_drift(heading)
 	column.add_child(heading)
 
 	var spacer := Control.new()
@@ -53,8 +53,7 @@ func _ready() -> void:
 	spacer2.custom_minimum_size = Vector2(0.0, 40.0)
 	column.add_child(spacer2)
 
-	var back := MenuPanel.make_pill("back", "Back", UiStyle.MINT)
-	back.custom_minimum_size = Vector2(560.0, 140.0)
+	var back := MenuPanel.make_text("Back", 96)
 	back.pressed.connect(_close)
 	var back_row := CenterContainer.new()
 	back_row.add_child(back)
@@ -102,7 +101,7 @@ func _build_row(key: String, name: String) -> Control:
 	row.add_child(name_label)
 
 	# A real minus sign, not a hyphen, so it matches the weight of the plus.
-	var down := MenuPanel.make_stepper("−")
+	var down := MenuPanel.make_text_stepper("−")
 	down.pressed.connect(_adjust.bind(key, -1))
 	row.add_child(down)
 
@@ -110,11 +109,10 @@ func _build_row(key: String, name: String) -> Control:
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	value.custom_minimum_size = Vector2(240.0, 110.0)
-	value.add_theme_stylebox_override("normal", UiStyle.plate_box())
 	_value_labels[key] = value
 	row.add_child(value)
 
-	var up := MenuPanel.make_stepper("+")
+	var up := MenuPanel.make_text_stepper("+")
 	up.pressed.connect(_adjust.bind(key, 1))
 	row.add_child(up)
 	return row

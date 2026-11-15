@@ -53,6 +53,7 @@ func _build() -> void:
 	var title := UiStyle.label("Losing My\nMarbles!", UiStyle.TITLE_FONT_SIZE, UiStyle.CREAM)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_constant_override("line_spacing", 14)
+	UiStyle.set_marble_drift(title)
 	_panels.add_child(title)
 
 	var gap := Control.new()

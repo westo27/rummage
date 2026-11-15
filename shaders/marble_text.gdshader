@@ -18,6 +18,9 @@ uniform float detail = 1.0;
 uniform float glass_clarity = 0.7;
 // Slides the swirls along, in radians. Menu words animate it while pointed at.
 uniform float drift = 0.0;
+// A steady drift on top, in radians per second, for headings that always flow.
+// TIME keeps running while the game is paused, so the pause menu flows too.
+uniform float drift_speed = 0.0;
 
 // VERTEX is in the node's own coordinates in vertex(); the fragment step gets
 // it interpolated per pixel through these varyings.
@@ -38,7 +41,7 @@ float hash(float n) {
 // A soft ribbon that wanders across the letter: 1 on its centre line.
 float ribbon(vec2 g, float seed, float width) {
 	// Each ribbon drifts at its own pace, so they slide past each other.
-	float ph = seed * 6.283 + drift * (0.6 + 0.8 * hash(seed + 0.9));
+	float ph = seed * 6.283 + (drift + TIME * drift_speed) * (0.6 + 0.8 * hash(seed + 0.9));
 	float lean = mix(-0.6, 0.6, hash(seed + 0.3));
 	float cy = 0.5 + (g.x - 0.5) * lean + 0.18 * sin(g.x * 4.0 + ph)
 		+ 0.03 * sin(g.y * 5.0 + ph * 2.0);

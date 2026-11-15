@@ -300,6 +300,18 @@ static func marble(item: CanvasItem) -> void:
 	item.material = m
 
 
+## How fast headings' swirls drift, in radians per second: slower than a
+## pointed-at menu word, so the words you can click still stand out.
+const HEADING_DRIFT: float = 0.25
+
+
+## Sets a marble label's swirls drifting slowly and forever.
+static func set_marble_drift(item: CanvasItem, speed: float = HEADING_DRIFT) -> void:
+	var m := item.material as ShaderMaterial
+	if m != null:
+		m.set_shader_parameter("drift_speed", speed)
+
+
 ## Tells the marble shader where a line of text sits in the item's own pixels.
 static func set_marble_line(item: CanvasItem, baseline: float, font_size: int) -> void:
 	var m := item.material as ShaderMaterial

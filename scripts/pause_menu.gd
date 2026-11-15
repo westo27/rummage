@@ -41,33 +41,34 @@ func _build() -> void:
 
 	var column := VBoxContainer.new()
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 60)
+	column.add_theme_constant_override("separation", 90)
 	_panels.add_child(column)
 
-	var heading := UiStyle.label("Paused", 110, UiStyle.CREAM)
+	var heading := UiStyle.label("Paused", UiStyle.TITLE_FONT_SIZE, UiStyle.CREAM)
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	UiStyle.set_marble_drift(heading)
 	column.add_child(heading)
 
-	# The same stack of pills as the title screen, so pausing feels like the
+	# The same glass words as the title screen, so pausing feels like the
 	# same menu rather than a different one.
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	stack.add_theme_constant_override("separation", 28)
+	stack.add_theme_constant_override("separation", 0)
 	column.add_child(stack)
 
-	var resume := MenuPanel.make_pill("play", "Resume", UiStyle.AMBER)
+	var resume := MenuPanel.make_text("Resume")
 	resume.pressed.connect(close)
 	stack.add_child(resume)
 
-	var settings := MenuPanel.make_pill("sliders", "Settings", UiStyle.MINT)
+	var settings := MenuPanel.make_text("Settings")
 	settings.pressed.connect(_on_settings)
 	stack.add_child(settings)
 
-	var restart := MenuPanel.make_pill("loop", "Restart", UiStyle.SKY)
+	var restart := MenuPanel.make_text("Restart")
 	restart.pressed.connect(_on_restart)
 	stack.add_child(restart)
 
-	var quit := MenuPanel.make_pill("house", "Title", UiStyle.CORAL)
+	var quit := MenuPanel.make_text("Title")
 	quit.pressed.connect(_on_quit_to_title)
 	stack.add_child(quit)
 

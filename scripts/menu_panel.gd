@@ -41,6 +41,8 @@ const DRIFT_SPEED: float = 0.7
 ## TIME * speed in the shader) so easing the speed in and out never makes
 ## them jump.
 var _drift: float = 0.0
+## A bare label's font size at rest (it's drawn this much bigger, grown).
+var bare_font_size: int = BARE_FONT_SIZE
 
 var _lift: float = 0.0
 var _sink: float = 0.0
@@ -147,11 +149,15 @@ func _draw_text() -> void:
 	var font: Font = UiStyle.font(700)
 
 	if bare:
-		var fs: int = roundi(BARE_FONT_SIZE * (1.0 + BARE_GROW))
-		var w: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		var at := Vector2((size.x - w) * 0.5, (size.y + fs * UiStyle.CAP_HEIGHT) * 0.5)
+		var fs: int = roundi(bare_font_size * (1.0 + BARE_GROW))
+		var words: String = label_text if label_text != "" else glyph
+		var w: float = font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		# Words are centred on their capitals; − and + sit lower in the font,
+		# around the middle of the lowercase letters, so they're centred there.
+		var lift: float = UiStyle.CAP_HEIGHT * 0.5 if label_text != "" else 0.27
+		var at := Vector2((size.x - w) * 0.5, size.y * 0.5 + fs * lift)
 		UiStyle.set_marble_line(_text, at.y, fs)
-		_text.draw_string(font, at, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiStyle.CREAM)
+		_text.draw_string(font, at, words, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiStyle.CREAM)
 		return
 
 	if glyph != "":
@@ -202,13 +208,24 @@ static func make_pill(icon: String, text: String, tint: Color) -> MenuPanel:
 
 ## Just the words, big and glassy, with no panel behind them. Sized to fit the
 ## words at their hovered size, so growing never spills past the click area.
-static func make_text(text: String) -> MenuPanel:
+static func make_text(text: String, font_size: int = BARE_FONT_SIZE) -> MenuPanel:
 	var panel := MenuPanel.new()
 	panel.label_text = text
 	panel.bare = true
-	var fs: int = roundi(BARE_FONT_SIZE * (1.0 + BARE_GROW))
+	panel.bare_font_size = font_size
+	var fs: int = roundi(font_size * (1.0 + BARE_GROW))
 	var w: float = UiStyle.font(700).get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	panel.custom_minimum_size = Vector2(w + 40.0, fs * 1.05)
+	return panel
+
+
+## A bare − or + for the settings rows: a fixed square, so both line up.
+static func make_text_stepper(character: String) -> MenuPanel:
+	var panel := MenuPanel.new()
+	panel.glyph = character
+	panel.bare = true
+	panel.bare_font_size = 104
+	panel.custom_minimum_size = Vector2(110.0, 110.0)
 	return panel
 
 

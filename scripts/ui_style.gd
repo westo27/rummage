@@ -14,8 +14,7 @@ class_name UiStyle
 # the same family as the game's rooms (cream walls, brown floor, green side
 # room) so the menus and the game look like one thing.
 
-## Text is drawn at this z_index so it lands above the menus' pixel filter
-## (PixelFilter.FILTER_Z) and stays crisp.
+## Text is drawn at this z_index, above everything else in a menu.
 const TEXT_Z: int = 2000
 
 const BG_TOP := Color(0.10, 0.20, 0.22)

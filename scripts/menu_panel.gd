@@ -58,8 +58,6 @@ func _ready() -> void:
 	# FOCUS_NONE: the panel can't hold keyboard focus, so Godot's built-in
 	# arrow-key and Tab navigation between buttons never applies to it.
 	focus_mode = Control.FOCUS_NONE
-	# Lets the pixel filter tell when a menu is on screen (PixelFilter).
-	add_to_group("menu_panels")
 	if custom_minimum_size == Vector2.ZERO:  # not already set by the caller
 		custom_minimum_size = UiStyle.PANEL_SIZE_SMALL if compact else UiStyle.PANEL_SIZE
 

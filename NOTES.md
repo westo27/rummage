@@ -389,11 +389,7 @@ child up past your bedtime". So it's night.
   simulated in `VIEW_SIZE` coordinates via `size_2d_override`) with no
   shadow under it. The tag's count is drawn crisp on top of the viewport
   (`_draw_tag_text`), so it stays readable at that size.
-  Menus get it too, except their text: while any `MenuPanel` is visible,
-  `PixelFilter` puts a second copy of the filter in that menu's canvas layer
-  at z_index 1000. Text (`UiStyle.label`, `MenuPanel`'s label and glyph) sits
-  at `UiStyle.TEXT_Z` (2000), so it's drawn after it and stays crisp. The
-  in-game HUD stays crisp.
+  Menus, buttons and the in-game HUD stay crisp (they're on higher layers).
   `tests/shoot_pixel.tscn` renders it off and at a few sizes.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.

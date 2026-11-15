@@ -73,6 +73,7 @@ var _meshes: Array[MeshInstance3D] = []
 var _aura: MeshInstance3D = null
 var _mesh_rest_positions: Array[Vector3] = []
 var _shudder_left: float = 0.0
+var _shudder_scale: float = 1.0
 ## The player body we are currently ignoring collisions with, if any.
 var _ignored_body: PhysicsBody3D = null
 
@@ -208,8 +209,10 @@ func end_hold() -> void:
 
 ## The "too heavy" wobble. Only the meshes move, not the body, so trying to lift
 ## the bed can't nudge it and disturb what's hiding under it.
-func shudder() -> void:
+## amount scales how hard it shakes (a marble's bump is gentler than the beam).
+func shudder(amount: float = 1.0) -> void:
 	_shudder_left = SHUDDER_SECONDS
+	_shudder_scale = amount
 	set_physics_process(true)
 
 
@@ -271,7 +274,7 @@ func _now() -> float:
 
 func _update_shudder(delta: float) -> void:
 	_shudder_left -= delta
-	var strength: float = maxf(_shudder_left, 0.0) / SHUDDER_SECONDS * SHUDDER_AMOUNT
+	var strength: float = maxf(_shudder_left, 0.0) / SHUDDER_SECONDS * SHUDDER_AMOUNT * _shudder_scale
 	for i in _meshes.size():
 		var jitter := Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * strength
 		_meshes[i].position = _mesh_rest_positions[i] + jitter

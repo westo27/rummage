@@ -63,6 +63,8 @@ const MASK_SIGHT: int = 1 | 4 | 16
 const TOP_OFFSET: float = 0.048
 ## The ball's radius, for rolling: it turns one radian per this many metres.
 const ROLL_RADIUS: float = 0.054
+## How far above itself a hidden marble will bounce up to hit a cover (m).
+const BUMP_REACH: float = 0.4
 ## Cowering creatures bob up and down happily: this high (m), this often (Hz).
 const BOUNCE_HEIGHT: float = 0.021
 const BOUNCE_RATE: float = 1.8
@@ -447,10 +449,10 @@ func _give_tell() -> void:
 	match randi() % 3:
 		0:
 			var cover: Prop = _nearest_cover()
-			if cover != null:
-				cover.shudder()
-			else:
+			if cover == null:
 				hop()
+			elif not _bump_underside(cover):
+				cover.shudder()
 		1:
 			flash()
 		2:
@@ -485,6 +487,43 @@ func hop() -> void:
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_property(_visual, "position:y", 0.08, 0.1)
 	tween.tween_property(_visual, "position:y", 0.0, 0.12)
+
+
+## Under something low (the bed): bounce up into its underside twice, and the
+## hits are what make it shake and knock. Returns false if nothing's overhead
+## within reach, so the caller can just shake the cover instead.
+func _bump_underside(cover: Prop) -> bool:
+	var from: Vector3 = global_position
+	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.UP * (BUMP_REACH + ROLL_RADIUS), MASK_PROPS)
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty() or hit.collider != cover:
+		return false
+	var gap: float = (hit.position as Vector3).y - from.y - ROLL_RADIUS
+	if gap < 0.01:
+		return false
+	var at: Vector3 = hit.position
+	# Rising, it slows (ease out) but meets the wood before stopping; falling,
+	# it speeds up (ease in). The second bounce is a bit softer.
+	var t: float = 0.06 + gap * 0.5
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.tween_property(_visual, "position:y", gap, t).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(_knock_underside.bind(cover, at, 1.0))
+	tween.tween_property(_visual, "position:y", 0.0, t).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(_visual, "position:y", gap, t * 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(_knock_underside.bind(cover, at, 0.6))
+	tween.tween_property(_visual, "position:y", 0.0, t * 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(_visual, "position:y", 0.015, 0.06).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_visual, "position:y", 0.0, 0.06).set_ease(Tween.EASE_IN)
+	return true
+
+
+func _knock_underside(cover: Prop, at: Vector3, strength: float) -> void:
+	if not is_instance_valid(cover):
+		return
+	cover.shudder(strength)
+	var tune: Tunables = Game.tune
+	var speed: float = lerpf(tune.impact_min_speed, tune.impact_full_speed, 0.5 * strength)
+	Game.impacts.play(cover.impact_material, at, speed, cover.mass)
 
 
 # ---------------------------------------------------------------- helpers

@@ -1,22 +1,21 @@
-// Makes each letter look like a cat's-eye glass marble: clear glass in the
-// text colour that's thicker and darker toward its edges, a coloured ribbon
-// twisting down through the middle of the letter, light caught along the
-// upper-left edges, a curved highlight, a milky glow low down where light
-// collects, and now and then a sparkle.
+// Makes each letter look like a 3D glass marble: smoky clear glass you can see
+// the background through, bright white light along every edge (strongest at
+// the upper left), pink, blue and teal swirls floating inside, and a few tiny
+// bubbles.
 // UiStyle.set_marble_line() sets where the line sits, in the node's own pixels.
 shader_type canvas_item;
 
 uniform float cap_top = 0.0;
 uniform float baseline = 64.0;
-uniform vec4 swirl_color : source_color = vec4(0.16, 0.36, 0.95, 1.0);
-uniform vec4 swirl_color_2 : source_color = vec4(0.18, 0.80, 0.62, 1.0);
-uniform vec4 rim_color : source_color = vec4(0.06, 0.12, 0.30, 1.0);
-// How far in from the letter's edge the glass thickens, in font texture pixels.
+uniform vec4 swirl_color : source_color = vec4(0.95, 0.25, 0.70, 1.0);
+uniform vec4 swirl_color_2 : source_color = vec4(0.25, 0.45, 1.0, 1.0);
+uniform vec4 swirl_color_3 : source_color = vec4(0.20, 0.85, 0.80, 1.0);
+// How far in from the letter's edge the bright rim reaches, in font texture pixels.
 uniform float rim_width = 2.5;
-// 0..1. Small text gets less swirl and no sparkle, so it stays readable.
+// 0..1. Small text gets less swirl and no bubbles, so it stays readable.
 uniform float detail = 1.0;
 // How see-through the middle of the glass is.
-uniform float glass_clarity = 0.3;
+uniform float glass_clarity = 0.7;
 
 // VERTEX is in the node's own coordinates in vertex(); the fragment step gets
 // it interpolated per pixel through these varyings.
@@ -34,9 +33,14 @@ float hash(float n) {
 	return fract(sin(n * 12.9898) * 43758.5453);
 }
 
-// 1 where the font texture is empty a little way off in direction `dir`.
-float edge_toward(sampler2D tex, vec2 uv, vec2 dir, vec2 px) {
-	return 1.0 - texture(tex, uv + dir * px).a;
+// A soft ribbon that wanders across the letter: 1 on its centre line.
+float ribbon(vec2 g, float seed, float width) {
+	float ph = seed * 6.283;
+	float lean = mix(-0.6, 0.6, hash(seed + 0.3));
+	float cy = 0.5 + (g.x - 0.5) * lean + 0.18 * sin(g.x * 4.0 + ph)
+		+ 0.03 * sin(g.y * 5.0 + ph * 2.0);
+	float w = width * (0.5 + abs(cos(g.x * 3.1 + ph)));
+	return 1.0 - smoothstep(w * 0.3, w, abs(g.y - cy));
 }
 
 void vertex() {
@@ -51,6 +55,9 @@ void fragment() {
 	if (plain < 0.5) {
 		vec2 px = TEXTURE_PIXEL_SIZE;
 		vec2 g = glyph;
+		// Dark text (on the light buttons) becomes dark glass that stays solid;
+		// light text becomes clear glass over the background.
+		float dark = 1.0 - smoothstep(0.25, 0.6, dot(COLOR.rgb, vec3(0.3, 0.59, 0.11)));
 
 		// Which letter this is, as a random number: the letter's left edge in
 		// node pixels, worked out from how fast `glyph` and `local` change
@@ -59,67 +66,57 @@ void fragment() {
 		float glyph_left = abs(gx_rate) > 1e-5 ? local.x - g.x * dFdx(local.x) / gx_rate : local.x;
 		float r = hash(floor(glyph_left * 0.25));
 
-		// The glass is thicker toward the letter's edge (found by looking out
-		// in eight directions for empty texture), so the edge is darker and
-		// solid and the middle is clearer.
-		float inside = 1.0;
-		float deep = 1.0;
+		// How near the letter's edge this pixel is: look out in eight
+		// directions for empty texture, close in and further in.
+		float near_edge = 1.0;
+		float mid_edge = 1.0;
 		for (int i = 0; i < 8; i++) {
 			float a = float(i) * 0.785398;
-			inside = min(inside, texture(TEXTURE, UV + vec2(cos(a), sin(a)) * rim_width * px).a);
-			deep = min(deep, texture(TEXTURE, UV + vec2(cos(a + 0.39), sin(a + 0.39)) * rim_width * 2.6 * px).a);
+			vec2 dir = vec2(cos(a), sin(a));
+			near_edge = min(near_edge, texture(TEXTURE, UV + dir * rim_width * px).a);
+			mid_edge = min(mid_edge, texture(TEXTURE, UV + dir * rim_width * 2.8 * px).a);
 		}
-		float rim = 1.0 - inside;
-		float thick = 1.0 - deep;  // a wider band in from the edge
+		float rim = 1.0 - near_edge;
+		// A second, fainter line a little way in: the far side of the glass.
+		float inner = (1.0 - mid_edge) * near_edge;
+		// Light from the upper left.
+		float lit = 1.0 - texture(TEXTURE, UV + vec2(-0.7, -0.7) * rim_width * 1.6 * px).a;
 
-		// (COLOR already holds the glyph texture times the text colour.)
-		vec3 col = COLOR.rgb;
-		col = mix(col, rim_color.rgb, thick * 0.18);
-		// Milky glow low in the letter, where light through a marble collects.
-		col = mix(col, vec3(0.93, 0.97, 1.0), smoothstep(0.55, 0.92, g.y) * 0.35 * (1.0 - rim));
+		// The body: smoky glass, dark and see-through.
+		vec3 smoke = mix(vec3(0.16, 0.18, 0.24), COLOR.rgb, 0.25 + 0.5 * dark);
+		vec3 col = smoke * mix(1.2, 0.8, g.y);
 
-		// The ribbon runs top to bottom through the letter, leaning and
-		// wiggling, and swells and pinches like a ribbon turning edge-on.
-		// Each letter gets its own twist from `r`.
-		float phase = r * 6.283;
-		float lean = mix(-0.25, 0.25, hash(r + 1.7));
-		float cx = 0.5 + (g.y - 0.5) * lean + 0.13 * sin(g.y * 3.8 + phase);
-		float w = 0.11 + 0.12 * abs(cos(g.y * 2.9 + phase));
-		float d = abs(g.x - cx);
-		float ribbon = (1.0 - smoothstep(w * 0.55, w, d)) * detail;
-		// Darker at the ribbon's own edges, so it looks rounded and inside the glass.
-		vec3 ribbon_col = swirl_color.rgb * (0.55 + 0.75 * (1.0 - d / w));
-		col = mix(col, ribbon_col, ribbon * 0.95);
-		float cx2 = cx + 0.45 * w * sin(g.y * 6.0 + phase * 1.3);
-		float thread = (1.0 - smoothstep(0.018, 0.045, abs(g.x - cx2))) * detail;
-		col = mix(col, swirl_color_2.rgb, thread * 0.9);
+		// Swirls floating inside, glowing a little where they cross.
+		float s1 = ribbon(g, r, 0.10) * detail;
+		float s2 = ribbon(g, r + 0.37, 0.07) * detail;
+		float s3 = ribbon(g, r + 0.71, 0.04) * detail;
+		col = mix(col, swirl_color.rgb, s1 * 0.85);
+		col = mix(col, swirl_color_2.rgb, s2 * 0.85);
+		col = mix(col, swirl_color_3.rgb * 1.2, s3 * 0.9);
 
-		// Light from the upper left: a bright line just inside the upper-left
-		// edges and a shadow just inside the lower-right ones.
-		float lit = edge_toward(TEXTURE, UV, vec2(-0.7, -0.7), px * rim_width * 1.2);
-		float shade = edge_toward(TEXTURE, UV, vec2(0.7, 0.7), px * rim_width * 1.2);
-		col = mix(col, rim_color.rgb * 0.6, shade * 0.6);
-		col = mix(col, vec3(1.0), lit * 0.75);
+		// Bubbles: a few tiny pale dots in each letter.
+		float bubbles = 0.0;
+		for (int i = 0; i < 4; i++) {
+			vec2 c = vec2(hash(r + float(i) * 1.1), hash(r + float(i) * 2.3 + 5.0)) * 0.7 + 0.15;
+			float rad = 0.018 + 0.02 * hash(r + float(i) * 3.7);
+			bubbles = max(bubbles, 1.0 - smoothstep(rad * 0.5, rad, length((g - c) * vec2(1.0, 1.3))));
+		}
+		bubbles *= detail;
+		col = mix(col, vec3(0.9, 0.95, 1.0), bubbles * 0.6);
 
-		// A curved highlight around the upper left of the letter, like a
-		// window reflected in a marble.
-		vec2 p = (g - 0.5) * vec2(1.0, 1.15);
-		float arc = smoothstep(0.26, 0.31, length(p)) * (1.0 - smoothstep(0.33, 0.40, length(p)));
-		arc *= smoothstep(0.35, 0.85, dot(normalize(p + 1e-4), vec2(-0.6, -0.8)));
-		arc *= detail * (1.0 - rim);
-		col = mix(col, vec3(1.0), arc * 0.7);
-
-		// A sparkle on about a third of the letters.
-		vec2 s = (g - vec2(0.34, 0.3)) * vec2(1.0, 1.2);
-		float star = max(0.0, 1.0 - abs(s.x) / 0.14) * max(0.0, 1.0 - abs(s.y) / 0.02)
-			+ max(0.0, 1.0 - abs(s.y) / 0.14) * max(0.0, 1.0 - abs(s.x) / 0.02);
-		star = clamp(star * step(0.66, hash(r + 4.1)) * detail, 0.0, 1.0);
-		col = mix(col, vec3(1.0), star);
+		// Bright edges: white all round, strongest facing the light, and the
+		// fainter inner line.
+		// Dark glass keeps a dark outer edge so it stands out on light panels,
+		// and catches the light just inside it instead.
+		float edge_light = rim * (0.55 + 0.45 * lit) + inner * 0.35 * (1.0 - g.y * 0.6);
+		vec3 edge_col = mix(vec3(1.0), vec3(0.05, 0.06, 0.1), dark * (1.0 - lit * 0.3));
+		col = mix(col, edge_col, clamp(rim * (0.55 + 0.45 * lit), 0.0, 1.0));
+		col = mix(col, vec3(1.0), clamp(inner * (0.35 + 0.5 * dark) * (1.0 - g.y * 0.6), 0.0, 1.0));
+		// A soft sheen across the upper part of each letter.
+		col += vec3(0.25) * smoothstep(0.45, 0.1, g.y) * smoothstep(0.0, 0.25, g.y) * (1.0 - rim);
 
 		COLOR.rgb = col;
-		// Clear glass lets the background through in the middle; the thick
-		// edge, the ribbon and the highlights stay solid.
-		float solid = clamp(max(max(thick, ribbon), max(max(lit, arc), max(thread, star))), 0.0, 1.0);
+		float solid = clamp(max(max(edge_light, s1), max(max(s2, s3), bubbles)) + dark, 0.0, 1.0);
 		COLOR.a *= 1.0 - glass_clarity * detail * (1.0 - solid);
 	}
 }

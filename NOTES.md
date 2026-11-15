@@ -61,9 +61,9 @@ a root node and a script.
   crosshair follow. Icons are drawn from circles, rectangles and triangles in
   code. The one imported asset is the font, Coiny (`fonts/`, OFL), which has a
   single weight. Menu text (UiStyle.label and button labels) uses
-  `shaders/marble_text.gdshader`: each letter is its own cat's-eye marble:
-  clear glass, a ribbon (blue/green, or the button's accent) twisting through
-  it, edge light from the upper left, a curved highlight and the odd sparkle.
+  `shaders/marble_text.gdshader`: each letter is a 3D glass marble: smoky
+  see-through glass, white edge light, pink/blue/teal swirls (pink becomes the
+  button's accent) and tiny bubbles. Dark text stays solid with a dark edge.
   Letter-local coordinates come from VERTEX_ID (one quad per glyph).
   Small text gets less swirl (`detail`, set from the font size).
 - **The glossy finish** (mid-2000s style) is `UiStyle.draw_glossy_panel`. It

@@ -16,6 +16,8 @@ var settings: Settings
 var impacts: ImpactAudio
 ## The chunky-pixel look, switched by Graphics > Pixel filter.
 var pixel_filter: PixelFilter
+## Temporary: number keys switch looks (see look_switcher.gd).
+var looks: LookSwitcher
 
 
 func _ready() -> void:
@@ -32,7 +34,8 @@ func _ready() -> void:
 	# Swap the mouse arrow for the menus' pointing hand. See pointer_cursor.gd.
 	add_child(PointerCursor.new())
 	# Temporary: 1/2/3 switch looks while choosing an art direction.
-	add_child(LookSwitcher.new())
+	looks = LookSwitcher.new()
+	add_child(looks)
 	impacts = ImpactAudio.new()
 	add_child(impacts)
 

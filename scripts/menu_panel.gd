@@ -26,6 +26,13 @@ extends BaseButton
 @export var accent: Color = UiStyle.AMBER
 ## Compact panels (the steppers) are drawn as circles or near-circles.
 @export var compact: bool = false
+## No panel at all: just the label, big, in the title's clear glass. Pointing
+## at it makes the words grow instead of raising a panel.
+@export var bare: bool = false
+
+## Font size of a bare label at rest; it grows by BARE_GROW when pointed at.
+const BARE_FONT_SIZE: int = 112
+const BARE_GROW: float = 0.12
 
 var _lift: float = 0.0
 var _sink: float = 0.0
@@ -87,6 +94,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if bare:
+		return
 	# Anything much wider than it is tall is drawn as a pill, with the icon
 	# tucked in at the left and the label across the middle. Steppers are
 	# circles. Anything else is a gumdrop: a square rounded by a good fraction
@@ -116,6 +125,15 @@ func _draw_text() -> void:
 	var pill: bool = size.x > size.y * 2.0
 	var offset := Vector2(0.0, -UiStyle.LIFT * _lift + 6.0 * _sink)
 	var font: Font = UiStyle.font(700)
+
+	if bare:
+		# Pushed in reads as the words shrinking back a touch.
+		var fs: int = roundi(BARE_FONT_SIZE * (1.0 + BARE_GROW * _lift - 0.05 * _sink))
+		var w: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		var at := Vector2((size.x - w) * 0.5, (size.y + fs * UiStyle.CAP_HEIGHT) * 0.5)
+		UiStyle.set_marble_line(_text, at.y, fs)
+		_text.draw_string(font, at, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiStyle.CREAM)
+		return
 
 	if glyph != "":
 		var glyph_size: int = int(size.y * 0.46)
@@ -160,6 +178,18 @@ static func make(icon: String, text: String, tint: Color) -> MenuPanel:
 static func make_pill(icon: String, text: String, tint: Color) -> MenuPanel:
 	var panel := make(icon, text, tint)
 	panel.custom_minimum_size = UiStyle.PILL_SIZE
+	return panel
+
+
+## Just the words, big and glassy, with no panel behind them. Sized to fit the
+## words at their hovered size, so growing never spills past the click area.
+static func make_text(text: String) -> MenuPanel:
+	var panel := MenuPanel.new()
+	panel.label_text = text
+	panel.bare = true
+	var fs: int = roundi(BARE_FONT_SIZE * (1.0 + BARE_GROW))
+	var w: float = UiStyle.font(700).get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	panel.custom_minimum_size = Vector2(w + 40.0, fs * 1.05)
 	return panel
 
 

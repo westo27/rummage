@@ -1,5 +1,5 @@
 extends Control
-## The title screen: the game's name and three panels (Play, Settings, Quit).
+## The title screen: the game's name and three clickable words (Play, Settings, Quit).
 ##
 ## The background wash and the drifting blobs are drawn by this node itself
 ## rather than by child nodes, because a parent draws before its children and
@@ -59,22 +59,21 @@ func _build() -> void:
 	gap.custom_minimum_size = Vector2(0.0, 80.0)
 	_panels.add_child(gap)
 
-	# A stack of wide pills rather than a row of tiles: the long shape shows
-	# the gloss off, and one column is easier to run down with the keyboard.
+	# Just the words, in the same glass as the title, stacked in one column.
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	stack.add_theme_constant_override("separation", 34)
+	stack.add_theme_constant_override("separation", 0)
 	_panels.add_child(stack)
 
-	var play := MenuPanel.make_pill("creature", "Play", UiStyle.AMBER)
+	var play := MenuPanel.make_text("Play")
 	play.pressed.connect(_on_play)
 	stack.add_child(play)
 
-	var settings := MenuPanel.make_pill("sliders", "Settings", UiStyle.MINT)
+	var settings := MenuPanel.make_text("Settings")
 	settings.pressed.connect(_on_settings)
 	stack.add_child(settings)
 
-	var quit := MenuPanel.make_pill("exit", "Quit", UiStyle.CORAL)
+	var quit := MenuPanel.make_text("Quit")
 	quit.pressed.connect(_on_quit)
 	stack.add_child(quit)
 

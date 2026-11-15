@@ -43,10 +43,6 @@ Run only the suites the change touches; the full set once before committing.
 to Inbox. "Sort my ideas" means moving Inbox items into the sections, asking about
 unclear ones. Don't act on ideas unless Tom asks.
 
-## Parked (do after the playtest unless Tom says otherwise)
-- Playtest build: Windows export (Tom downloads export templates first),
-  then 3–5 players.
-- More life in the creatures beyond the eyes (squash/stretch, lean, startled jump), if the eyes aren't enough.
-- First-minute lesson; squeak and ping sound pass; itch page; web build test.
-- Trapdoor under the rug opens to a hidden space with something to find (Grace's idea; only the closed trapdoor exists).
-- Design question: tip-but-not-lift heavy things (the wardrobe gate would need an exception).
+## Roadmap
+**ROADMAP.md** holds the plan to the playtest and itch release (it replaced
+the old Parked list). Tick items off when they land.

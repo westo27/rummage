@@ -14,6 +14,10 @@ class_name UiStyle
 # the same family as the game's rooms (cream walls, brown floor, green side
 # room) so the menus and the game look like one thing.
 
+## Text is drawn at this z_index so it lands above the menus' pixel filter
+## (PixelFilter.FILTER_Z) and stays crisp.
+const TEXT_Z: int = 2000
+
 const BG_TOP := Color(0.10, 0.20, 0.22)
 const BG_BOTTOM := Color(0.04, 0.07, 0.10)
 ## A panel's face is a vertical gradient, not one colour: bright along the top
@@ -277,6 +281,7 @@ static func label(text: String, size: int, color: Color, weight: int = 700) -> L
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.z_index = TEXT_Z
 	return l
 
 

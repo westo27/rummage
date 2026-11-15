@@ -6,53 +6,68 @@ extends CanvasLayer
 ## drawn before every other one, so its screen texture is just the rendered 3D
 ## world, and the HUD (layer 0 and up) lands crisp on top.
 ##
-## Menus get the look too: while any menu button is on screen, a second copy
-## of the filter is drawn above all the UI, so it pixelates the menu along
-## with everything under it. Running the filter over the already-filtered 3D
-## changes nothing (same grid, colours already on their shades).
+## Menus get the look too, all but their text: while a menu button is on
+## screen, a second copy of the filter is drawn into that menu's own canvas
+## layer at z_index FILTER_Z, so it pixelates the menu and everything under it.
+## Text sits at UiStyle.TEXT_Z, higher still, so it's drawn after the filter
+## and stays crisp. Running the filter over the already-filtered 3D changes
+## nothing (same grid, colours already on their shades).
 ##
 ## Lives under the Game autoload so it survives scene changes.
 
-## Above the pause menu (10) and the HUD.
-const MENU_LAYER: int = 50
+## Above every panel and picture in a menu, below its text (UiStyle.TEXT_Z).
+const FILTER_Z: int = 1000
 
 var _rect: ColorRect
-var _menu_layer: CanvasLayer
+var _material: ShaderMaterial
+## The menu copy is a bare RenderingServer canvas item rather than a node, so it
+## can be hung under whichever layer the open menu is in without becoming a
+## child of (and being freed with) that menu's nodes.
+var _menu_item: RID
+var _menu_canvas: RID
 
 
 func _init() -> void:
 	layer = -100
 	# Keeps checking for menus while the game is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	var material := ShaderMaterial.new()
-	material.shader = preload("res://shaders/pixel_filter.gdshader")
-	_rect = _make_rect(material)
+	_material = ShaderMaterial.new()
+	_material.shader = preload("res://shaders/pixel_filter.gdshader")
+	_rect = ColorRect.new()
+	_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_rect.material = _material
 	add_child(_rect)
-	_menu_layer = CanvasLayer.new()
-	_menu_layer.layer = MENU_LAYER
-	_menu_layer.visible = false
-	_menu_layer.add_child(_make_rect(material))
-	add_child(_menu_layer)
+
+	_menu_item = RenderingServer.canvas_item_create()
+	RenderingServer.canvas_item_set_material(_menu_item, _material.get_rid())
+	RenderingServer.canvas_item_set_z_index(_menu_item, FILTER_Z)
+	# Far bigger than any screen: the shader works in screen pixels, so the
+	# rect only has to cover it.
+	RenderingServer.canvas_item_add_rect(_menu_item, Rect2(-20000, -20000, 40000, 40000), Color.WHITE)
+	RenderingServer.canvas_item_set_visible(_menu_item, false)
 
 
-func _make_rect(material: ShaderMaterial) -> ColorRect:
-	var rect := ColorRect.new()
-	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.material = material
-	return rect
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		RenderingServer.free_rid(_menu_item)
 
 
 func _process(_delta: float) -> void:
-	var menu_open: bool = false
+	var canvas := RID()
 	if visible:
 		for panel: Control in get_tree().get_nodes_in_group("menu_panels"):
 			if panel.is_visible_in_tree():
-				menu_open = true
+				# The panel's own layer, or the main canvas if it has none.
+				var menu_layer: CanvasLayer = panel.get_canvas_layer_node()
+				canvas = menu_layer.get_canvas() if menu_layer else panel.get_world_2d().canvas
 				break
-	_menu_layer.visible = menu_open
+	if canvas != _menu_canvas:
+		_menu_canvas = canvas
+		RenderingServer.canvas_item_set_parent(_menu_item, canvas)
+	RenderingServer.canvas_item_set_visible(_menu_item, canvas.is_valid())
 
 
 ## `rows` is how many chunky pixels tall the screen is.
 func set_rows(rows: float) -> void:
-	(_rect.material as ShaderMaterial).set_shader_parameter("target_rows", rows)
+	_material.set_shader_parameter("target_rows", rows)

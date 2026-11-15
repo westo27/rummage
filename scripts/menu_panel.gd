@@ -30,6 +30,10 @@ extends BaseButton
 var _lift: float = 0.0
 var _sink: float = 0.0
 var _voice: AudioStreamPlayer
+## The label and glyph are drawn on this child, at UiStyle.TEXT_Z, so they sit
+## above the menus' pixel filter and stay crisp. The panel itself is drawn
+## below it.
+var _text: Control
 
 
 ## The sounds are wired up in _init rather than _ready so that the chime is the
@@ -42,6 +46,11 @@ func _init() -> void:
 	add_child(_voice)
 	mouse_entered.connect(_play_hover)
 	pressed.connect(_play_select)
+	_text = Control.new()
+	_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_text.z_index = UiStyle.TEXT_Z
+	_text.draw.connect(_draw_text)
+	add_child(_text)
 
 
 func _ready() -> void:
@@ -75,6 +84,7 @@ func _process(delta: float) -> void:
 	_lift = lerpf(_lift, 1.0 if is_hovered() else 0.0, clampf(delta * 14.0, 0.0, 1.0))
 	_sink = lerpf(_sink, 1.0 if button_pressed else 0.0, clampf(delta * 22.0, 0.0, 1.0))
 	queue_redraw()
+	_text.queue_redraw()
 
 
 func _draw() -> void:
@@ -89,26 +99,35 @@ func _draw() -> void:
 	# down into the page while held.
 	var rect := Rect2(Vector2(0.0, -UiStyle.LIFT * _lift + 6.0 * _sink), size)
 	UiStyle.draw_glossy_panel(self, rect, radius, accent, _lift, _sink)
+	if icon_name != "":
+		var icon_rect := _icon_rect()
+		UiStyle.draw_icon(self, icon_name, Rect2(rect.position + icon_rect.position, icon_rect.size), accent)
 
+
+## Where the icon goes, before the panel's lift and sink are added.
+func _icon_rect() -> Rect2:
+	var pill: bool = size.x > size.y * 2.0
+	var box: float = size.y * (0.56 if pill else 0.34)
+	var at := Vector2(size.y * 0.34, (size.y - box) * 0.5) if pill \
+		else Vector2((size.x - box) * 0.5, size.y * 0.22)
+	return Rect2(at, Vector2(box, box))
+
+
+func _draw_text() -> void:
+	var pill: bool = size.x > size.y * 2.0
+	var offset := Vector2(0.0, -UiStyle.LIFT * _lift + 6.0 * _sink)
 	var font: Font = UiStyle.font(700)
 
 	if glyph != "":
 		var glyph_size: int = int(size.y * 0.46)
 		var measured: Vector2 = font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, glyph_size)
-		_draw_engraved(font, rect.position + Vector2((size.x - measured.x) * 0.5, size.y * 0.66),
+		_draw_engraved(font, offset + Vector2((size.x - measured.x) * 0.5, size.y * 0.66),
 			glyph, glyph_size)
 		return
 
-	# Where the icon ends, so a pill's label can keep clear of it.
-	var icon_right: float = 0.0
-	if icon_name != "":
-		var box: float = size.y * (0.56 if pill else 0.34)
-		var icon_at := Vector2(size.y * 0.34, (size.y - box) * 0.5) if pill \
-			else Vector2((size.x - box) * 0.5, size.y * 0.22)
-		UiStyle.draw_icon(self, icon_name, Rect2(rect.position + icon_at, Vector2(box, box)), accent)
-		icon_right = icon_at.x + box
-
 	if label_text != "":
+		# Where the icon ends, so a pill's label can keep clear of it.
+		var icon_right: float = _icon_rect().end.x if icon_name != "" else 0.0
 		var label_size: int = UiStyle.PILL_FONT_SIZE if pill else UiStyle.LABEL_FONT_SIZE
 		var width: float = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x
 		var baseline: float = size.y * (0.64 if pill else 0.82)
@@ -116,16 +135,16 @@ func _draw() -> void:
 		var x: float = (size.x - width) * 0.5
 		if pill and icon_right > 0.0:
 			x = maxf(x, icon_right + size.y * 0.22)
-		_draw_engraved(font, rect.position + Vector2(x, baseline), label_text, label_size)
+		_draw_engraved(font, offset + Vector2(x, baseline), label_text, label_size)
 
 
 ## Text with a pale copy a little below it. Light comes from above, so a
 ## highlight along the lower edge reads as the letters being cut into the
 ## surface. It's a small thing that stops the type looking stuck on top.
 func _draw_engraved(font: Font, at: Vector2, text: String, font_size: int) -> void:
-	draw_string(font, at + Vector2(0.0, 2.5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+	_text.draw_string(font, at + Vector2(0.0, 2.5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
 		Color(1.0, 1.0, 1.0, 0.6))
-	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiStyle.INK)
+	_text.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiStyle.INK)
 
 
 ## Builds a panel in one call, instead of five lines of property setting.

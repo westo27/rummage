@@ -574,7 +574,7 @@ fresh bump faster than `CLACK_SPEED` plays the bag's marble clack from where
 it hit (`_react_to_bumps`). A CharacterBody3D can't push rigid bodies, so it
 knocks clutter along with an impulse (`KNOCK_MASS`).
 
-They're 11 cm across (radius 0.054; the eyes are the old ones scaled 0.6)
+They're 11 cm across (radius 0.054)
 and run at `flee_speed` 2.2 m/s, so they fit in drawers. Four hide in
 drawers (`drawer_furniture` / `drawer_index` on the creature): three in the
 chest, one in the bedside table. They ride the drawer as it's pulled and pop
@@ -585,9 +585,13 @@ them.
 ## The creatures' eyes
 
 The creatures are cheeky and playful, and all of it is in the eyes
-(`scripts/creature_eyes.gd`, on Visual/Eyes). Each eye is a pivot with a
-white and a pupil: scaling the pivot blinks, widens or squints it, and the
-pupil slides across the white to look (up to 42° off straight ahead).
+(`scripts/creature_eyes.gd`, on Visual/Eyes). The body is a glass marble
+matching its marble in the bag (`shaders/creature_marble.gdshader`: smoky
+glass, swirl in its colour seen through the ball, bubbles, edge light), and
+the eyes are painted flat on it by the same shader, which creature_eyes.gd
+feeds each tick: blink, widen, squint, where the pupils look (up to 42° off
+straight ahead), happy arcs, glint. `tests/shoot_creature.tscn` renders a
+close-up row of moods.
 - Always: blinks every 2-5 s; catchlights on the pupils; the whites glow
   faintly so they read as white at night.
 - Hidden: every 3-8 s it peeks at you for a second; its giveaway (and a

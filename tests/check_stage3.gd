@@ -223,7 +223,8 @@ func _run() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	_check("caught, its eyes squeeze into happy arcs", cower._eyes.mood == CreatureEyes.Mood.HAPPY
-		and cower._eyes._arcs[0].visible, "mood=%s" % cower._eyes.mood)
+		and cower.get_node("Visual/Body").material_override.get_shader_parameter("happy") == 1.0,
+		"mood=%s" % cower._eyes.mood)
 
 	# --- A creature in a drawer rides it, then pops out when it's open ---
 	var chest: Prop = _main.get_node("MainRoomProps/ChestOfDrawers")

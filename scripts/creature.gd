@@ -736,8 +736,9 @@ func _apply_random_color() -> void:
 	var color: Color = BODY_COLORS.pick_random()
 	body_color = color
 	# duplicate() so each creature gets its own colour instead of sharing one material.
-	var mat := body.material_override.duplicate() as StandardMaterial3D
-	mat.albedo_color = color
-	mat.emission = color
+	# The eyes write into it each tick too, so each needs its own anyway.
+	var mat := body.material_override.duplicate() as ShaderMaterial
+	mat.set_shader_parameter("tint", color)
+	mat.set_shader_parameter("seed", randf())
 	body.material_override = mat
 	_glow.light_color = color

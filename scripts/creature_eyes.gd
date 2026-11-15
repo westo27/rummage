@@ -4,17 +4,17 @@ extends Node3D
 ## glint from hiding, go wide when found, squint cheekily as it runs, wink
 ## while it waits, and squeeze into happy arcs when caught.
 ##
-## Each eye is a pivot (EyeL / EyeR) holding a white and a pupil. Scaling the
-## pivot blinks, widens or squints the eye; moving the pupil across the
-## white's front makes it look somewhere. The creature drives this from its
-## physics tick (step()), since physics interpolation expects transforms to
-## change only in ticks.
+## The eyes are painted flat on the ball by the body's shader
+## (shaders/creature_marble.gdshader). This works out their shape and where
+## they look and hands that to the shader each tick. EyeL / EyeR are empty
+## pivots marking where each eye sits, used to aim the look; their scale
+## holds each eye's shape. The creature drives this from its physics tick
+## (step()).
 
 enum Mood { NORMAL, WIDE, SQUINT, HAPPY }
 
-## How far the pupil sits from the eye's centre, and the widest angle it
-## can turn from straight ahead before it would slide off the white.
-const PUPIL_DISTANCE: float = 0.022
+## The widest angle a pupil can turn from straight ahead; at this angle it
+## reaches the edge of the white.
 const MAX_LOOK_ANGLE: float = deg_to_rad(42.0)
 ## How quickly the pupils dart to a new target (per second).
 const LOOK_RATE: float = 14.0
@@ -37,12 +37,11 @@ const SHAPE_RATE: float = 18.0
 const WHITE_GLOW: float = 0.35
 const GLINT_ENERGY: float = 3.0
 const GLINT_SECONDS: float = 0.6
-const ARC_DOTS: int = 7
-const ARC_RADIUS: float = 0.022
-const DOT_RADIUS: float = 0.0055
 
 @onready var _eyes: Array[Node3D] = [$EyeL, $EyeR]
-@onready var _pupils: Array[Node3D] = [$EyeL/Pupil, $EyeR/Pupil]
+## The ball whose shader draws the eyes. Its material is looked up each
+## tick, since the creature gives it its own copy after this node is ready.
+@onready var _body: MeshInstance3D = $"../Body"
 
 var mood: Mood = Mood.NORMAL
 ## Where the pupils want to point, in world space. A zero vector means
@@ -59,23 +58,11 @@ var _wink_eye: int = 0
 var _mood_left: float = 0.0
 var _mood_after: Mood = Mood.NORMAL
 var _after_seconds: float = 0.0
-var _white_material: StandardMaterial3D
-var _arcs: Array[Node3D] = []
+var _white_glow: float = WHITE_GLOW
 
 
 func _ready() -> void:
 	_next_blink = randf_range(BLINK_GAP_MIN, BLINK_GAP_MAX)
-	# One material for both whites, this creature's own, so its glint
-	# doesn't light up every creature's eyes.
-	var white := $EyeL/White as MeshInstance3D
-	_white_material = (white.material_override as StandardMaterial3D).duplicate()
-	_white_material.emission_enabled = true
-	_white_material.emission = Color.WHITE
-	_white_material.emission_energy_multiplier = WHITE_GLOW
-	for eye in _eyes:
-		(eye.get_node("White") as MeshInstance3D).material_override = _white_material
-		_add_catchlight(eye.get_node("Pupil") as Node3D)
-		_arcs.append(_make_happy_arc(eye))
 
 
 ## Advances blinks, moods and where the pupils point. Called every physics tick.
@@ -95,6 +82,7 @@ func step(delta: float) -> void:
 	_wink_left = maxf(_wink_left - delta, 0.0)
 	_update_shape(delta)
 	_update_look(delta)
+	_send_to_shader()
 
 
 ## Shows `new_mood` for `seconds`, then `after` for `after_seconds`, then
@@ -116,12 +104,12 @@ func wink() -> void:
 ## eyes shining out from under the bed.
 func glint() -> void:
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	tween.tween_property(_white_material, "emission_energy_multiplier", GLINT_ENERGY, GLINT_SECONDS * 0.25)
-	tween.tween_property(_white_material, "emission_energy_multiplier", WHITE_GLOW, GLINT_SECONDS * 0.75)
+	tween.tween_property(self, "_white_glow", GLINT_ENERGY, GLINT_SECONDS * 0.25)
+	tween.tween_property(self, "_white_glow", WHITE_GLOW, GLINT_SECONDS * 0.75)
 
 
 func is_glinting() -> bool:
-	return _white_material.emission_energy_multiplier > WHITE_GLOW + 0.5
+	return _white_glow > WHITE_GLOW + 0.5
 
 
 ## How open an eye is right now (0 shut, 1 normal, more when wide).
@@ -147,9 +135,6 @@ func _update_shape(delta: float) -> void:
 		var shut: float = maxf(blink, wink if i == _wink_eye else 0.0)
 		var height: float = maxf(_height * (1.0 - shut * 0.92), 0.02)
 		_eyes[i].scale = Vector3(_size, _size * height, _size)
-		_pupils[i].scale = Vector3.ONE * _pupil_size
-		_eyes[i].visible = mood != Mood.HAPPY or _height > 0.15
-		_arcs[i].visible = mood == Mood.HAPPY
 
 
 func _update_look(delta: float) -> void:
@@ -169,47 +154,22 @@ func _update_look(delta: float) -> void:
 		# Blend and renormalise: close enough to a true rotation for small
 		# steps, and safe when the two directions are nearly the same.
 		_look_dirs[i] = _look_dirs[i].lerp(wanted, minf(LOOK_RATE * delta, 1.0)).normalized()
-		_pupils[i].position = _look_dirs[i] * PUPIL_DISTANCE
 
 
-## A tiny white dot on the pupil, a reflected light, which makes the eyes
-## look wet and alive.
-func _add_catchlight(pupil: Node3D) -> void:
-	var dot := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.0045
-	sphere.height = 0.009
-	sphere.radial_segments = 8
-	sphere.rings = 4
-	dot.mesh = sphere
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = Color.WHITE
-	dot.material_override = material
-	dot.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	dot.position = Vector3(-0.005, 0.006, -0.012)
-	pupil.add_child(dot)
-
-
-## The "^" of a happy, squeezed-shut eye: a row of dark dots along an
-## upward arc, shown in place of the eye.
-func _make_happy_arc(eye: Node3D) -> Node3D:
-	var arc := Node3D.new()
-	arc.position = eye.position + Vector3(0.0, -0.006, -0.02)
-	arc.visible = false
-	var sphere := SphereMesh.new()
-	sphere.radius = DOT_RADIUS
-	sphere.height = DOT_RADIUS * 2.0
-	sphere.radial_segments = 8
-	sphere.rings = 4
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.02, 0.02, 0.02)
-	for k in ARC_DOTS:
-		var angle: float = lerpf(deg_to_rad(20.0), deg_to_rad(160.0), float(k) / (ARC_DOTS - 1))
-		var dot := MeshInstance3D.new()
-		dot.mesh = sphere
-		dot.material_override = material
-		dot.position = Vector3(cos(angle) * ARC_RADIUS, sin(angle) * ARC_RADIUS * 0.8, 0.0)
-		arc.add_child(dot)
-	add_child(arc)
-	return arc
+## Hands this tick's eyes to the body's shader.
+func _send_to_shader() -> void:
+	var mat := _body.material_override as ShaderMaterial
+	if mat == null:
+		return
+	var sizes := Vector2(_eyes[0].scale.x, _eyes[1].scale.x)
+	mat.set_shader_parameter("eye_size", sizes)
+	mat.set_shader_parameter("eye_height",
+		Vector2(_eyes[0].scale.y, _eyes[1].scale.y) / sizes.max(Vector2.ONE * 0.001))
+	mat.set_shader_parameter("pupil_size", Vector2.ONE * _pupil_size)
+	# A pupil turned MAX_LOOK_ANGLE sideways sits at the edge of the white (1).
+	var reach: float = sin(MAX_LOOK_ANGLE)
+	var l := Vector2(_look_dirs[0].x, _look_dirs[0].y) / reach
+	var r := Vector2(_look_dirs[1].x, _look_dirs[1].y) / reach
+	mat.set_shader_parameter("pupil_offset", Vector4(l.x, l.y, r.x, r.y))
+	mat.set_shader_parameter("happy", 1.0 if mood == Mood.HAPPY else 0.0)
+	mat.set_shader_parameter("white_glow", _white_glow)

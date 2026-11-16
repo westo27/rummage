@@ -23,6 +23,9 @@ uniform vec4 pupil_offset = vec4(0.0);
 uniform float happy = 0.0;
 // How brightly the whites glow (they glint from hiding).
 uniform float white_glow = 0.35;
+// 0 round whites with pupils. 1 glossy black bead eyes, 2 tiny dot eyes,
+// 3 big sparkly eyes: the last three with blush and a little mouth.
+uniform int face_style = 0;
 
 // The face as seen head-on, as on the bag's marble: eye centres and radii
 // in units of the ball's radius.
@@ -78,9 +81,9 @@ vec4 eye(vec2 f, vec2 c, float size, float height, float psize, vec2 look, inout
 }
 
 // The "^" of a happy, squeezed-shut eye.
-float arc(vec2 f, vec2 c) {
-	float aa = fwidth(f.x) * 1.5;
-	vec2 d = (f - c - vec2(0.0, -0.04)) / vec2(1.0, 0.8);
+float arc(vec2 f, vec2 c, float scale) {
+	float aa = fwidth(f.x) * 1.5 / scale;
+	vec2 d = (f - c - vec2(0.0, -0.04 * scale)) / (vec2(1.0, 0.8) * scale);
 	float r = 0.19;
 	float ang = atan(d.y, d.x);
 	float on_arc = step(0.35, ang) * step(ang, 2.79);
@@ -91,6 +94,44 @@ float arc(vec2 f, vec2 c) {
 	float ends = max(1.0 - smoothstep(0.06 - aa, 0.06, length(d - e1)),
 		1.0 - smoothstep(0.06 - aa, 0.06, length(d - e2)));
 	return max(line * on_arc, ends);
+}
+
+
+// A solid glossy eye with no white: dark, lit from below with a little of
+// the body's colour, two highlights. `r` is its radii; `wide` 0..1 grows
+// the shine. Returns (colour, how much eye covers here).
+vec4 bead(vec2 f, vec2 c, vec2 r, float height, vec2 look, float wide, inout vec3 emit) {
+	float aa = fwidth(f.x) * 1.5;
+	vec2 rr = r * vec2(1.0, max(height, 0.02));
+	vec2 d = (f - c - look * r * 0.25) / rr;
+	float cover = 1.0 - smoothstep(1.0 - aa / rr.x, 1.0, length(d));
+	vec3 col = mix(vec3(0.015, 0.01, 0.03), tint.rgb * 0.55, smoothstep(0.1, -1.0, d.y) * 0.85);
+	float open = step(0.35, height);
+	float big = mix(0.3, 0.38, wide);
+	float h1 = 1.0 - smoothstep(big - aa / rr.x, big, length(d - vec2(-0.3, 0.4)));
+	float h2 = 1.0 - smoothstep(0.14 - aa / rr.x, 0.14, length(d - vec2(0.38, -0.42)));
+	float h3 = (1.0 - smoothstep(0.08 - aa / rr.x, 0.08, length(d - vec2(0.05, 0.62)))) * wide;
+	float shine = max(max(h1, h2 * 0.9), h3) * open;
+	col = mix(col, vec3(1.0), shine);
+	emit += cover * shine * (0.4 + white_glow) * vec3(1.0);
+	return vec4(col, cover);
+}
+
+// Soft round 0..1 patch, radii r.
+float patch(vec2 f, vec2 c, vec2 r) {
+	return 1.0 - smoothstep(0.55, 1.0, length((f - c) / r));
+}
+
+// The little mouth: a smile, or a small "o" when wide-eyed.
+float mouth(vec2 f, float wide, float scale) {
+	float aa = fwidth(f.x) * 1.5;
+	vec2 c = vec2(0.0, -0.17 * scale);
+	if (wide > 0.5) {
+		return 1.0 - smoothstep(1.0 - aa / 0.04, 1.0, length((f - c) / vec2(0.04, 0.05) / scale));
+	}
+	vec2 d = f - c - vec2(0.0, 0.05 * scale);
+	float ring = 1.0 - smoothstep(0.016 - aa, 0.016, abs(length(d) - 0.055 * scale));
+	return ring * step(d.y, -0.022 * scale);
 }
 
 void fragment() {
@@ -135,7 +176,7 @@ void fragment() {
 	// The face, painted flat on the front of the ball. Paint isn't glossy,
 	// so the pupils stay black whatever the glass reflects.
 	float paint = 0.0;
-	if (p.z < 0.0) {
+	if (p.z < 0.0 && face_style == 0) {
 		vec2 f = vec2(p.x, p.y);
 		vec3 eye_emit = vec3(0.0);
 		vec4 l = eye(f, vec2(-EYE_CENTRE.x, EYE_CENTRE.y), eye_size.x, eye_height.x, pupil_size.x, pupil_offset.xy, eye_emit);
@@ -143,10 +184,35 @@ void fragment() {
 		float cover = max(l.a, r.a) * (1.0 - happy);
 		col = mix(col, l.rgb * l.a + r.rgb * r.a, cover);
 		emit = mix(emit, eye_emit, cover);
-		float arcs = max(arc(f, vec2(-EYE_CENTRE.x, EYE_CENTRE.y)), arc(f, EYE_CENTRE)) * happy;
+		float arcs = max(arc(f, vec2(-EYE_CENTRE.x, EYE_CENTRE.y), 1.0), arc(f, EYE_CENTRE, 1.0)) * happy;
 		col = mix(col, vec3(0.02), arcs);
 		emit = mix(emit, vec3(0.0), arcs);
 		paint = max(cover, arcs);
+	} else if (p.z < 0.0) {
+		vec2 f = vec2(p.x, p.y);
+		// Where the eyes sit and how big, per style: wide apart and low.
+		vec2 ec = face_style == 1 ? vec2(0.3, 0.02) : (face_style == 2 ? vec2(0.2, 0.05) : vec2(0.33, 0.06));
+		vec2 er = face_style == 1 ? vec2(0.12, 0.17) : (face_style == 2 ? vec2(0.06, 0.07) : vec2(0.17, 0.22));
+		float scale = face_style == 2 ? 0.8 : 1.0;
+		vec2 wide = clamp((1.0 - pupil_size) / 0.4, 0.0, 1.0);
+		vec3 eye_emit = vec3(0.0);
+		vec4 l = bead(f, vec2(-ec.x, ec.y), er * eye_size.x, eye_height.x, pupil_offset.xy, wide.x, eye_emit);
+		vec4 r = bead(f, ec, er * eye_size.y, eye_height.y, pupil_offset.zw, wide.y, eye_emit);
+		float cover = max(l.a, r.a) * (1.0 - happy);
+		// Blush under the outer corners of the eyes.
+		float blush = max(patch(f, vec2(-ec.x - 0.14, ec.y - 0.2) * vec2(1.0, 1.0), vec2(0.12, 0.07)),
+			patch(f, vec2(ec.x + 0.14, ec.y - 0.2), vec2(0.12, 0.07))) * 0.6;
+		col = mix(col, vec3(1.0, 0.45, 0.55), blush);
+		emit = mix(emit, vec3(1.0, 0.35, 0.45) * 0.25, blush);
+		col = mix(col, l.rgb * l.a + r.rgb * r.a, cover);
+		emit = mix(emit, eye_emit, cover);
+		float arc_scale = er.x / 0.12 * 0.75;
+		float arcs = max(arc(f, vec2(-ec.x, ec.y), arc_scale), arc(f, ec, arc_scale)) * happy;
+		float m = mouth(f, max(wide.x, wide.y) * (1.0 - happy), scale);
+		float dark = max(arcs, m);
+		col = mix(col, vec3(0.12, 0.02, 0.05), dark);
+		emit = mix(emit, vec3(0.0), dark);
+		paint = max(max(cover, dark), blush);
 	}
 
 	ALBEDO = col;

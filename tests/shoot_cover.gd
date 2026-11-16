@@ -8,10 +8,12 @@ extends Node
 const OUT: String = "user://shots"
 const COVER_SIZE := Vector2i(630, 500)
 const SPOT := Vector3(2.45, 0.1, -1.2)  # just under the bed's front edge
-const TITLE_SIZE: int = 350
-## Gap above the title, in render pixels: it sits over the bed's side, the
-## empty band above the creature, rather than against the top edge.
-const TITLE_TOP: int = 300
+const TITLE_SIZE: int = 420  # "Marbles!"
+const TITLE_SMALL: int = 245  # "Losing My"
+## Gap above the title, in render pixels, and from one line's top to the next.
+## Both lines sit over the bed's side, above the creature.
+const TITLE_TOP: int = 30
+const TITLE_LINE_GAP: int = 235
 const TITLE_OUTLINE: int = 44
 const SHADOW_DROP: int = 18
 const TITLE_FILL := Color(1.0, 0.86, 0.72)
@@ -129,22 +131,25 @@ func _dim(main: Node) -> void:
 
 ## The title as a logo: marble text over a solid cream fill, a heavy plum
 ## outline and a soft drop shadow, so it reads at thumbnail size.
+## Two lines: a smaller "Losing My" over a big "Marbles!".
 func _title() -> CanvasLayer:
 	var layer := CanvasLayer.new()
 	layer.layer = 10
+	_title_line(layer, "Losing My", TITLE_SMALL, TITLE_TOP)
+	_title_line(layer, "Marbles!", TITLE_SIZE, TITLE_TOP + TITLE_LINE_GAP)
+	return layer
+
+
+func _title_line(layer: CanvasLayer, text: String, size: int, top: int) -> void:
+	var outline: int = roundi(TITLE_OUTLINE * float(size) / TITLE_SIZE)
 	# The shadow sits a little lower than the logo itself.
-	layer.add_child(_title_row(TITLE_TOP + SHADOW_DROP, [
-		_title_text(Color(0.04, 0.01, 0.08, 0.55), Color(0.04, 0.01, 0.08, 0.55), TITLE_OUTLINE + 14),
-	]))
+	var shade := Color(0.04, 0.01, 0.08, 0.55)
+	layer.add_child(_title_row(top + SHADOW_DROP, [_title_text(text, size, shade, shade, outline + 14)]))
 	# A MarginContainer stacks its children: fill and outline, then the marble.
-	var marble := UiStyle.label("Losing My Marbles!", TITLE_SIZE, UiStyle.CREAM)
+	var marble := UiStyle.label(text, size, UiStyle.CREAM)
 	marble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UiStyle.set_marble_drift(marble)
-	layer.add_child(_title_row(TITLE_TOP, [
-		_title_text(TITLE_FILL, TITLE_INK, TITLE_OUTLINE),
-		marble,
-	]))
-	return layer
+	layer.add_child(_title_row(top, [_title_text(text, size, TITLE_FILL, TITLE_INK, outline), marble]))
 
 
 func _title_row(top: int, labels: Array) -> MarginContainer:
@@ -156,12 +161,12 @@ func _title_row(top: int, labels: Array) -> MarginContainer:
 	return holder
 
 
-func _title_text(fill: Color, ink: Color, outline: int) -> Label:
+func _title_text(text: String, size: int, fill: Color, ink: Color, outline: int) -> Label:
 	var l := Label.new()
-	l.text = "Losing My Marbles!"
+	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_override("font", UiStyle.font(700))
-	l.add_theme_font_size_override("font_size", TITLE_SIZE)
+	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", fill)
 	l.add_theme_color_override("font_outline_color", ink)
 	l.add_theme_constant_override("outline_size", outline)

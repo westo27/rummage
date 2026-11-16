@@ -1,10 +1,11 @@
 extends RefCounted
-## The game's logo for press images: marble text over a solid cream fill, a
-## heavy plum outline and a soft drop shadow, so it reads at thumbnail size.
+## The game's logo for press images: see-through glass marble text, as in the
+## game, ringed with a heavy plum outline and a soft drop shadow, so it reads
+## at thumbnail size. Only the rings are drawn behind the glass, so whatever
+## is behind the logo shows through the letters.
 ## Two lines: a smaller "Losing My" over a big "Marbles!".
 ## Sizes are for "Marbles!" at `size`; everything else scales with it.
 
-const FILL := Color(1.0, 0.86, 0.72)
 const INK := Color(0.2, 0.06, 0.2)
 const SHADE := Color(0.04, 0.01, 0.08, 0.55)
 ## As shares of the big line's font size.
@@ -24,12 +25,12 @@ static func _line(parent: Node, text: String, size: int, top: int, big: int) -> 
 	var outline: int = roundi(size * OUTLINE)
 	# The shadow sits a little lower than the logo itself.
 	var drop: int = roundi(big * SHADOW_DROP)
-	parent.add_child(_row(top + drop, [_text(text, size, SHADE, SHADE, outline + roundi(big / 30.0))]))
-	# A MarginContainer stacks its children: fill and outline, then the marble.
+	parent.add_child(_row(top + drop, [_text(text, size, SHADE, outline + roundi(big / 30.0))]))
+	# A MarginContainer stacks its children: the outline, then the marble.
 	var marble := UiStyle.label(text, size, UiStyle.CREAM)
 	marble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UiStyle.set_marble_drift(marble)
-	parent.add_child(_row(top, [_text(text, size, FILL, INK, outline), marble]))
+	parent.add_child(_row(top, [_text(text, size, INK, outline), marble]))
 
 
 static func _row(top: int, labels: Array) -> MarginContainer:
@@ -41,13 +42,14 @@ static func _row(top: int, labels: Array) -> MarginContainer:
 	return holder
 
 
-static func _text(text: String, size: int, fill: Color, ink: Color, outline: int) -> Label:
+## Just the ring round the letters: the glyphs themselves are left clear.
+static func _text(text: String, size: int, ink: Color, outline: int) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_override("font", UiStyle.font(700))
 	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", fill)
+	l.add_theme_color_override("font_color", Color.TRANSPARENT)
 	l.add_theme_color_override("font_outline_color", ink)
 	l.add_theme_constant_override("outline_size", outline)
 	return l

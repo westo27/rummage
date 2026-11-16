@@ -16,7 +16,7 @@ const BANNER_WIDTH: int = 900
 const LOGO_SIZE: int = 420
 
 const TILE: int = 640
-const COUNT: int = 32
+const COUNT: int = 14
 const SEED: int = 7
 ## Each marble is rendered alone at this size, then scaled to its spot in the
 ## tile; drawn big and shrunk, its edge comes out smooth.
@@ -24,14 +24,20 @@ const SPRITE: int = 256
 ## Smallest and largest marble across, in tile pixels.
 const SIZE_MIN: float = 70.0
 const SIZE_MAX: float = 125.0
-## How close two marbles may sit, as a share of their combined radii: a
-## little under 1, so they jostle without hiding each other's faces.
-const SPACING: float = 0.86
+## How close two marbles may sit, as a share of their combined radii: well
+## over 1, so they're scattered with room between.
+const SPACING: float = 1.5
 const NIGHT := Color(0.06, 0.03, 0.11)
 ## How far the finished tile is pulled toward NIGHT, so the page text over it
 ## stays the thing you read.
-const DIM: float = 0.2
+const DIM: float = 0.55
 const SHADOW_DROP := Vector2i(5, 8)
+## Out of focus: how far each marble's blur spreads, in tile pixels. The
+## smallest get the most, as if further behind the page.
+const BLUR_NEAR: float = 3.0
+const BLUR_FAR: float = 6.0
+## The blur runs on the marble shrunk by this much: same look, far less work.
+const BLUR_SHRINK: int = 2
 
 ## Faces: mood, a wink, and how far the pupils wander off straight ahead.
 const FACES: Array = [
@@ -92,8 +98,10 @@ func _background() -> void:
 		var size: int = roundi(spot.z)
 		sprite.resize(size, size, Image.INTERPOLATE_LANCZOS)
 		var at := Vector2i(roundi(spot.x - size * 0.5), roundi(spot.y - size * 0.5))
-		_paste_wrapped(tile, _shadow(sprite), at + SHADOW_DROP)
-		_paste_wrapped(tile, sprite, at)
+		var far: float = inverse_lerp(SIZE_MAX, SIZE_MIN, spot.z)
+		var blur: float = lerpf(BLUR_NEAR, BLUR_FAR, far)
+		_paste_wrapped(tile, _blur(_shadow(sprite), blur), at + SHADOW_DROP - Vector2i(size, size) / 2)
+		_paste_wrapped(tile, _blur(sprite, blur), at - Vector2i(size, size) / 2)
 	view.queue_free()
 	tile.convert(Image.FORMAT_RGB8)
 	for y in TILE:
@@ -205,6 +213,53 @@ func _shadow(sprite: Image) -> Image:
 	shade.resize(maxi(size / 6, 1), maxi(size / 6, 1), Image.INTERPOLATE_BILINEAR)
 	shade.resize(size, size, Image.INTERPOLATE_CUBIC)
 	return shade
+
+
+## Softens a cut-out, with a margin all round so the blur has room to spread.
+## The result is twice the size, centred on the same spot. Three box blurs in
+## a row come out close to a true soft focus.
+func _blur(sprite: Image, spread: float) -> Image:
+	var size: int = sprite.get_width()
+	var full: int = size * 2
+	var padded := Image.create(full, full, false, Image.FORMAT_RGBA8)
+	padded.blit_rect(sprite, Rect2i(Vector2i.ZERO, sprite.get_size()), Vector2i(size, size) / 2)
+	var small: int = full / BLUR_SHRINK
+	padded.resize(small, small, Image.INTERPOLATE_LANCZOS)
+	var radius: int = maxi(roundi(spread / BLUR_SHRINK), 1)
+	# Colour weighted by alpha while blurring, so the see-through margin
+	# doesn't bleed black into the marble's edge.
+	var px := PackedColorArray()
+	px.resize(small * small)
+	for y in small:
+		for x in small:
+			var c: Color = padded.get_pixel(x, y)
+			px[y * small + x] = Color(c.r * c.a, c.g * c.a, c.b * c.a, c.a)
+	for i in 3:
+		px = _box(px, small, radius, Vector2i(1, 0))
+		px = _box(px, small, radius, Vector2i(0, 1))
+	for y in small:
+		for x in small:
+			var c: Color = px[y * small + x]
+			var a: float = maxf(c.a, 0.0001)
+			padded.set_pixel(x, y, Color(c.r / a, c.g / a, c.b / a, c.a))
+	padded.resize(full, full, Image.INTERPOLATE_LANCZOS)
+	return padded
+
+
+## One box blur pass along `step` (a row or a column), clamped at the edges.
+func _box(px: PackedColorArray, n: int, radius: int, step: Vector2i) -> PackedColorArray:
+	var out := PackedColorArray()
+	out.resize(n * n)
+	var weight: float = 1.0 / (radius * 2 + 1)
+	for y in n:
+		for x in n:
+			var sum := Color(0, 0, 0, 0)
+			for k in range(-radius, radius + 1):
+				var sx: int = clampi(x + step.x * k, 0, n - 1)
+				var sy: int = clampi(y + step.y * k, 0, n - 1)
+				sum += px[sy * n + sx]
+			out[y * n + x] = sum * weight
+	return out
 
 
 func _paste_wrapped(tile: Image, sprite: Image, at: Vector2i) -> void:

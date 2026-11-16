@@ -19,6 +19,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 ├─ House           three rooms in a row, west to east (see "The house")
 │  ├─ Walls        CSGCombiner3D: walls/ceiling, both doorways, window, cubbies
 │  ├─ FloorPlayroom, FloorBedroom, FloorBoxRoom   CSGBox3D
+│  ├─ StableDoor   scripts/stable_door.gd: playroom–bedroom door, top half bolted shut
 │  ├─ LandingDoor  the landing's door; its Door body swings open after the lesson
 │  └─ LampPlayroom, LampMain (bedroom), LampSide (box room), a ReflectionProbe each
 ├─ Player          scenes/player.tscn  (scripts/player.gd: move, look, kick clutter)
@@ -296,8 +297,10 @@ each room (needs a window).
 - **Playroom** (x -5.1..-0.1, 5 × 4.5 m), through the landing door: a beanbag in the north-west
   corner, a toy bin, a school bag by the north wall, the bookcase on the west
   wall, a beanbag, the play table on the rug over the trapdoor, two bins. Planks.
-- **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a low doorway at z=0 (1.1 m
-  high, so you crouch: standing is 1.3 m, crouched 0.95 m): the bed
+- **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a stable door at z=0
+  (`scripts/stable_door.gd`, House/StableDoor: the glazed top half is bolted
+  shut from 1.1 m up, the bottom half stands open against the bedroom wall,
+  so you crouch: standing is 1.3 m, crouched 0.95 m): the bed
   under the window, bedside table, chest of drawers, the wardrobe in front
   of the box-room door, a desk and chair, a laundry bin. Teal carpet.
 - **Box room** (x 5.3..8.3, 3 × 2.8 m), reached through the wardrobe.

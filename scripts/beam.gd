@@ -433,10 +433,16 @@ func _min_hold_distance(prop: Prop) -> float:
 
 
 ## Where the beam leaves the hand: below and right of the eye, but never
-## under the floor when you're lying flat.
+## under the floor when you're lying flat. Then it's pulled in towards the
+## eye rather than lifted straight up, so it stays in the same direction on
+## screen (off the bottom edge) instead of popping up mid-view.
 func beam_origin() -> Vector3:
+	const FLOOR_CLEARANCE: float = 0.06
+	var eye: Vector3 = _camera.global_position
 	var origin: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
-	origin.y = maxf(origin.y, 0.06)
+	if origin.y < FLOOR_CLEARANCE and eye.y > origin.y:
+		var k: float = clampf((eye.y - FLOOR_CLEARANCE) / (eye.y - origin.y), 0.2, 1.0)
+		origin = eye + (origin - eye) * k
 	return origin
 
 

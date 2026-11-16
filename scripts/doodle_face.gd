@@ -5,6 +5,15 @@ extends RefCounted
 ## drops into the HUD bag, so the caught marble wears the same face.
 ## The creature's shader (creature_marble.gdshader) draws it in 3D; draw()
 ## here is the bag's small 2D version.
+## Faces drawn by hand in the face painter (tools/face_painter.tscn) live in
+## FOLDER; when there are any, creatures wear those instead of the built-in
+## doodles below.
+
+const FOLDER: String = "res://faces"
+## A drawn face is four square cells side by side: eye, happy eye, mouth,
+## startled mouth.
+enum Cell { EYE, HAPPY_EYE, MOUTH, STARTLED_MOUTH }
+const CELLS: int = 4
 
 enum Eyes { DOTS, RINGS, LASHES, BEANS, GOOGLY, SLEEPY, STARS, HEARTS, SPIRAL, WINK }
 enum Mouth { SMILE, GRIN, WONKY, CAT, TONGUE, BUCK, ZIGZAG, KISS, TOOTHY }
@@ -50,10 +59,66 @@ var mouth: Mouth = Mouth.SMILE
 var extras: int = 0
 ## -1..1: one eye a touch bigger and higher than the other.
 var lop: float = 0.0
+## A face drawn in the face painter, or null for a built-in doodle.
+var drawn: Texture2D = null
+
+static var _drawn_faces: Array[Texture2D] = []
+static var _drawn_loaded: bool = false
 
 
 static func random() -> DoodleFace:
+	var faces: Array[Texture2D] = drawn_faces()
+	if not faces.is_empty():
+		var face := DoodleFace.new()
+		face.drawn = faces.pick_random()
+		face.lop = randf_range(-1.0, 1.0)
+		return face
 	return variant(IN_PLAY.pick_random())
+
+
+## Every face in FOLDER, loaded once.
+static func drawn_faces() -> Array[Texture2D]:
+	if not _drawn_loaded:
+		_drawn_loaded = true
+		for name: String in face_names():
+			_drawn_faces.append(load_drawn(name))
+	return _drawn_faces
+
+
+## The names of the faces in FOLDER (file names without ".png").
+static func face_names() -> Array[String]:
+	var names: Array[String] = []
+	var dir := DirAccess.open(FOLDER)
+	if dir == null:
+		return names
+	for file: String in dir.get_files():
+		# In an exported game the PNGs are listed by their import files.
+		file = file.trim_suffix(".import").trim_suffix(".remap")
+		if file.ends_with(".png") and not file.get_basename() in names:
+			names.append(file.get_basename())
+	names.sort()
+	return names
+
+
+## A drawn face's texture, with mipmaps so it stays smooth at a distance.
+static func load_drawn(name: String) -> Texture2D:
+	var path: String = "%s/%s.png" % [FOLDER, name]
+	var image: Image
+	if ResourceLoader.exists(path):
+		image = (load(path) as Texture2D).get_image()
+	else:
+		image = Image.load_from_file(ProjectSettings.globalize_path(path))
+	return texture_from(image)
+
+
+## The face painter's live texture uses this too.
+static func texture_from(image: Image) -> ImageTexture:
+	image = image.duplicate() as Image
+	if image.is_compressed():
+		image.decompress()
+	image.convert(Image.FORMAT_RGBA8)
+	image.generate_mipmaps()
+	return ImageTexture.create_from_image(image)
 
 
 ## One of VARIANTS, drawn a little lopsided at random.
@@ -72,11 +137,16 @@ func apply(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("face_mouth", mouth)
 	mat.set_shader_parameter("face_extras", extras)
 	mat.set_shader_parameter("face_lop", lop)
+	mat.set_shader_parameter("face_drawn", drawn != null)
+	mat.set_shader_parameter("face_tex", drawn)
 
 
 ## Draws the face on `canvas` for a ball of `radius`, centred on its origin,
 ## facing the viewer (y down). Positions match the shader's head-on face.
 func draw(canvas: CanvasItem, radius: float) -> void:
+	if drawn != null:
+		_draw_drawn(canvas, radius)
+		return
 	var w: float = maxf(radius * 0.085, 1.0)
 	var tilt: float = lop * 0.125
 	for side: float in [-1.0, 1.0]:
@@ -104,3 +174,23 @@ func draw(canvas: CanvasItem, radius: float) -> void:
 			canvas.draw_arc(m - Vector2(0.0, mr * 1.6), mr * 2.0, PI * 0.37, PI * 0.63, 10, INK, w, true)
 		_:
 			canvas.draw_arc(m - Vector2(0.0, mr * 0.6), mr, PI * 0.18, PI * 0.82, 10, INK, w, true)
+
+
+## The hand-drawn face: its eye (mirrored for the right) and mouth cells, at
+## the shader's positions.
+func _draw_drawn(canvas: CanvasItem, radius: float) -> void:
+	var cell: float = drawn.get_height()
+	var eye_box: float = 0.41 * radius
+	for side: float in [-1.0, 1.0]:
+		var tilt: float = lop * 0.2 * side
+		var at := Vector2(0.435 * side, -0.116 + tilt * 0.14) * radius
+		var box: float = eye_box * (1.0 - tilt)
+		# Mirroring the right eye: draw it with x flipped about its centre.
+		canvas.draw_set_transform(at, 0.0, Vector2(-1.0 if side > 0.0 else 1.0, 1.0))
+		canvas.draw_texture_rect_region(drawn, Rect2(-box, -box, box * 2.0, box * 2.0),
+			Rect2(Cell.EYE * cell, 0.0, cell, cell))
+	var mouth_box: float = 0.435 * radius
+	canvas.draw_set_transform(Vector2(0.0, 0.32 * radius), 0.0, Vector2.ONE)
+	canvas.draw_texture_rect_region(drawn, Rect2(-mouth_box, -mouth_box, mouth_box * 2.0, mouth_box * 2.0),
+		Rect2(Cell.MOUTH * cell, 0.0, cell, cell))
+	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

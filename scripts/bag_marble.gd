@@ -61,6 +61,8 @@ func _ready() -> void:
 	_glass.draw.connect(_draw_glass)
 	add_child(_glass)
 	_face = Node2D.new()
+	# Hand-drawn faces are big textures shrunk a lot: mipmaps keep them smooth.
+	_face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_face.draw.connect(_draw_face)
 	add_child(_face)
 

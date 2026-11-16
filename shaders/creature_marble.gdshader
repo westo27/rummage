@@ -24,6 +24,11 @@ uniform int face_eyes = 0;
 uniform int face_mouth = 0;
 uniform int face_extras = 0;
 uniform float face_lop = 0.0;
+// A face drawn by hand in the face painter (tools/face_painter.tscn): four
+// square cells side by side, ink in the alpha: eye, happy eye, mouth,
+// startled mouth. Used in place of the built-in doodles when face_drawn.
+uniform bool face_drawn = false;
+uniform sampler2D face_tex : source_color, filter_linear_mipmap, repeat_disable;
 // Per eye (x left, y right): size, height (0 shut .. 1 open), pupil size
 // (under 1 when wide-eyed).
 uniform vec2 eye_size = vec2(1.0);
@@ -298,6 +303,38 @@ float doodle_extras(vec2 f, int extras, vec2 lc, vec2 rc, float s) {
 	return ink;
 }
 
+// One cell of the hand-drawn face, placed in a box centred `c` with
+// half-size `box` (mirrored for the right eye), its lines nudged a little
+// each boil. Returns the ink.
+float drawn_part(vec2 f, vec2 c, vec2 box, int cell, bool mirror, float s) {
+	vec2 uv = (f - c) / box * 0.5 + 0.5;
+	uv.y = 1.0 - uv.y;
+	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
+		return 0.0;
+	}
+	if (mirror) {
+		uv.x = 1.0 - uv.x;
+	}
+	uv += vec2(wobble(uv.y * 6.0 + s * 5.0), wobble(uv.x * 6.0 + s * 5.0 + 3.0)) * 0.006;
+	uv = clamp(uv, 0.004, 0.996);
+	return texture(face_tex, vec2((float(cell) + uv.x) / 4.0, uv.y)).a;
+}
+
+// The hand-drawn face's eye: its drawing squashed as it blinks or squints,
+// grown when wide-eyed, nudged toward where it looks. A blink is a line.
+// Returns (ink, the eye's area, which flashes when it glints).
+vec2 drawn_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, bool mirror, float s) {
+	// The painter's dashed guide (0.65 of the box) is the built-in eye size.
+	float box = 0.28 * size * (1.0 + wide * 0.3);
+	if (open < 0.3) {
+		return vec2(ink_stroke(f, c - vec2(box * 0.8, 0.0), c + vec2(box * 0.8, 0.0), 0.036), 0.0);
+	}
+	vec2 at = c + look * 0.04;
+	float ink = drawn_part(f, at, vec2(box, box * min(open, 1.2)), 0, mirror, s);
+	float area = 1.0 - smoothstep(0.7, 1.1, length((f - c) / box));
+	return vec2(ink, area);
+}
+
 void fragment() {
 	// The ball as a unit sphere in its own space: the face looks down -Z.
 	vec3 p = normalize(obj_pos);
@@ -348,16 +385,29 @@ void fragment() {
 		vec2 wide = clamp((1.0 - pupil_size) / 0.4, 0.0, 1.0);
 		vec2 lc = vec2(-0.3, 0.08 + lop * 0.1);
 		vec2 rc = vec2(0.3, 0.08 - lop * 0.1);
-		vec2 le = doodle_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, face_eyes, -1.0, s);
-		vec2 re = doodle_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, face_eyes, 1.0, s + 1.0);
+		vec2 le;
+		vec2 re;
+		float arcs;
+		float m;
+		float extras = 0.0;
+		float startled = max(wide.x, wide.y) * (1.0 - happy);
+		if (face_drawn) {
+			le = drawn_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, false, s);
+			re = drawn_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, true, s + 1.0);
+			arcs = max(drawn_part(f, lc, vec2(0.28), 1, false, s), drawn_part(f, rc, vec2(0.28), 1, true, s + 1.0)) * happy;
+			m = drawn_part(f, vec2(0.0, -0.22), vec2(0.3), startled > 0.5 ? 3 : 2, false, s + 2.0);
+		} else {
+			le = doodle_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, face_eyes, -1.0, s);
+			re = doodle_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, face_eyes, 1.0, s + 1.0);
+			arcs = max(ink_ring(f, lc - vec2(0.0, 0.07), 0.16, 0.036, s, 0.35, 2.79),
+				ink_ring(f, rc - vec2(0.0, 0.07), 0.16, 0.036, s + 1.0, 0.35, 2.79)) * happy;
+			// Drawn 1.3x size and a little lower, to sit with the big eyes.
+			vec2 fm = vec2(0.0, -0.17) + (f - vec2(0.0, -0.21)) / 1.3;
+			m = doodle_mouth(fm, face_mouth, startled, happy, s + 2.0);
+			extras = doodle_extras(f, face_extras, lc, rc, s + 3.0);
+		}
 		float eyes = max(le.x, re.x) * (1.0 - happy);
 		float flash = max(le.y, re.y) * (1.0 - happy);
-		float arcs = max(ink_ring(f, lc - vec2(0.0, 0.07), 0.16, 0.036, s, 0.35, 2.79),
-			ink_ring(f, rc - vec2(0.0, 0.07), 0.16, 0.036, s + 1.0, 0.35, 2.79)) * happy;
-		// Drawn 1.3x size and a little lower, to sit with the big eyes.
-		vec2 fm = vec2(0.0, -0.17) + (f - vec2(0.0, -0.21)) / 1.3;
-		float m = doodle_mouth(fm, face_mouth, max(wide.x, wide.y) * (1.0 - happy), happy, s + 2.0);
-		float extras = doodle_extras(f, face_extras, lc, rc, s + 3.0);
 		// Felt-tip on glass: dark blue-black.
 		float line = max(max(max(eyes, arcs), m), extras);
 		col = mix(col, vec3(0.03, 0.02, 0.09), line);

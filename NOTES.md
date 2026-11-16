@@ -627,10 +627,20 @@ each tick: blink, widen (bigger eyes, an "o" mouth), squint, where the pupils
 look, happy arcs and grin, glint. Turned to look at you, it tips its face 70%
 of the way up to your eyes (`FACE_TIP`), since you always look down on it.
 `tests/shoot_faces.tscn` renders a sheet of random faces in every mood;
+`tests/shoot_face_variants.tscn` the 20 named built-in faces;
 `tests/shoot_creature.tscn` a row in the room.
-- Always: blinks every 2-5 s; a highlight left blank in each pupil.
+
+**Face painter** (`tools/face_painter.tscn`, F6): draw faces by hand as four
+parts (eye, happy eye, mouth, startled mouth), with a live marble preview
+running through the moods. Save writes `res://faces/<name>.png` (the four
+parts side by side). When that folder has any faces, creatures wear those
+(at random) instead of the built-in doodles; the shader places the parts,
+mirrors the eye for the right, squashes it to blink and squint, grows it
+when startled and wobbles the lines as the ink boils.
+`tests/shoot_face_painter.tscn` checks it end to end.
+- Always: blinks every 2-5 s.
 - Hidden: every 3-8 s it peeks at you for a second; its giveaway (and a
-  ping) makes the pupil highlights glint, bright enough for bloom.
+  ping) makes the glass round its eyes flash, bright enough for bloom.
 - Found: wide eyes for 0.35 s, then a cheeky squint as it bolts.
 - Running and cowering: it keeps its eyes on you, and winks now and then
   while it waits.

@@ -3,7 +3,7 @@ extends RefCounted
 ## game, ringed with a heavy plum outline and a soft drop shadow, so it reads
 ## at thumbnail size. Only the rings are drawn behind the glass, so whatever
 ## is behind the logo shows through the letters.
-## Two lines: a smaller "Losing My" over a big "Marbles!".
+## Two lines: a smaller "I’m Losing My" over a big "Marbles!".
 ## Sizes are for "Marbles!" at `size`; everything else scales with it.
 
 const INK := Color(0.2, 0.06, 0.2)
@@ -16,8 +16,8 @@ const SHADOW_DROP: float = 18.0 / 420.0
 
 
 ## Adds the logo's labels to `parent`, centred across it, `top` pixels down.
-static func build(parent: Node, size: int, top: int, first: String = "Losing My") -> void:
-	_line(parent, first, roundi(size * SMALL), top, size)
+static func build(parent: Node, size: int, top: int) -> void:
+	_line(parent, "I’m Losing My", roundi(size * SMALL), top, size)
 	_line(parent, "Marbles!", size, top + roundi(size * LINE_GAP), size)
 
 

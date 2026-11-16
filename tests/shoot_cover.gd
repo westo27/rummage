@@ -172,7 +172,7 @@ func _shot_crate() -> void:
 ## they're waiting for you to look away.
 func _shot_sill() -> void:
 	_night(0.3, 0.5, 0.72)
-	_place_camera(Vector3(2.6, 1.12, -1.45), Vector3(2.6, 1.43, -2.2), 42.0)
+	_place_camera(Vector3(2.6, 1.12, -1.45), Vector3(2.6, 1.46, -2.2), 42.0)
 	_focus(0.85, 0.6, 0.05)
 	var sill_y: float = 1.2 + R
 	var line := [[YELLOW, NORMAL], [PURPLE, NORMAL], [GREEN, WIDE], [ORANGE, WIDE], [PINK, WIDE],
@@ -186,8 +186,8 @@ func _shot_sill() -> void:
 	(_main.get_node("Moonlight") as Light3D).light_specular = 0.15
 	_omni(Vector3(2.45, 1.2, -1.5), Color(1.0, 0.8, 0.6), 0.5, 1.2)
 	_grade(1.15, 1.25)
-	_vignette(0.75)
-	_logo(400, 30)
+	_vignette(0.75, 0.5, 0.22)
+	_logo(400, 735)  # centred in the frame
 
 
 # --- Staging -----------------------------------------------------------------
@@ -339,27 +339,32 @@ func _add(node: Node) -> void:
 func _logo(size: int, top: int) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 10
-	PressLogo.build(layer, size, top, "I’m Losing My")
+	PressLogo.build(layer, size, top)
 	_add(layer)
 
 
-## Darkens the corners, so the eye goes to the middle.
-func _vignette(strength: float) -> void:
+## Darkens the corners, so the eye goes to the middle, plus a soft band of
+## shade behind the logo (centred `title_at` down the frame, `title_reach`
+## either side) so it stands clear of the room.
+func _vignette(strength: float, title_at: float = 0.0, title_reach: float = 0.42) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 5
 	var shader := Shader.new()
 	shader.code = """shader_type canvas_item;
 uniform float strength = 0.75;
+uniform float title_at = 0.0;
+uniform float title_reach = 0.42;
 void fragment() {
 	vec2 p = (UV - 0.5) * vec2(1.26, 1.0);
 	float corners = smoothstep(0.3, 0.85, length(p)) * strength;
-	// A soft shade down from the top, so the logo stands clear of the room.
-	float top = (1.0 - smoothstep(0.0, 0.42, UV.y)) * 0.45;
-	COLOR = vec4(0.02, 0.01, 0.07, max(corners, top));
+	float title = (1.0 - smoothstep(0.0, title_reach, abs(UV.y - title_at))) * 0.45;
+	COLOR = vec4(0.02, 0.01, 0.07, max(corners, title));
 }"""
 	var mat := ShaderMaterial.new()
 	mat.shader = shader
 	mat.set_shader_parameter("strength", strength)
+	mat.set_shader_parameter("title_at", title_at)
+	mat.set_shader_parameter("title_reach", title_reach)
 	var rect := ColorRect.new()
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	rect.material = mat

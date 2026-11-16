@@ -33,7 +33,7 @@ Run only the suites the change touches; the full set once before committing.
 ## Visual checks (need a real window, not --headless)
 - `tests/shoot_cover.tscn` (itch cover, 1260x1000 → press/), `tests/shoot_banner.tscn` (itch theme banner + seamless marble background tile, 1920x1080 → press/), `tests/shoot_itch.tscn` (5 itch screenshots, 1920x1080 → press/), `tests/shoot_gif.tscn` (itch GIF frames: `--resolution 1280x720 --fixed-fps 15`, then `tools/make_gif.py`), `tests/shoot.tscn` (all screens), `tests/shoot_lamp.tscn` (lamp), `tests/shoot_title.tscn` (title backdrop),
   `tests/shoot_rooms.tscn` (each room) and `tests/shoot_pixel.tscn` (pixel filter), PNGs
-  in `%APPDATA%/Godot/app_userdata/Losing My Marbles!/shots`.
+  in `%APPDATA%/Godot/app_userdata/I'm Losing My Marbles!/shots`.
 - Render at `--resolution 960x540` and look only when the look is the point.
 - `tests/bench_gpu.tscn` measures GPU cost per graphics setting.
 - `tests/check_marble_text.tscn` (needs a window): swirl text stays steady.

@@ -5,9 +5,9 @@
 // It's opaque: the "inside" is faked by sampling the swirl partway along
 // the view ray through the ball, so it shifts with the angle like real glass.
 // The face is drawn on in felt-tip, as if by the child who owns the marbles:
-// wobbly ink, its own mix of eyes and mouth on every marble, pencil-scribbled
-// cheeks, and lines that "boil" (redrawn a few times a second, like hand-drawn
-// animation). CreatureEyes drives it through the eye_* uniforms.
+// rough wobbly ink, loops that don't quite close, its own mix of eyes and
+// mouth on every marble, and lines that "boil" (redrawn a few times a second,
+// like hand-drawn animation). CreatureEyes drives it through the eye_* uniforms.
 shader_type spatial;
 
 uniform vec4 tint : source_color = vec4(0.45, 0.95, 0.4, 1.0);
@@ -75,15 +75,21 @@ float wobble(float x) {
 }
 
 // A hand-drawn ink line along a wobbly circle: radius r, thickness w.
-// `from`..`to` limits it to an arc (radians, 0 = right, anticlockwise).
+// `from`..`to` limits it to an arc (radians, 0 = right, anticlockwise). A
+// full loop doesn't quite close: it drifts outward as it goes round, so the
+// end overshoots the start, as a pen does.
 float ink_ring(vec2 f, vec2 c, float r, float w, float s, float from, float to) {
 	float aa = fwidth(f.x) * 1.2;
 	vec2 d = f - c;
 	float ang = atan(d.y, d.x);
 	float k = ang * 1.3 + s * 17.0;
-	float rr = r * (1.0 + 0.07 * wobble(k) + 0.03 * wobble(k * 3.1));
+	float rr = r * (1.0 + 0.11 * wobble(k) + 0.02 * wobble(k * 2.3));
+	if (to - from > 6.2) {
+		float start = hash(floor(s) + 0.5) * 6.283;
+		rr *= 1.0 + 0.12 * (fract((ang - start) / 6.283) - 0.5);
+	}
 	// Felt-tip pressure: thicker in places.
-	float ww = w * (0.8 + 0.35 * (wobble(k * 1.7 + 5.0) * 0.5 + 0.5));
+	float ww = w * (0.7 + 0.6 * (wobble(k * 1.7 + 5.0) * 0.5 + 0.5));
 	float line = 1.0 - smoothstep(ww - aa, ww, abs(length(d) - rr));
 	float span = step(from, ang) * step(ang, to);
 	return line * (to - from > 6.2 ? 1.0 : span);
@@ -94,7 +100,7 @@ float ink_dot(vec2 f, vec2 c, vec2 r, float s) {
 	float aa = fwidth(f.x) * 1.2;
 	vec2 d = (f - c) / r;
 	float ang = atan(d.y, d.x);
-	float edge = 1.0 + 0.1 * wobble(ang * 1.5 + s * 13.0);
+	float edge = 1.0 + 0.18 * wobble(ang * 1.5 + s * 13.0);
 	return 1.0 - smoothstep(edge - aa / r.x, edge, length(d));
 }
 
@@ -112,26 +118,25 @@ float ink_stroke(vec2 f, vec2 a, vec2 b, float w) {
 // bean, 4 googly (big ring, small droopy pupil), 5 sleepy (half-lidded),
 // 6 star, 7 heart, 8 spiral, 9 winking (the right eye a "^").
 // `open` squashes it shut (blink, squint); `wide` draws it bigger. Returns
-// (ink, the little highlight left blank in it, which is what glints).
+// (ink, the eye's area, which flashes when it glints).
 vec2 doodle_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, int kind, float side, float s) {
 	float h = max(open, 0.05);
 	vec2 g = vec2(f.x, c.y + (f.y - c.y) / h);  // squash toward the eye's middle line
-	float r = 0.145 * size * (1.0 + wide * 0.35);
-	float w = 0.03;
+	float r = 0.18 * size * (1.0 + wide * 0.3);
+	float w = 0.036;
 	float aa = fwidth(f.x) * 1.2;
 	if (open < 0.3) {
 		// Shut: just a line.
 		return vec2(ink_stroke(f, c - vec2(r, 0.0), c + vec2(r, 0.0), w), 0.0);
 	}
 	if (kind == 9 && side > 0.0) {
-		return vec2(ink_ring(f, c - vec2(0.0, 0.06), 0.13, w, s, 0.35, 2.79), 0.0);
+		return vec2(ink_ring(f, c - vec2(0.0, 0.07), 0.16, w, s, 0.35, 2.79), 0.0);
 	}
 	float pupil_r = r * mix(0.55, 0.38, wide);
 	vec2 pc = c + look * r * 0.45 + vec2(0.0, -r * 0.1);
 	vec2 d = (g - c) / r;
 	float ink = 0.0;
 	vec2 dot_r = vec2(pupil_r);
-	bool has_spark = true;
 	if (kind == 0) {
 		dot_r = vec2(r * 0.62, r * 0.78);
 		ink = ink_dot(g, pc, dot_r, s);
@@ -169,7 +174,6 @@ vec2 doodle_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, i
 		float dist = abs(fract(rr * 1.6 - a + 0.5) - 0.5) / 1.6 * 1.3;
 		float lw = w * 0.75 / r;
 		ink = (1.0 - smoothstep(lw - aa / r, lw, dist)) * step(rr, 1.0);
-		has_spark = false;
 	} else {
 		ink = max(ink_ring(g, c, r, w, s, -4.0, 4.0), ink_dot(g, pc, dot_r, s + 3.0));
 		if (kind == 2) {
@@ -181,8 +185,8 @@ vec2 doodle_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, i
 			}
 		}
 	}
-	float spark = has_spark ? ink_dot(g, pc + vec2(-0.32, 0.36) * dot_r, dot_r * 0.3, s + 7.0) : 0.0;
-	return vec2(ink * (1.0 - spark), spark);
+	float area = 1.0 - smoothstep(0.8, 1.25, length(d));
+	return vec2(ink, area);
 }
 
 // The doodled mouth. Kinds: 0 smile, 1 open grin, 2 wonky smile with a
@@ -245,14 +249,14 @@ float doodle_mouth(vec2 f, int kind, float wide, float happy_amount, float s) {
 }
 
 // The extras some faces have (bits of face_extras): 1 brows, 2 nose,
-// 4 freckles (instead of scribbled cheeks), 8 moustache, 16 glasses, 32 a
+// 4 freckles, 8 moustache, 16 glasses, 32 a
 // tuft of hair. Returns the ink.
 float doodle_extras(vec2 f, int extras, vec2 lc, vec2 rc, float s) {
-	float w = 0.028;
+	float w = 0.034;
 	float ink = 0.0;
 	if ((extras & 1) != 0) {
-		ink = max(ink, max(ink_ring(f, lc - vec2(0.0, 0.03), 0.31, w, s, 1.25, 1.9),
-			ink_ring(f, rc - vec2(0.0, 0.03), 0.31, w, s + 1.0, 1.24, 1.89)));
+		ink = max(ink, max(ink_ring(f, lc - vec2(0.0, 0.05), 0.38, w, s, 1.27, 1.88),
+			ink_ring(f, rc - vec2(0.0, 0.05), 0.38, w, s + 1.0, 1.26, 1.87)));
 	}
 	if ((extras & 2) != 0) {
 		ink = max(ink, ink_ring(f, vec2(0.0, -0.05), 0.03, w * 0.85, s, -3.0, -0.14));
@@ -271,7 +275,7 @@ float doodle_extras(vec2 f, int extras, vec2 lc, vec2 rc, float s) {
 			ink_ring(f, vec2(0.165, -0.07), 0.045, w * 0.9, s + 1.0, -2.54, 0.0)));
 	}
 	if ((extras & 16) != 0) {
-		float gr = 0.22;
+		float gr = 0.26;
 		ink = max(ink, max(ink_ring(f, lc, gr, w, s, -4.0, 4.0), ink_ring(f, rc, gr, w, s + 1.0, -4.0, 4.0)));
 		ink = max(ink, ink_stroke(f, lc + vec2(gr, 0.02), rc - vec2(gr, -0.02), w));
 	}
@@ -280,13 +284,6 @@ float doodle_extras(vec2 f, int extras, vec2 lc, vec2 rc, float s) {
 			max(ink_stroke(f, vec2(0.0, 0.41), vec2(0.0, 0.53), w), ink_stroke(f, vec2(0.05, 0.4), vec2(0.09, 0.5), w))));
 	}
 	return ink;
-}
-
-// Pink pencil scribbled in a patch: the cheeks.
-float scribble(vec2 f, vec2 c, vec2 r, float s) {
-	float inside = 1.0 - smoothstep(0.75, 1.0, length((f - c) / r));
-	float lines = smoothstep(0.42, 0.1, abs(fract((f.x * 0.8 + f.y) * 30.0 + wobble(f.y * 30.0 + s) * 0.3) - 0.5));
-	return inside * lines;
 }
 
 void fragment() {
@@ -335,31 +332,28 @@ void fragment() {
 		// Redrawn a little differently six times a second: the ink boils.
 		float s = seed * 31.0 + floor(TIME * 6.0) * 0.37;
 		vec2 f = vec2(p.x, p.y) / 1.45;
-		float lop = face_lop * 0.125;
+		float lop = face_lop * 0.2;
 		vec2 wide = clamp((1.0 - pupil_size) / 0.4, 0.0, 1.0);
-		vec2 lc = vec2(-0.27, 0.07 + lop * 0.1);
-		vec2 rc = vec2(0.27, 0.07 - lop * 0.1);
+		vec2 lc = vec2(-0.3, 0.08 + lop * 0.1);
+		vec2 rc = vec2(0.3, 0.08 - lop * 0.1);
 		vec2 le = doodle_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, face_eyes, -1.0, s);
 		vec2 re = doodle_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, face_eyes, 1.0, s + 1.0);
 		float eyes = max(le.x, re.x) * (1.0 - happy);
-		float spark = max(le.y, re.y) * (1.0 - happy);
-		float arcs = max(ink_ring(f, lc - vec2(0.0, 0.06), 0.13, 0.03, s, 0.35, 2.79),
-			ink_ring(f, rc - vec2(0.0, 0.06), 0.13, 0.03, s + 1.0, 0.35, 2.79)) * happy;
-		float m = doodle_mouth(f, face_mouth, max(wide.x, wide.y) * (1.0 - happy), happy, s + 2.0);
-		float cheeks = max(scribble(f, vec2(-0.46, -0.15), vec2(0.1, 0.065), s),
-			scribble(f, vec2(0.46, -0.15), vec2(0.1, 0.065), s + 4.0));
-		cheeks *= (face_extras & 4) != 0 ? 0.0 : 1.0;  // freckles instead
+		float flash = max(le.y, re.y) * (1.0 - happy);
+		float arcs = max(ink_ring(f, lc - vec2(0.0, 0.07), 0.16, 0.036, s, 0.35, 2.79),
+			ink_ring(f, rc - vec2(0.0, 0.07), 0.16, 0.036, s + 1.0, 0.35, 2.79)) * happy;
+		// Drawn 1.3x size and a little lower, to sit with the big eyes.
+		vec2 fm = vec2(0.0, -0.17) + (f - vec2(0.0, -0.21)) / 1.3;
+		float m = doodle_mouth(fm, face_mouth, max(wide.x, wide.y) * (1.0 - happy), happy, s + 2.0);
 		float extras = doodle_extras(f, face_extras, lc, rc, s + 3.0);
 		// Felt-tip on glass: dark blue-black.
 		float line = max(max(max(eyes, arcs), m), extras);
-		col = mix(col, vec3(1.0, 0.42, 0.55), cheeks);
 		col = mix(col, vec3(0.03, 0.02, 0.09), line);
-		col = mix(col, vec3(1.0), spark);
 		emit = mix(emit, vec3(0.0), line * 0.9);
-		emit = mix(emit, vec3(1.0, 0.3, 0.45) * 0.15, cheeks);
-		// The highlights catch the light: enough for the bloom when glinting.
-		emit += vec3(1.0) * spark * white_glow * 2.5;
-		paint = max(line, cheeks * 0.5);
+		// A glint (white_glow above its resting level) lights the glass round
+		// the eyes, enough for the bloom: two eyes shining from hiding.
+		emit += vec3(1.0) * flash * (1.0 - line) * max(white_glow - 0.35, 0.0) * 2.0;
+		paint = line;
 	}
 
 	ALBEDO = col;

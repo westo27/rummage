@@ -79,7 +79,8 @@ func _creature(at: Vector3, index: int, camera: Camera3D) -> void:
 	mat.set_shader_parameter("tint", Creature.BODY_COLORS[index % Creature.BODY_COLORS.size()])
 	mat.set_shader_parameter("seed", 0.17 * index)
 	var face := DoodleFace.variant(index)
-	face.lop = 0.0  # drawn straight, so they compare fairly
+	# Lopsided by a fixed amount each, so the sheet is the same every run.
+	face.lop = sin(index * 2.3) * 0.7
 	face.apply(mat)
 	var visual := c.get_node("Visual") as Node3D
 	visual.look_at(camera.global_position, Vector3.UP)

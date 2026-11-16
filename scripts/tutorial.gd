@@ -22,14 +22,27 @@ const DONE_HINT_TIME: float = 4.0
 ## The door swings into the playroom by this much, over this long.
 const DOOR_OPEN_DEGREES: float = 100.0
 const DOOR_OPEN_TIME: float = 1.4
+## By the bed, once the lesson is over: how to get down and look under it.
+const CROUCH_HINT: String = "Hold  C  to crouch"
+const PRONE_HINT: String = "Hold  Z  to lie on your tummy"
+## How close to the bed's middle (along the floor) the bed hints come up.
+const BED_HINT_RANGE: float = 2.0
 
 var step: Step = Step.GRAB
+## Which bed hint is up ("" for none), and whether the bed lesson is over:
+## it ends the first time you lie flat by the bed.
+var _bed_hint: String = ""
+var _bed_done: bool = false
+## The last lesson hint is still on screen, so the bed hints wait.
+var _done_hint_up: bool = false
 
 @onready var _beam: Beam = $"../Player/Head/Camera3D/Beam"
 @onready var _ping: Ping = $"../Ping"
 @onready var _hud: Hud = $"../HUD"
 @onready var _creature: Creature = $"../Landing/LessonCreature"
 @onready var _door: AnimatableBody3D = $"../House/LandingDoor/Door"
+@onready var _player: CharacterBody3D = $"../Player"
+@onready var _bed: Node3D = $"../MainRoomProps/Bed"
 
 
 func _ready() -> void:
@@ -45,6 +58,36 @@ func _process(_delta: float) -> void:
 	if step < Step.CATCH and is_instance_valid(_creature) \
 			and _creature.state != Creature.State.HIDDEN:
 		_reach(Step.CATCH)
+	_update_bed_hint()
+
+
+## Near the bed: "crouch", then "lie flat" once you're crouched. Walking off
+## hides it; lying flat ends it for good. The bed can be dragged about, so
+## this goes by where it is now.
+func _update_bed_hint() -> void:
+	if step != Step.DONE or _done_hint_up or _bed_done:
+		return
+	var want: String = ""
+	var crouch: float = _player.crouch
+	if crouch >= 0.99:
+		_bed_done = _bed_hint != ""
+	elif _near_bed():
+		want = PRONE_HINT if crouch >= 0.5 else CROUCH_HINT
+	if want == _bed_hint:
+		return
+	_bed_hint = want
+	if want == "":
+		_hud.hide_hint()
+	else:
+		_hud.show_hint(want)
+
+
+func _near_bed() -> bool:
+	if not is_instance_valid(_bed):
+		return false
+	var offset: Vector3 = _bed.global_position - _player.global_position
+	offset.y = 0.0
+	return offset.length() < BED_HINT_RANGE
 
 
 ## Moves on to `to`, unless the lesson is already past it.
@@ -60,7 +103,10 @@ func _finish() -> void:
 		return
 	step = Step.DONE
 	_hud.show_hint(DONE_HINT)
-	get_tree().create_timer(DONE_HINT_TIME, false).timeout.connect(_hud.hide_hint)
+	_done_hint_up = true
+	get_tree().create_timer(DONE_HINT_TIME, false).timeout.connect(func() -> void:
+		_hud.hide_hint()
+		_done_hint_up = false)
 	open_door()
 
 

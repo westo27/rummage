@@ -175,12 +175,15 @@ func _shot_sill() -> void:
 	_place_camera(Vector3(2.6, 1.12, -1.45), Vector3(2.6, 1.43, -2.2), 42.0)
 	_focus(0.85, 0.6, 0.05)
 	var sill_y: float = 1.2 + R
-	var line := [[PURPLE, NORMAL], [GREEN, WIDE], [ORANGE, WIDE], [PINK, WIDE],
-			[BLUE, NORMAL], [YELLOW, NORMAL], [PURPLE, WIDE]]
+	var line := [[YELLOW, NORMAL], [PURPLE, NORMAL], [GREEN, WIDE], [ORANGE, WIDE], [PINK, WIDE],
+			[BLUE, NORMAL], [YELLOW, WIDE], [PURPLE, WIDE], [GREEN, NORMAL]]
+	# Nearly touching, edge to edge across the frame: a line of them.
 	for i in line.size():
-		var x: float = 2.6 + (i - (line.size() - 1) * 0.5) * 0.14 + randf_range(-0.02, 0.02)
-		var c := _pose(Vector3(x, sill_y, -2.16 + randf_range(-0.03, 0.03)), line[i][0], line[i][1], 0.1)
+		var x: float = 2.6 + (i - (line.size() - 1) * 0.5) * 0.118 + randf_range(-0.005, 0.005)
+		var c := _pose(Vector3(x, sill_y, -2.16 + randf_range(-0.015, 0.015)), line[i][0], line[i][1], 0.1)
 		_turn(c, randf_range(-0.2, 0.2), randf_range(-0.25, 0.25))
+	# The moon behind still rims them, without a hot sparkle on every top.
+	(_main.get_node("Moonlight") as Light3D).light_specular = 0.15
 	_omni(Vector3(2.45, 1.2, -1.5), Color(1.0, 0.8, 0.6), 0.5, 1.2)
 	_grade(1.15, 1.25)
 	_vignette(0.75)
@@ -197,7 +200,7 @@ func _reset() -> void:
 	_used = 0
 	for c in _pool:
 		c.global_position = FAR
-	_env.volumetric_fog_enabled = false
+	(_main.get_node("Moonlight") as Light3D).light_specular = 0.5
 
 
 ## Lamps and moon turned down to night, and the exposure.

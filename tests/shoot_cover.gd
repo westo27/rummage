@@ -73,6 +73,7 @@ func _run() -> void:
 		var image: Image = get_viewport().get_texture().get_image()
 		image.resize(COVER_SIZE.x, COVER_SIZE.y, Image.INTERPOLATE_LANCZOS)
 		image.save_png("%s/cover_%s.png" % [OUT, shot])
+		await _save_without_text(shot)
 		# All of them at itch's browse size (315x250) on one sheet, to compare.
 		image.convert(Image.FORMAT_RGB8)
 		image.resize(COVER_SIZE.x / 2, COVER_SIZE.y / 2, Image.INTERPOLATE_LANCZOS)
@@ -344,6 +345,25 @@ func _logo(size: int, top: int) -> void:
 	layer.layer = 10
 	PressLogo.build(layer, size, top)
 	_add(layer)
+
+
+## The same shot again with no logo (and no shade behind it), as
+## cover_<shot>_notext.png; the logo comes back after.
+func _save_without_text(shot: String) -> void:
+	var shown: Array[CanvasLayer] = []
+	for n in _shot_nodes:
+		if n is CanvasLayer and (n as CanvasLayer).layer == 10:
+			(n as CanvasLayer).visible = false
+			shown.append(n)
+		elif n is CanvasLayer and (n as CanvasLayer).layer == 5:
+			var rect := (n as CanvasLayer).get_child(0) as ColorRect
+			(rect.material as ShaderMaterial).set_shader_parameter("title_at", -10.0)
+	await _frames(4)
+	var image: Image = get_viewport().get_texture().get_image()
+	image.resize(COVER_SIZE.x, COVER_SIZE.y, Image.INTERPOLATE_LANCZOS)
+	image.save_png("%s/cover_%s_notext.png" % [OUT, shot])
+	for layer in shown:
+		layer.visible = true
 
 
 ## Darkens the corners, so the eye goes to the middle, plus a soft band of

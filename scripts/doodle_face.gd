@@ -7,7 +7,8 @@ extends RefCounted
 ## here is the bag's small 2D version.
 ## Faces drawn by hand in the face painter (tools/face_painter.tscn) live in
 ## FOLDER; when there are any, creatures wear those instead of the built-in
-## doodles below.
+## doodles below. A face with no happy eye or startled mouth drawn gets them
+## made from its eye and mouth (fill_missing).
 
 const FOLDER: String = "res://faces"
 ## A drawn face is four square cells side by side: eye, happy eye, mouth,
@@ -118,7 +119,7 @@ static func load_drawn(name: String) -> Texture2D:
 		image = (load(path) as Texture2D).get_image()
 	else:
 		image = Image.load_from_file(ProjectSettings.globalize_path(path))
-	return texture_from(image)
+	return texture_from(fill_missing(image))
 
 
 ## Where the ink of a drawn face's eye sits in its square: see eye_span.
@@ -218,3 +219,146 @@ func _draw_drawn(canvas: CanvasItem, radius: float) -> void:
 	canvas.draw_texture_rect_region(drawn, Rect2(-mouth_box, -mouth_box, mouth_box * 2.0, mouth_box * 2.0),
 		Rect2(Cell.MOUTH * cell, 0.0, cell, cell))
 	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+# --- Making the happy eye and startled mouth -----------------------------------
+
+## Fills in a drawn face's happy eye and startled mouth when they're blank,
+## from its eye and mouth. Returns a new atlas; drawn parts are kept as they are.
+static func fill_missing(atlas: Image) -> Image:
+	atlas = _rgba(atlas)
+	var cell: int = atlas.get_height()
+	for pair: Array in [[Cell.HAPPY_EYE, Cell.EYE], [Cell.STARTLED_MOUTH, Cell.MOUTH]]:
+		var target: int = pair[0]
+		if atlas.get_region(Rect2i(target * cell, 0, cell, cell)).get_used_rect().size.x > 0:
+			continue
+		var source := atlas.get_region(Rect2i(int(pair[1]) * cell, 0, cell, cell))
+		var made: Image = happy_from_eye(source) if target == Cell.HAPPY_EYE else startled_from_mouth(source)
+		atlas.blit_rect(made, Rect2i(0, 0, cell, cell), Vector2i(target * cell, 0))
+	return atlas
+
+
+## The happy eye: the top edge of the eye, traced as a closed "^" arch, in
+## the eye's own pen weight. Small eyes get a bigger arch, so it reads.
+static func happy_from_eye(eye: Image) -> Image:
+	eye = _rgba(eye)
+	var size: int = eye.get_width()
+	var out := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var used: Rect2i = eye.get_used_rect()
+	if used.size.x <= 0:
+		return out
+	# The topmost ink in each column, sampled every few pixels.
+	var step: int = maxi(size / 128, 1)
+	var tops := PackedVector2Array()
+	for x in range(used.position.x, used.end.x, step):
+		for y in range(used.position.y, used.end.y, step):
+			if eye.get_pixel(x, y).a > 0.5:
+				tops.append(Vector2(x, y))
+				break
+	if tops.size() < 2:
+		return out
+	var weight: float = pen_weight(eye)
+	# Trace along the outside of the line: shift down by half the pen.
+	for i in tops.size():
+		tops[i].y += weight * 0.5
+	# Smooth out the steps, then scale up about the eye's middle if it's small.
+	tops = _smooth(tops, 3)
+	var middle := Vector2(used.get_center())
+	var min_width: float = size * 0.3
+	var grow: float = maxf(min_width / maxf(used.size.x, 1.0), 1.0)
+	var lift: float = (used.size.y * 0.5 - weight) * 0.5
+	for i in tops.size():
+		# A flat-topped eye still needs to read as a curve: bow it a little.
+		var t: float = float(i) / (tops.size() - 1) * 2.0 - 1.0
+		var p: Vector2 = tops[i] + Vector2(0.0, lift + t * t * size * 0.04)
+		tops[i] = middle + (p - middle) * grow
+	draw_stroke(out, tops, weight * 0.5)
+	return out
+
+
+## The startled mouth: a little "o" in the mouth's pen weight, sized to the
+## mouth and centred where it sits.
+static func startled_from_mouth(mouth: Image) -> Image:
+	mouth = _rgba(mouth)
+	var size: int = mouth.get_width()
+	var out := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var used: Rect2i = mouth.get_used_rect()
+	var centre: Vector2 = Vector2(size, size) * 0.5
+	var width: float = size * 0.25
+	var weight: float = size * 0.03
+	if used.size.x > 0:
+		centre = Vector2(used.get_center())
+		width = clampf(used.size.x * 0.45, size * 0.12, size * 0.3)
+		weight = pen_weight(mouth)
+	var ring := PackedVector2Array()
+	for i in 41:
+		var a: float = TAU * i / 40.0 + 0.3
+		ring.append(centre + Vector2(cos(a) * width * 0.5, sin(a) * width * 0.62))
+	draw_stroke(out, ring, weight * 0.5)
+	return out
+
+
+## How thick the drawing's lines are, in pixels: the commonest length of a
+## run of ink across a row or down a column (whichever is shorter).
+static func pen_weight(image: Image) -> float:
+	var size: int = image.get_width()
+	var used: Rect2i = image.get_used_rect()
+	var runs: Array[int] = []
+	for horizontal: bool in [true, false]:
+		var lines: int = used.size.y if horizontal else used.size.x
+		for i in range(0, lines, maxi(lines / 24, 1)):
+			var run: int = 0
+			var length: int = used.size.x if horizontal else used.size.y
+			for j in length:
+				var x: int = used.position.x + j if horizontal else used.position.x + i
+				var y: int = used.position.y + i if horizontal else used.position.y + j
+				if image.get_pixel(x, y).a > 0.5:
+					run += 1
+				elif run > 0:
+					runs.append(run)
+					run = 0
+			if run > 0:
+				runs.append(run)
+	if runs.is_empty():
+		return size * 0.03
+	runs.sort()
+	# The lower quarter: lines crossed square on, not along their length.
+	return clampf(runs[runs.size() / 4], size * 0.02, size * 0.08)
+
+
+## Ink along a path, round-ended, with a soft edge.
+static func draw_stroke(image: Image, points: PackedVector2Array, radius: float) -> void:
+	var size: int = image.get_width()
+	for i in points.size() - 1:
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[i + 1]
+		var lo := Vector2i(floori(minf(a.x, b.x) - radius - 2.0), floori(minf(a.y, b.y) - radius - 2.0))
+		var hi := Vector2i(ceili(maxf(a.x, b.x) + radius + 2.0), ceili(maxf(a.y, b.y) + radius + 2.0))
+		for y in range(maxi(lo.y, 0), mini(hi.y, size)):
+			for x in range(maxi(lo.x, 0), mini(hi.x, size)):
+				var p := Vector2(x + 0.5, y + 0.5)
+				var ab: Vector2 = b - a
+				var t: float = clampf((p - a).dot(ab) / maxf(ab.length_squared(), 0.0001), 0.0, 1.0)
+				var cover: float = clampf((radius + 0.75 - p.distance_to(a + ab * t)) / 1.5, 0.0, 1.0)
+				if cover > image.get_pixel(x, y).a:
+					image.set_pixel(x, y, Color(INK.r, INK.g, INK.b, cover))
+
+
+static func _smooth(points: PackedVector2Array, reach: int) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for i in points.size():
+		var sum := Vector2.ZERO
+		var count: int = 0
+		for k in range(maxi(i - reach, 0), mini(i + reach + 1, points.size())):
+			sum += points[k]
+			count += 1
+		out.append(sum / count)
+	return out
+
+
+static func _rgba(image: Image) -> Image:
+	image = image.duplicate() as Image
+	if image.is_compressed():
+		image.decompress()
+	image.convert(Image.FORMAT_RGBA8)
+	return image

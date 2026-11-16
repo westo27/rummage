@@ -4,7 +4,8 @@ extends Control
 ##
 ## A face is four parts, each drawn on its own square: the eye (the game
 ## mirrors it for the right eye), the happy eye (^ ^ when caught), the mouth,
-## and the startled mouth (when found). The game places them, squashes the
+## and the startled mouth (when found). Leave the happy eye or startled mouth
+## blank and they're made from the eye and mouth (DoodleFace.fill_missing). The game places them, squashes the
 ## eyes to blink and squint, grows them when startled and nudges them to
 ## look about. Save writes res://faces/<name>.png; when that folder has any
 ## faces, creatures wear those (picked at random) instead of the built-in
@@ -45,6 +46,10 @@ var _last: Vector2 = Vector2.ZERO
 var _dirty: bool = true
 var _pen_white: bool = false
 var _auto_white: bool = true
+## Bumped whenever a part changes (a stroke ends, undo, clear, load), so the
+## made-for-you parts are only remade when what they come from has changed.
+var _revision: Array[int] = [0, 0, 0, 0]
+var _made: Dictionary = {}
 ## While drawing: the part as it was before this stroke, and how much the
 ## stroke covers each pixel (only its soft edge is part-covered).
 var _stroke_base: Image
@@ -58,6 +63,7 @@ var _canvas_tex: ImageTexture
 var _name_edit: LineEdit
 var _faces: OptionButton
 var _status: Label
+var _made_label: Label
 var _mood_label: Label
 var _part_buttons: Array[Button] = []
 
@@ -98,8 +104,7 @@ func _on_canvas_input(event: InputEvent) -> void:
 				_stamp_line(_last, _last)
 			else:
 				_drawing = false
-				_show_part()
-				_dirty = true
+				_end_stroke()
 	elif event is InputEventMouseMotion and _drawing:
 		var at := _to_image((event as InputEventMouseMotion).position)
 		_stamp_line(_last, at)
@@ -114,6 +119,12 @@ func _begin_stroke(erasing: bool) -> void:
 	_stroke_mask.resize(SIZE * SIZE)
 	_stroke_mask.fill(0.0)
 	_stroke_length = 0.0
+
+
+func _end_stroke() -> void:
+	_revision[_part] += 1
+	_show_part()
+	_dirty = true
 
 
 func _to_image(at: Vector2) -> Vector2:
@@ -176,6 +187,8 @@ func _grain(x: int, y: int) -> float:
 ## closes off, under the ink.
 func _composed(index: int) -> Image:
 	var part := _parts[index]
+	if index in [DoodleFace.Cell.HAPPY_EYE, DoodleFace.Cell.STARTLED_MOUTH] and part.get_used_rect().size.x <= 0:
+		return _made_part(index)
 	if index != DoodleFace.Cell.EYE or not _auto_white:
 		return part
 	var small := part.duplicate() as Image
@@ -230,9 +243,26 @@ func _composed(index: int) -> Image:
 	return white
 
 
-## Shows the current part on the canvas as the game will draw it.
+## A blank happy eye or startled mouth, made from the eye or mouth: remade
+## only when that has changed since.
+func _made_part(index: int) -> Image:
+	var source: int = DoodleFace.Cell.EYE if index == DoodleFace.Cell.HAPPY_EYE else DoodleFace.Cell.MOUTH
+	var cached: Array = _made.get(index, [-1, null])
+	if cached[0] != _revision[source]:
+		var made: Image = DoodleFace.happy_from_eye(_parts[source]) if index == DoodleFace.Cell.HAPPY_EYE \
+			else DoodleFace.startled_from_mouth(_parts[source])
+		cached = [_revision[source], made]
+		_made[index] = cached
+	return cached[1]
+
+
+## Shows the current part on the canvas as the game will draw it; a part
+## made for you shows faded, so you can tell it from your own.
 func _show_part() -> void:
+	var made: bool = _part in [DoodleFace.Cell.HAPPY_EYE, DoodleFace.Cell.STARTLED_MOUTH] 		and _parts[_part].get_used_rect().size.x <= 0
 	_canvas_tex.update(_composed(_part))
+	_canvas.self_modulate = Color(1.0, 1.0, 1.0, 0.4) if made else Color.WHITE
+	_made_label.visible = made
 
 
 func _set_auto_white(on: bool) -> void:
@@ -253,6 +283,7 @@ func _undo_last() -> void:
 	if stack.is_empty():
 		return
 	_parts[_part] = stack.pop_back()
+	_revision[_part] += 1
 	_show_part()
 	_dirty = true
 
@@ -260,6 +291,7 @@ func _undo_last() -> void:
 func _clear_part() -> void:
 	_push_undo()
 	_parts[_part] = _blank()
+	_revision[_part] += 1
 	_show_part()
 	_dirty = true
 
@@ -278,11 +310,16 @@ func _select_part(index: int) -> void:
 	_canvas.queue_redraw()
 
 
-## The four parts side by side, as the game reads them.
-func _atlas() -> Image:
+## The four parts side by side, as the game reads them. For saving, a
+## blank happy eye or startled mouth stays blank: the game makes it on
+## loading, and the painter keeps making it as you change the eye or mouth.
+func _atlas(for_saving: bool = false) -> Image:
 	var atlas := Image.create(SIZE * DoodleFace.CELLS, SIZE, false, Image.FORMAT_RGBA8)
 	for i in DoodleFace.CELLS:
-		atlas.blit_rect(_composed(i), Rect2i(0, 0, SIZE, SIZE), Vector2i(i * SIZE, 0))
+		var blank_made: bool = i in [DoodleFace.Cell.HAPPY_EYE, DoodleFace.Cell.STARTLED_MOUTH] \
+			and _parts[i].get_used_rect().size.x <= 0
+		var part: Image = _parts[i] if for_saving and blank_made else _composed(i)
+		atlas.blit_rect(part, Rect2i(0, 0, SIZE, SIZE), Vector2i(i * SIZE, 0))
 	return atlas
 
 
@@ -295,7 +332,7 @@ func _save() -> void:
 		return
 	DirAccess.make_dir_recursive_absolute(DoodleFace.FOLDER)
 	var path: String = "%s/%s.png" % [DoodleFace.FOLDER, face_name]
-	var err: Error = _atlas().save_png(path)
+	var err: Error = _atlas(true).save_png(path)
 	_status.text = ("Saved %s" % path) if err == OK else ("Couldn't save (%s)" % error_string(err))
 	_refresh_faces(face_name)
 
@@ -314,6 +351,7 @@ func _load(face_name: String) -> void:
 			part.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
 		_parts[i] = part
 		_undo[i] = []
+		_revision[i] += 1
 	_name_edit.text = face_name
 	_show_part()
 	_dirty = true
@@ -324,6 +362,7 @@ func _new_face() -> void:
 	for i in DoodleFace.CELLS:
 		_parts[i] = _blank()
 		_undo[i] = []
+		_revision[i] += 1
 	_name_edit.text = ""
 	_faces.select(-1)
 	_show_part()
@@ -494,11 +533,16 @@ func _build_ui() -> void:
 	clear.text = "Clear this part"
 	clear.pressed.connect(_clear_part)
 	side_panel.add_child(clear)
+	_made_label = Label.new()
+	_made_label.text = "Made for you from your drawing. Draw here to use your own."
+	_made_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_made_label.modulate = Color(1.0, 0.85, 0.5)
+	side_panel.add_child(_made_label)
 	_status = Label.new()
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	side_panel.add_child(_status)
 	var help := Label.new()
-	help.text = "Left mouse draws, right mouse rubs out.\nClose a loop in the eye and it fills white.\nThe dashed circle is a good eye or mouth size; keep inside the square.\nThe right eye is this one mirrored."
+	help.text = "Left mouse draws, right mouse rubs out.\nClose a loop in the eye and it fills white.\nJust draw the eye and mouth if you like: the happy eye and startled mouth are made from them.\nThe dashed circle is a good eye or mouth size; keep inside the square.\nThe right eye is this one mirrored."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD
 	help.modulate = Color(1, 1, 1, 0.6)
 	side_panel.add_child(help)

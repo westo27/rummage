@@ -631,7 +631,7 @@ of the way up to your eyes (`FACE_TIP`), since you always look down on it.
 `tests/shoot_creature.tscn` a row in the room.
 
 **Face painter** (`tools/face_painter.tscn`, F6): draw faces by hand as four
-parts (eye, happy eye, mouth, startled mouth) with a felt-tip pen (one solid colour, soft edge) and a white pen; closed loops in the eye fill white automatically. A live marble preview
+parts (eye, happy eye, mouth, startled mouth) with a felt-tip pen (one solid colour, soft edge) and a white pen; leave the happy eye or startled mouth blank and they are made from the eye (its top edge as a "^" arch) and the mouth (an "o" to match), in the painter and when the game loads the face; closed loops in the eye fill white automatically. A live marble preview
 runs through the moods. Save writes `res://faces/<name>.png` (the four
 parts side by side). When that folder has any faces, creatures wear those
 (at random) instead of the built-in doodles; the shader places the parts,

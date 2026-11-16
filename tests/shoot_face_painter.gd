@@ -28,16 +28,12 @@ func _run() -> void:
 	painter.set("_brush", 34.0)
 	_loop(painter, c + Vector2(-20, 50), 18.0)
 	painter.set("_brush", 18.0)
-	# Happy eye: an arch.
-	painter.call("_select_part", 1)
-	_arc(painter, c + Vector2(0, 60), 120.0, PI * 1.1, PI * 1.9)
-	# Mouth: a smile.
+	# Mouth: a smile. The happy eye and startled mouth are left for the
+	# painter to make.
 	painter.call("_select_part", 2)
 	_arc(painter, c - Vector2(0, 80), 150.0, PI * 0.2, PI * 0.8)
-	# Startled mouth: a small loop.
-	painter.call("_select_part", 3)
-	_loop(painter, c, 60.0)
-	painter.call("_select_part", 0)
+	# Showing the happy eye it made from the eye.
+	painter.call("_select_part", 1)
 	(painter.get("_name_edit") as LineEdit).text = SAMPLE
 	painter.call("_save")
 	var path: String = "%s/%s.png" % [DoodleFace.FOLDER, SAMPLE]
@@ -76,7 +72,7 @@ func _arc(painter: Control, centre: Vector2, r: float, from: float, to: float) -
 		var at := centre + Vector2(cos(a), sin(a)) * r
 		painter.call("_stamp_line", last, at)
 		last = at
-	painter.call("_show_part")
+	painter.call("_end_stroke")
 
 
 func _frames(count: int) -> void:

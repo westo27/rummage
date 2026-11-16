@@ -203,9 +203,17 @@ the box, throw it, ping, lift what squeaked, catch it. Each goes once done
 (via `Beam.grabbed`/`thrown`, `Ping.pinged`, the creature's state and
 `captured`); doing a later thing early skips ahead. The catch swings the
 door (an AnimatableBody3D, origin at the hinge) 100° into the playroom and
-the last hint fades after 4 s. After that, within 2 m of the bed it
-shows "Hold C to crouch", then "Hold Z to lie on your tummy" once crouched;
-lying flat there ends it for good. The lesson creature counts like any other
+the last hint fades after 4 s. Once you're in the
+playroom and clear of its swing the door shuts for good (`shut_door`), and
+any creature left on the landing is put back just inside the playroom.
+
+Three more hints, each shown by tutorial.gd once the lesson is done:
+- "Hold C to crouch" within 1.8 m of the bedroom doorway, until you've been
+  through it.
+- "Hold Z to lie on your tummy" within 2 m of the bed, until you've lain flat
+  there.
+- "Press Q to ping", once only, after 10 s with no creature found while the
+  ping is ready. It goes when you ping or after 6 s. The lesson creature counts like any other
 (26 in all), so its lift arrives before the house. The timer runs from the
 start. A ping from the landing can reach a couple of playroom creatures
 through the wall.
@@ -288,7 +296,8 @@ each room (needs a window).
 - **Playroom** (x -5.1..-0.1, 5 × 4.5 m), through the landing door: a beanbag in the north-west
   corner, a toy bin, a school bag by the north wall, the bookcase on the west
   wall, a beanbag, the play table on the rug over the trapdoor, two bins. Planks.
-- **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a doorway at z=0: the bed
+- **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a low doorway at z=0 (1.1 m
+  high, so you crouch: standing is 1.3 m, crouched 0.95 m): the bed
   under the window, bedside table, chest of drawers, the wardrobe in front
   of the box-room door, a desk and chair, a laundry bin. Teal carpet.
 - **Box room** (x 5.3..8.3, 3 × 2.8 m), reached through the wardrobe.
@@ -518,7 +527,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the beam ends at the grab point |
-| check_tutorial | you start on the landing behind a door that holds you in; hints follow grab, throw, ping, find, catch; the catch opens the door and you can walk through; bed hints: crouch, then lie flat, then gone |
+| check_tutorial | you start on the landing behind a door that holds you in; hints follow grab, throw, ping, find, catch; the catch opens the door and you can walk through; the door shuts behind you and clears the landing of creatures; crouch hint at the low doorway, lie-flat hint by the bed, ping reminder once |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles and slurp; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
 | check_room | a ball thrown hard at the window stays in the room; wooden props are matte; the bedside lamp stands on its table; the drawer rests shut and can be grabbed, and yanking it leaves the fixed table put |

@@ -174,9 +174,11 @@ func _run() -> void:
 	_check("the table stands on the rug", Vector2(table_at.x - rug.centre().x, table_at.z - rug.centre().z).length() < 0.1, "")
 	_check("the trapdoor is under the rug", absf(trapdoor.global_position.x - rug.centre().x) < 1.5
 		and absf(trapdoor.global_position.z - rug.centre().z) < 1.0, "")
-	# From the doorway to the bedroom, looking at the rug's east edge.
+	# Crouched in the low doorway to the bedroom, looking at the rug's east edge.
 	player.global_position = Vector3(0.1, 0.05, -0.05)
 	player.reset_physics_interpolation()
+	Input.action_press("crouch")
+	await _wait(1.0)
 	var rug_edge: Vector3 = Vector3(-1.6, 0.006, -0.05)
 	look = (rug_edge - head.global_position).normalized()
 	player.rotation.y = atan2(-look.x, -look.z)
@@ -197,6 +199,7 @@ func _run() -> void:
 		await get_tree().physics_frame
 	beam._grab_armed = false  # let go of the button too, or it grabs again
 	beam._release()
+	Input.action_release("crouch")
 	await _wait(1.5)
 	var rug_flat: Vector2 = Vector2(rug.centre().x, rug.centre().z)
 	var trap_flat: Vector2 = Vector2(trapdoor.global_position.x, trapdoor.global_position.z)

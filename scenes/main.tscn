@@ -203,9 +203,9 @@ size = Vector3(3, 3.5, 2.8)
 material = SubResource("Mat_wall")
 
 [node name="DoorPlayroom" type="CSGBox3D" parent="House/Walls" unique_id=900055433]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.925, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.425, 0)
 operation = 2
-size = Vector3(0.6, 2.35, 1)
+size = Vector3(0.6, 1.35, 1)
 material = SubResource("Mat_wall")
 
 [node name="DoorBoxRoom" type="CSGBox3D" parent="House/Walls" unique_id=900063352]

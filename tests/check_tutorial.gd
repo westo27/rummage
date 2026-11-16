@@ -88,31 +88,68 @@ func _run() -> void:
 	await _wait(4.0)
 	_check("the last hint fades away", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
 
-	# Now you can walk through into the playroom.
+	_tutorial._ping_hint_done = true  # keep the ping reminder out of the next checks
+
+	# Now you can walk through into the playroom, and the door shuts behind
+	# you. A creature that slipped onto the landing is put back in the playroom.
+	var stray: Creature = _main.get_node("MainRoomCreatures").get_child(0)
+	stray.global_position = Vector3(-2.6, 0.3, 5.0)
 	_player.global_position = Vector3(-2.6, 0.05, 3.4)
 	_player.rotation = Vector3.ZERO
 	_player.reset_physics_interpolation()
 	Input.action_press("move_forward")
-	await _wait(2.0)
+	await _wait(1.0)
 	Input.action_release("move_forward")
 	_check("you can walk through to the playroom", _player.global_position.z < 1.8, "z=%.2f" % _player.global_position.z)
+	await _wait(2.0)
+	_check("the door shuts behind you", absf(hinge.rotation.y) < 0.01, "%.0f deg" % rad_to_deg(hinge.rotation.y))
+	_check("no creature is left on the landing", stray.global_position.z < Tutorial.LANDING_EDGE_Z, "%s" % stray.global_position)
+	_player.global_position = Vector3(-2.6, 0.05, 1.2)
+	_player.rotation = Vector3(0, PI, 0)
+	_player.reset_physics_interpolation()
+	Input.action_press("move_forward")
+	await _wait(1.0)
+	Input.action_release("move_forward")
+	_check("the shut door keeps you out of the landing", _player.global_position.z < 2.25, "z=%.2f" % _player.global_position.z)
 
-	# By the bed: crouch, then lie flat; walking off hides it.
-	_check("no bed hint away from the bed", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
-	var bed: Node3D = _main.get_node("MainRoomProps/Bed")
-	_player.global_position = Vector3(bed.global_position.x - 0.4, 0.05, bed.global_position.z + 1.2)
+	# The low doorway to the bedroom: a crouch hint, and you have to crouch.
+	_check("no hint away from the doorway", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
+	_player.global_position = Vector3(-1.2, 0.05, 0.0)
+	_player.rotation = Vector3(0, -PI / 2.0, 0)  # face +X
 	_player.reset_physics_interpolation()
 	await _wait(0.8)
-	_check("near the bed: crouch hint", _hud.hint_text() == Tutorial.CROUCH_HINT, "'%s'" % _hud.hint_text())
-	_player.global_position = Vector3(-2.6, 0.05, 1.0)
+	_check("at the doorway: crouch hint", _hud.hint_text() == Tutorial.CROUCH_HINT, "'%s'" % _hud.hint_text())
+	Input.action_press("move_forward")
+	await _wait(1.0)
+	_check("standing, the doorway stops you", _player.global_position.x < 0.0, "x=%.2f" % _player.global_position.x)
+	Input.action_press("crouch")
+	await _wait(1.5)
+	Input.action_release("move_forward")
+	Input.action_release("crouch")
+	_check("crouched, you get through", _player.global_position.x > 0.8, "x=%.2f" % _player.global_position.x)
+	await _wait(0.8)
+	_check("the crouch hint goes", _hud.hint_text() != Tutorial.CROUCH_HINT, "'%s'" % _hud.hint_text())
+	_player.global_position = Vector3(-1.2, 0.05, 0.0)
+	_player.reset_physics_interpolation()
+	await _wait(0.8)
+	_check("and doesn't come back", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
+
+	# By the bed: lie flat; walking off hides it.
+	var bed: Node3D = _main.get_node("MainRoomProps/Bed")
+	var by_bed := Vector3(bed.global_position.x - 0.4, 0.05, bed.global_position.z + 1.2)
+	_player.global_position = by_bed
+	_player.reset_physics_interpolation()
+	await _wait(0.8)
+	_check("near the bed: lie-flat hint", _hud.hint_text() == Tutorial.PRONE_HINT, "'%s'" % _hud.hint_text())
+	_player.global_position = Vector3(4.0, 0.05, 1.5)
 	_player.reset_physics_interpolation()
 	await _wait(0.8)
 	_check("walking off hides it", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
-	_player.global_position = Vector3(bed.global_position.x - 0.4, 0.05, bed.global_position.z + 1.2)
+	_player.global_position = by_bed
 	_player.reset_physics_interpolation()
 	Input.action_press("crouch")
 	await _wait(1.5)
-	_check("crouched: lie-flat hint", _hud.hint_text() == Tutorial.PRONE_HINT, "'%s'" % _hud.hint_text())
+	_check("crouched: still the lie-flat hint", _hud.hint_text() == Tutorial.PRONE_HINT, "'%s'" % _hud.hint_text())
 	Input.action_press("prone")
 	await _wait(2.0)
 	_check("lying flat hides it", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
@@ -120,6 +157,23 @@ func _run() -> void:
 	Input.action_release("crouch")
 	await _wait(2.0)
 	_check("and it doesn't come back", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
+
+	# The ping reminder: once, after 10 s with nothing found.
+	_player.global_position = Vector3(4.0, 0.05, 1.5)
+	_player.reset_physics_interpolation()
+	_tutorial._ping_hint_done = false
+	_tutorial._since_found = 0.0
+	await _wait(9.0)
+	_check("no ping reminder before 10 s", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
+	await _wait(2.0)
+	_check("then the ping reminder", _hud.hint_text() == Tutorial.PING_HINT, "'%s'" % _hud.hint_text())
+	_press("ping")
+	await _wait(0.1)
+	_release("ping")
+	await _wait(0.8)
+	_check("pinging hides it", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
+	await _wait(20.0)
+	_check("and it only shows once", _hud.hint_text() == "", "'%s'" % _hud.hint_text())
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

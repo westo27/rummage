@@ -101,6 +101,12 @@ func _run() -> void:
 	player.rotation.y = -PI / 2.0  # face +X
 	await _wait(0.2)
 	Input.action_press("move_forward")
+	await _wait(1.0)
+	_check("the low bedroom doorway stops you standing", player.global_position.x < 0.0,
+		"x=%.2f" % player.global_position.x)
+	Input.action_press("crouch")  # 1.1 m high: crouch to get through
+	await _wait(1.2)
+	Input.action_release("crouch")
 	await _wait(2.0)
 	Input.action_release("move_forward")
 	_check("doorways lead through to the box room", player.global_position.x > 5.5,

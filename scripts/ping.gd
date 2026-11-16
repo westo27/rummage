@@ -29,6 +29,11 @@ func _process(delta: float) -> void:
 		cooldown_changed.emit(_cooldown_left)
 
 
+## True once the cooldown has run out.
+func is_ready() -> bool:
+	return _cooldown_left <= 0.0
+
+
 func _ping() -> void:
 	_cooldown_left = Game.tune.ping_cooldown
 	cooldown_changed.emit(_cooldown_left)

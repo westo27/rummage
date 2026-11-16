@@ -2,8 +2,8 @@ extends Node
 ## Renders the itch page theme images:
 ## - banner.png: the logo alone on a transparent background, at most 900 wide
 ##   (itch shows the banner at its own size, up to the 960 px page column).
-## - background.png: a seamless tile of jumbled marble creatures pulling all
-##   their faces, on the night plum, for itch to repeat behind the page.
+## - background.png: a seamless tile of jumbled plain glass marbles (no
+##   faces), on the night plum, for itch to repeat behind the page.
 ## Needs a real window (no --headless).
 ## Run: Godot --path . --resolution 1920x1080 res://tests/shoot_banner.tscn
 
@@ -39,24 +39,11 @@ const BLUR_FAR: float = 6.0
 ## The blur runs on the marble shrunk by this much: same look, far less work.
 const BLUR_SHRINK: int = 2
 
-## Faces: mood, a wink, and how far the pupils wander off straight ahead.
-const FACES: Array = [
-	[CreatureEyes.Mood.NORMAL, false, 0.0],
-	[CreatureEyes.Mood.NORMAL, false, 1.0],
-	[CreatureEyes.Mood.WIDE, false, 0.3],
-	[CreatureEyes.Mood.SQUINT, false, 0.8],
-	[CreatureEyes.Mood.HAPPY, false, 0.0],
-	[CreatureEyes.Mood.NORMAL, true, 0.4],
-]
-
-
 func _ready() -> void:
 	_run.call_deferred()
 
 
 func _run() -> void:
-	# Press images show the cheerful set of faces.
-	DoodleFace.only = DoodleFace.PRESS_FACES
 	DirAccess.make_dir_recursive_absolute(OUT)
 	await _banner()
 	await _background()
@@ -174,35 +161,19 @@ func _stage() -> Array:
 	return [view, creature]
 
 
-## A random colour, a random face and a random tilt, then let it render.
+## A random colour, swirl and tilt, with no face, then let it render.
 func _pose(creature: Creature) -> void:
 	var body := creature.get_node("Visual/Body") as MeshInstance3D
 	var mat := body.material_override as ShaderMaterial
 	mat.set_shader_parameter("tint", Creature.BODY_COLORS.pick_random())
 	mat.set_shader_parameter("seed", randf())
-	DoodleFace.random().apply(mat)
+	# A drawn face with nothing drawn: just the glass.
+	var blank := DoodleFace.new()
+	blank.drawn = ImageTexture.create_from_image(Image.create(64 * DoodleFace.CELLS, 64, false, Image.FORMAT_RGBA8))
+	blank.apply(mat)
 	var visual := creature.get_node("Visual") as Node3D
-	# Turned a little off square, and rolled, so the faces sit at all angles.
-	visual.basis = Basis(Vector3.BACK, randf_range(-0.6, 0.6)) \
-		* Basis(Vector3.UP, randf_range(-0.35, 0.35)) * Basis(Vector3.RIGHT, randf_range(-0.3, 0.3))
-	var face: Array = FACES.pick_random()
-	var eyes := creature.get_node("Visual/Eyes") as CreatureEyes
-	eyes.mood = face[0]
-	eyes._mood_left = 0.0
-	eyes._next_blink = 1000.0
-	eyes._blink_left = 0.0
-	eyes._wink_left = 0.0
-	var wander: float = face[2]
-	var ahead: Vector3 = -visual.global_basis.z
-	var side := Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), 0.0) * wander
-	eyes.look_target = creature.global_position + ahead + visual.global_basis * side
-	for i in 4:
-		eyes.step(1.0)  # a full second each: every blend lands
-	if face[1]:
-		eyes._wink_eye = randi() % 2
-		eyes._wink_left = CreatureEyes.WINK_SECONDS * 0.5  # the wink at its tightest
-		eyes._update_shape(0.0)
-		eyes._send_to_shader()
+	# Turned and rolled, so the swirls and highlights vary.
+	visual.basis = Basis(Vector3.BACK, randf_range(-0.6, 0.6)) 		* Basis(Vector3.UP, randf_range(-0.35, 0.35)) * Basis(Vector3.RIGHT, randf_range(-0.3, 0.3))
 	await _frames(3)
 
 

@@ -15,6 +15,9 @@ echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "usage: tools/re
 sed -i -E "s/(application\/(file|product)_version=)\"[^\"]*\"/\1\"$VERSION.0\"/; \
 	s/(application\/(short_)?version=)\"[^\"]*\"/\1\"$VERSION\"/" export_presets.cfg
 
+# Keeps Godot from importing the builds as project files.
+mkdir -p build; touch build/.gdignore
+
 # preset name | itch channel | output file
 for line in "Windows|windows|ImLosingMyMarbles.exe" "Linux|linux|ImLosingMyMarbles.x86_64" \
 		"macOS|mac|ImLosingMyMarbles.zip" "Web|web|index.html"; do

@@ -8,7 +8,8 @@ signal closed
 
 ## Each entry is a soft heading and the lines under it.
 const ENTRIES: Array = [
-	["Made by", ["Tom"]],
+	["Made by", ["Tom Weston"]],
+	["Tested by", ["Grace Weston (Love you)"]],
 	["Built with", ["Godot Engine (MIT licence)", "© Juan Linietsky, Ariel Manzur and contributors", "Jolt Physics (MIT licence) © Jorrit Rouwe"]],
 	["Font", ["Coiny by Marcelo Magalhães", "SIL Open Font License 1.1"]],
 	["Sounds", ["Made in code, for this game"]],

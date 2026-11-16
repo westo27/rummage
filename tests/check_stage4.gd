@@ -26,6 +26,7 @@ func _run() -> void:
 	_check("26 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 26, "")
 	_check("4 of them in the box room", _main.get_node("SideRoomCreatures").get_child_count() == 4, "")
 	_check("bag tag shows 0 / 26", _hud.caught_text() == "0 / 26", "'%s'" % _hud.caught_text())
+	_check("counter label shows 0 of 26", (_hud.get_node("CountLabel") as Label).text == "0 of 26", "")
 	_check("HUD hides the lift limit", not (_hud.get_node("LiftLabel") as Label).visible, "")
 	_check("timer is counting up", _label("TimerLabel") != "0:00.0", "'%s'" % _label("TimerLabel"))
 	_check("HUD shows ping ready", _label("PingLabel").begins_with("Ping ready"), "'%s'" % _label("PingLabel"))

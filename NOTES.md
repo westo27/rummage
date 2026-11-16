@@ -101,8 +101,8 @@ a root node and a script.
   loosens while balls go in, and the bag squashes a little when each lands.
   To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`
   (21): all 25 currently fill a little over half of it.
-- **No number on screen for catches**: the marbles in the bag are the
-  counter. The bag still keeps the count for tests (`Hud.caught_text()`).
+- **Catch count** sits in glass text just above the bag ("14 of 25";
+  Coiny's "/" leans backwards, hence "of"). Hidden on the win screen.
 - **On winning, the bag moves onto the win screen** beside your time.
   `reparent()` carries its whole subtree, physics world included, so any
   balls still queued keep dropping in there.

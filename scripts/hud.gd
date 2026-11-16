@@ -14,8 +14,10 @@ extends CanvasLayer
 @onready var _ping_label: Label = $PingLabel
 
 ## The drawstring bag in the bottom-right corner that caught creatures drop
-## into. Its marbles are the only catch counter on screen. See marble_bag.gd.
+## into. See marble_bag.gd.
 var _bag: MarbleBag
+## "12 of 26" in glass text just above the bag.
+var _count_label: Label
 ## The win screen, built in code by _build_win_screen: the room dimmed, with
 ## the bag, the heading, the time and two clickable glass words floating over
 ## it. Named WinPanel and WinLabel so tests can find them.
@@ -40,6 +42,9 @@ const WIN_HEADING_FONT_SIZE: int = 104
 const WIN_TIME_FONT_SIZE: int = 66
 ## Gap between the marble bag and the bottom-right corner of the screen.
 const BAG_MARGIN := Vector2(40.0, 16.0)
+## How far the catch count sits down into the bag's box (its top is empty
+## space above the neck).
+const COUNT_DROP: float = 70.0
 const HINT_FONT_SIZE: int = 64
 ## How far down from the top of the screen the hint sits: a little above
 ## the crosshair (720), close to where you're looking without covering it.
@@ -61,6 +66,7 @@ func _ready() -> void:
 	# limit worth showing.
 	_lift_label.visible = false
 	_build_bag()
+	_build_count()
 	_build_hint()
 	# Built after the bag, so the win screen's dimming covers it.
 	_build_win_screen()
@@ -80,6 +86,22 @@ func _build_bag() -> void:
 	_bag.offset_right = -BAG_MARGIN.x
 	_bag.offset_bottom = -BAG_MARGIN.y
 	add_child(_bag)
+
+
+func _build_count() -> void:
+	_count_label = UiStyle.label("", READOUT_FONT_SIZE, UiStyle.CREAM)
+	_count_label.name = "CountLabel"
+	_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# Same column as the bag, sitting on top of it.
+	_count_label.anchor_left = 1.0
+	_count_label.anchor_top = 1.0
+	_count_label.anchor_right = 1.0
+	_count_label.anchor_bottom = 1.0
+	_count_label.offset_left = _bag.offset_left
+	_count_label.offset_right = _bag.offset_right
+	_count_label.offset_bottom = _bag.offset_top + COUNT_DROP
+	_count_label.offset_top = _count_label.offset_bottom - READOUT_FONT_SIZE * 1.6
+	add_child(_count_label)
 
 
 func _build_hint() -> void:
@@ -203,9 +225,10 @@ func set_lift_limit(kg: float) -> void:
 	_lift_label.text = "Lift: %.0f kg" % kg
 
 
-## The bag keeps the catch count (nothing on screen shows the number).
 func set_caught(caught: int, total: int) -> void:
 	_bag.set_count(caught, total)
+	# Coiny draws "/" leaning back, so the label says "of".
+	_count_label.text = "%d of %d" % [caught, total]
 
 
 ## What the catch counter currently says, e.g. "12 / 25". For tests.
@@ -234,6 +257,7 @@ func show_win(seconds: float, total: int) -> void:
 	# keeps its whole subtree, including its own little physics world, so any
 	# balls still queued keep dropping in there.
 	_bag.reparent(_win_bag_slot, false)
+	_count_label.visible = false
 	_win_panel.visible = true
 	# Nothing floats over the words: no lesson hint, no crosshair.
 	_hint_label.visible = false

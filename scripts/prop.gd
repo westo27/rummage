@@ -23,6 +23,9 @@ extends RigidBody3D
 ## pictures on the wall, and the wardrobe, so pulling its doors can't drag it
 ## off the doorway before its gate opens.
 @export var frozen_until_grabbed: bool = false
+## A moving part jointed to the room itself rather than to a piece of
+## furniture (a door hung in a doorway). It stays movable whatever it weighs.
+@export var jointed_to_room: bool = false
 ## What it's made of, which picks its knock when it hits something.
 @export var impact_material: Tones.ImpactMaterial = Tones.ImpactMaterial.WOOD
 
@@ -297,7 +300,7 @@ func _restore_player_collision_when_clear() -> void:
 
 
 func _fix_if_furniture() -> void:
-	if mass <= Game.tune.player_push_max_mass or part_of != null:
+	if mass <= Game.tune.player_push_max_mass or part_of != null or jointed_to_room:
 		return
 	is_furniture = true
 	# A frozen static body: immovable, but drawers and doors jointed to it

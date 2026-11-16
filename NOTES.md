@@ -299,8 +299,9 @@ each room (needs a window).
   wall, a beanbag, the play table on the rug over the trapdoor, two bins. Planks.
 - **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a stable door at z=0
   (`scripts/stable_door.gd`, House/StableDoor: the glazed top half is bolted
-  shut from 1.1 m up, the bottom half stands open against the bedroom wall,
-  so you crouch: standing is 1.3 m, crouched 0.95 m): the bed
+  shut from 1.1 m up; the bottom half starts shut, a 3.5 kg Prop on a
+  HingeJoint3D that the beam pulls up to 165° toward you into the playroom,
+  so you open it and crouch: standing is 1.3 m, crouched 0.95 m): the bed
   under the window, bedside table, chest of drawers, the wardrobe in front
   of the box-room door, a desk and chair, a laundry bin. Teal carpet.
 - **Box room** (x 5.3..8.3, 3 × 2.8 m), reached through the wardrobe.

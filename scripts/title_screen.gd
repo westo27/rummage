@@ -109,8 +109,7 @@ func _draw() -> void:
 
 
 func _on_play() -> void:
-	# change_scene_to_file replaces the whole current scene on the next frame.
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	SceneFade.change_scene("res://scenes/main.tscn")
 
 
 func _on_settings() -> void:

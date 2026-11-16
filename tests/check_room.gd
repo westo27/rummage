@@ -174,7 +174,10 @@ func _run() -> void:
 	_check("the table stands on the rug", Vector2(table_at.x - rug.centre().x, table_at.z - rug.centre().z).length() < 0.1, "")
 	_check("the trapdoor is under the rug", absf(trapdoor.global_position.x - rug.centre().x) < 1.5
 		and absf(trapdoor.global_position.z - rug.centre().z) < 1.0, "")
-	# Crouched in the low doorway to the bedroom, looking at the rug's east edge.
+	# Crouched in the stable door's open bottom half, looking at the rug's
+	# east edge.
+	_main.get_node("House/StableDoor").swing_open()
+	await _wait(1.5)
 	player.global_position = Vector3(0.1, 0.05, -0.05)
 	player.reset_physics_interpolation()
 	Input.action_press("crouch")

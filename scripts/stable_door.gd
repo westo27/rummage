@@ -1,8 +1,9 @@
 extends StaticBody3D
 ## The stable door between the playroom and the bedroom: two halves, one
 ## above the other. The glazed top half is bolted shut, so you can see into
-## the bedroom but have to crouch through the bottom half, which stands open
-## against the bedroom wall.
+## the bedroom but have to crouch through the bottom half. That starts shut:
+## it's a light Prop on a hinge, so the beam pulls it open toward you, into
+## the playroom, as with the wardrobe's doors.
 ##
 ## Built from boxes here rather than in the scene, since it's all repeats of
 ## the same few pieces. The node sits on the floor in the middle of the
@@ -16,16 +17,25 @@ const LINING_DEPTH: float = 0.26
 ## Where the two halves meet. The player is 1.3 m tall standing and 0.95 m
 ## crouched, so this is what makes you duck.
 const SPLIT_HEIGHT: float = 1.1
-## The leaves sit this far toward the bedroom, flush with that side's wall.
-const LEAF_X: float = 0.075
+## The leaves sit this far toward the playroom, flush with that side's wall.
+const LEAF_X: float = -0.075
 const LEAF_THICK: float = 0.05
 const STILE: float = 0.1
-## How far round the bottom half stands open: nearly flat against the wall.
-const OPEN_DEGREES: float = 168.0
+## The bottom half: its gap above the floor and below the top half, how far
+## it swings into the playroom (nearly flat against the wall), its weight
+## (over 3 kg, so it blocks you like furniture rather than being kicked
+## aside) and its hinges' stiffness, which stops it flapping.
+const BOTTOM_GAP: float = 0.02
+const SWING: float = deg_to_rad(165.0)
+const BOTTOM_MASS: float = 3.5
+const HINGE_DAMP: float = 3.0
 
 const WOOD := Color(0.82, 0.58, 0.34)
 const FRAME_WHITE := Color(0.98, 0.97, 0.94)
 const CHROME := Color(0.8, 0.8, 0.83)
+
+## The bottom half, for the beam to grab.
+var bottom_half: Prop
 
 var _wood: StandardMaterial3D
 var _white: StandardMaterial3D
@@ -44,45 +54,9 @@ func _ready() -> void:
 	# No shine: a lamp's highlight on smooth glass blooms into a blinding glare.
 	_glass.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	_build_lining()
-
 	var leaf_width: float = OPENING_WIDTH - LINING * 2.0
-	var hinge_z: float = -leaf_width * 0.5
-	# Each leaf's own node sits at its hinge-side bottom corner, the leaf
-	# reaching along its +z, so turning the node swings the leaf.
-	var top := Node3D.new()
-	top.name = "TopHalf"
-	top.position = Vector3(LEAF_X, SPLIT_HEIGHT + 0.01, hinge_z)
-	add_child(top)
-	var top_height: float = OPENING_HEIGHT - LINING - SPLIT_HEIGHT - 0.01
-	_build_leaf(top, leaf_width, top_height, true)
-	_build_bolt(top, leaf_width)
-	# The top half's collision fills the whole upper opening, lining and all.
-	_add_collision(Transform3D(Basis.IDENTITY, Vector3(LEAF_X, (SPLIT_HEIGHT + OPENING_HEIGHT) * 0.5, 0.0)),
-		Vector3(LEAF_THICK, OPENING_HEIGHT - SPLIT_HEIGHT, OPENING_WIDTH))
-
-	var bottom := Node3D.new()
-	bottom.name = "BottomHalf"
-	# Hinged on the bedroom face of the wall, so it can fold right back.
-	bottom.position = Vector3(LEAF_X + LEAF_THICK * 0.5, 0.01, hinge_z)
-	bottom.rotation.y = deg_to_rad(OPEN_DEGREES)
-	add_child(bottom)
-	var bottom_height: float = SPLIT_HEIGHT - 0.02
-	var inner := Node3D.new()  # the leaf itself, set back from the hinge line
-	inner.position.x = -LEAF_THICK * 0.5
-	bottom.add_child(inner)
-	_build_leaf(inner, leaf_width, bottom_height, false)
-	for side: float in [-1.0, 1.0]:
-		var knob := MeshInstance3D.new()
-		var ball := SphereMesh.new()
-		ball.radius = 0.03
-		ball.height = 0.06
-		knob.mesh = ball
-		knob.material_override = _chrome
-		knob.position = Vector3(side * (LEAF_THICK * 0.5 + 0.025), bottom_height - 0.2, leaf_width - STILE * 0.5)
-		inner.add_child(knob)
-	_add_collision(bottom.transform * Transform3D(Basis.IDENTITY,
-		Vector3(-LEAF_THICK * 0.5, bottom_height * 0.5, leaf_width * 0.5)),
-		Vector3(LEAF_THICK, bottom_height, leaf_width))
+	_build_top_half(leaf_width)
+	_build_bottom_half(leaf_width)
 
 
 ## The white lining round the opening: two jambs and a head.
@@ -94,44 +68,108 @@ func _build_lining() -> void:
 		Vector3(0.0, OPENING_HEIGHT - LINING * 0.5, 0.0))
 
 
-## One half of the door: a frame of stiles (uprights) and rails (crosspieces),
-## filled with nine panes of glass or with boards.
+## Fixed shut: just meshes, and one collision box filling the upper opening.
+func _build_top_half(width: float) -> void:
+	var height: float = OPENING_HEIGHT - LINING - SPLIT_HEIGHT - 0.01
+	var top := Node3D.new()
+	top.name = "TopHalf"
+	top.position = Vector3(LEAF_X, SPLIT_HEIGHT + 0.01 + height * 0.5, 0.0)
+	add_child(top)
+	_build_leaf(top, width, height, true)
+	_build_bolt(top, width, height)
+	var shape := _box_shape(Vector3(LEAF_THICK, OPENING_HEIGHT - SPLIT_HEIGHT, OPENING_WIDTH))
+	shape.position = Vector3(LEAF_X, (SPLIT_HEIGHT + OPENING_HEIGHT) * 0.5, 0.0)
+	add_child(shape)
+
+
+## A Prop of its own, tied to the wall by a HingeJoint3D down one edge, so it
+## swings by physics when the beam pulls or pushes it.
+func _build_bottom_half(width: float) -> void:
+	var height: float = SPLIT_HEIGHT - BOTTOM_GAP * 2.0
+	bottom_half = Prop.new()
+	bottom_half.name = "BottomHalf"
+	bottom_half.mass = BOTTOM_MASS
+	bottom_half.hold_radius = 0.5
+	bottom_half.jointed_to_room = true
+	bottom_half.angular_damp = HINGE_DAMP
+	bottom_half.position = Vector3(LEAF_X, BOTTOM_GAP + height * 0.5, 0.0)
+	_build_leaf(bottom_half, width, height, false)
+	for side: float in [-1.0, 1.0]:
+		var knob := MeshInstance3D.new()
+		var ball := SphereMesh.new()
+		ball.radius = 0.03
+		ball.height = 0.06
+		knob.mesh = ball
+		knob.material_override = _chrome
+		knob.position = Vector3(side * (LEAF_THICK * 0.5 + 0.025), height * 0.5 - 0.2, (width - STILE) * 0.5)
+		bottom_half.add_child(knob)
+	# A little smaller than it looks, so it clears the wall as it swings.
+	var shape := _box_shape(Vector3(LEAF_THICK - 0.01, height - 0.02, width - 0.06))
+	shape.position.z = 0.02
+	bottom_half.add_child(shape)
+	add_child(bottom_half)
+
+	# A hinge turns about its own z axis: this basis stands that axis upright.
+	# It sits on the leaf's playroom-side edge, so the leaf can fold right back.
+	var hinge := HingeJoint3D.new()
+	hinge.name = "BottomHinge"
+	hinge.transform = Transform3D(Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, -1, 0)),
+		Vector3(LEAF_X - LEAF_THICK * 0.5, SPLIT_HEIGHT * 0.5, -width * 0.5))
+	add_child(hinge)
+	hinge.node_a = hinge.get_path_to(self)
+	hinge.node_b = hinge.get_path_to(bottom_half)
+	hinge.set_flag(HingeJoint3D.FLAG_USE_LIMIT, true)
+	# Which way round is "open into the playroom" was found by trying it.
+	hinge.set_param(HingeJoint3D.PARAM_LIMIT_LOWER, -SWING)
+	hinge.set_param(HingeJoint3D.PARAM_LIMIT_UPPER, 0.0)
+
+
+## How far the bottom half is open, in radians (0 = shut).
+func open_angle() -> float:
+	return global_basis.z.angle_to(bottom_half.global_basis.z)
+
+
+## Flings the bottom half open. For tests.
+func swing_open() -> void:
+	bottom_half.sleeping = false
+	bottom_half.angular_velocity = Vector3.DOWN * 16.0
+
+
+## One half of the door, centred on `leaf`: a frame of stiles (uprights) and
+## rails (crosspieces), filled with nine panes of glass or with boards.
 func _build_leaf(leaf: Node3D, width: float, height: float, glazed: bool) -> void:
-	for z: float in [STILE * 0.5, width - STILE * 0.5]:
-		_box(leaf, _wood, Vector3(LEAF_THICK, height, STILE), Vector3(0.0, height * 0.5, z))
-	var rail_length: float = width - STILE * 2.0
-	for y: float in [STILE * 0.5, height - STILE * 0.5]:
-		_box(leaf, _wood, Vector3(LEAF_THICK, STILE, rail_length), Vector3(0.0, y, width * 0.5))
+	for side: float in [-1.0, 1.0]:
+		_box(leaf, _wood, Vector3(LEAF_THICK, height, STILE), Vector3(0.0, 0.0, side * (width - STILE) * 0.5))
+		_box(leaf, _wood, Vector3(LEAF_THICK, STILE, width - STILE * 2.0), Vector3(0.0, side * (height - STILE) * 0.5, 0.0))
+	var inner_width: float = width - STILE * 2.0
 	var inner_height: float = height - STILE * 2.0
 	if glazed:
 		const BAR: float = 0.03
-		for i in [1, 2]:
-			_box(leaf, _wood, Vector3(LEAF_THICK * 0.8, inner_height, BAR),
-				Vector3(0.0, height * 0.5, STILE + rail_length * i / 3.0))
-			_box(leaf, _wood, Vector3(LEAF_THICK * 0.8, BAR, rail_length),
-				Vector3(0.0, STILE + inner_height * i / 3.0, width * 0.5))
-		var pane := _box(leaf, _glass, Vector3(0.008, inner_height, rail_length),
-			Vector3(0.0, height * 0.5, width * 0.5))
+		for side: float in [-1.0, 1.0]:
+			_box(leaf, _wood, Vector3(LEAF_THICK * 0.8, inner_height, BAR), Vector3(0.0, 0.0, side * inner_width / 6.0))
+			_box(leaf, _wood, Vector3(LEAF_THICK * 0.8, BAR, inner_width), Vector3(0.0, side * inner_height / 6.0, 0.0))
+		var pane := _box(leaf, _glass, Vector3(0.008, inner_height, inner_width), Vector3.ZERO)
 		pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	else:
 		const BOARDS: int = 5
 		const GAP: float = 0.008
-		var board_width: float = rail_length / BOARDS
+		var board_width: float = inner_width / BOARDS
 		for i in BOARDS:
 			_box(leaf, _wood, Vector3(LEAF_THICK * 0.6, inner_height, board_width - GAP),
-				Vector3(0.0, height * 0.5, STILE + board_width * (i + 0.5)))
+				Vector3(0.0, 0.0, board_width * (i + 0.5) - inner_width * 0.5))
 		# A thin backing so the gaps between boards read as grooves, not holes.
-		_box(leaf, _material(WOOD.darkened(0.45), 0.7, 0.0), Vector3(LEAF_THICK * 0.3, inner_height, rail_length),
-			Vector3(0.0, height * 0.5, width * 0.5))
+		_box(leaf, _material(WOOD.darkened(0.45), 0.7, 0.0), Vector3(LEAF_THICK * 0.3, inner_height, inner_width),
+			Vector3.ZERO)
 
 
 ## The little barrel bolt that keeps the top half shut: on the playroom face,
 ## low on the latch side, shot across into a keep on the lining.
-func _build_bolt(leaf: Node3D, width: float) -> void:
+func _build_bolt(leaf: Node3D, width: float, height: float) -> void:
 	var face_x: float = -LEAF_THICK * 0.5
-	var y: float = STILE * 0.5
-	_box(leaf, _chrome, Vector3(0.004, 0.04, 0.13), Vector3(face_x - 0.002, y, width - 0.075))
-	_box(leaf, _chrome, Vector3(0.012, 0.04, 0.03), Vector3(face_x - 0.006, y, width + 0.02))  # the keep
+	var y: float = (STILE - height) * 0.5
+	var edge: float = width * 0.5
+	_box(leaf, _chrome, Vector3(0.004, 0.04, 0.13), Vector3(face_x - 0.002, y, edge - 0.075))
+	_box(leaf, _chrome, Vector3(0.012, 0.04, 0.03), Vector3(face_x - 0.006, y, edge + 0.02))  # the keep
 	var bar := MeshInstance3D.new()
 	var rod := CylinderMesh.new()
 	rod.top_radius = 0.008
@@ -140,7 +178,7 @@ func _build_bolt(leaf: Node3D, width: float) -> void:
 	bar.mesh = rod
 	bar.material_override = _chrome
 	bar.rotation.x = PI / 2.0  # a cylinder stands upright; lay it along z
-	bar.position = Vector3(face_x - 0.012, y, width - 0.05)
+	bar.position = Vector3(face_x - 0.012, y, edge - 0.05)
 	leaf.add_child(bar)
 	var handle := MeshInstance3D.new()
 	var nub := CylinderMesh.new()
@@ -150,7 +188,7 @@ func _build_bolt(leaf: Node3D, width: float) -> void:
 	handle.mesh = nub
 	handle.material_override = _chrome
 	handle.rotation.z = PI / 2.0  # sticking out toward the playroom
-	handle.position = Vector3(face_x - 0.03, y, width - 0.08)
+	handle.position = Vector3(face_x - 0.03, y, edge - 0.08)
 	leaf.add_child(handle)
 
 
@@ -165,13 +203,12 @@ func _box(parent: Node3D, material: Material, size: Vector3, at: Vector3) -> Mes
 	return instance
 
 
-func _add_collision(at: Transform3D, size: Vector3) -> void:
+func _box_shape(size: Vector3) -> CollisionShape3D:
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = size
 	shape.shape = box
-	shape.transform = at
-	add_child(shape)
+	return shape
 
 
 func _material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:

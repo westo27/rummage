@@ -637,7 +637,7 @@ parts side by side). When that folder has any faces, creatures wear those
 (at random) instead of the built-in doodles; the shader places the parts,
 mirrors the eye for the right, squashes it to blink and squint, grows it
 when startled and wobbles the lines as the ink boils.
-`tests/shoot_face_painter.tscn` checks it end to end; `tests/shoot_drawn_faces.tscn` shows every drawn face in three moods; `tools/face_batch.tscn` draws a starter set of simple line faces through the painter (skipping names already there).
+`tests/shoot_face_painter.tscn` checks it end to end; `tests/shoot_drawn_faces.tscn` shows every drawn face in three moods; `tools/import_face_sheet.tscn` turns a sheet of drawn doodle faces (`art/face_sheet.png`) into faces: each face's ink split into left eye, right eye and mouth, scaled to the game's eye spacing, saved with its own right eye so lopsided faces stay lopsided (a drawn face has an optional fifth cell for that). `tools/face_batch.tscn` draws a starter set of simple line faces through the painter (skipping names already there).
 - Always: blinks every 2-5 s.
 - Hidden: every 3-8 s it peeks at you for a second; its giveaway (and a
   ping) makes the glass round its eyes flash, bright enough for bloom.

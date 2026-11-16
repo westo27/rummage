@@ -2,6 +2,7 @@ extends Node
 ## Every hand-drawn face in res://faces on a marble, each as normal, startled
 ## and happy, on one labelled sheet. Needs a real window.
 ## Run: Godot --path . --resolution 1800x1100 res://tests/shoot_drawn_faces.tscn
+## Pass `-- <prefix>` to show only faces whose names start with it.
 ## Writes drawn_faces.png to user://shots.
 
 const CreatureScene: PackedScene = preload("res://scenes/creature.tscn")
@@ -37,6 +38,9 @@ func _run() -> void:
 	key.look_at_from_position(Vector3(-1.0, 1.2, -1.5), Vector3.ZERO)
 
 	var names: Array[String] = DoodleFace.face_names()
+	var args := OS.get_cmdline_user_args()
+	if args.size() > 0:
+		names = names.filter(func(n: String) -> bool: return n.begins_with(args[0]))
 	var rows: int = ceili(float(names.size()) / COLUMNS)
 	var camera := Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
@@ -88,6 +92,7 @@ func _creature(at: Vector3, tex: Texture2D, index: int, mood: CreatureEyes.Mood,
 	var face := DoodleFace.new()
 	face.drawn = tex
 	face.eye_span = DoodleFace.measure_eye(tex.get_image())
+	face.right_span = DoodleFace.measure_eye(tex.get_image(), DoodleFace.Cell.RIGHT_EYE)
 	face.apply(mat)
 	var visual := c.get_node("Visual") as Node3D
 	visual.look_at(camera.global_position, Vector3.UP)

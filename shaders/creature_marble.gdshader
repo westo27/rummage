@@ -32,6 +32,10 @@ uniform bool face_drawn = false;
 // edge, middle height. A blink is a line across that; a squint squashes the
 // eye about its middle.
 uniform vec3 face_eye_span = vec3(0.15, 0.85, 0.5);
+// How many cells the drawn face has: 4, or 5 when it has a right eye of its
+// own (cell 4, not mirrored, for lopsided faces), with that eye's span.
+uniform int face_cells = 4;
+uniform vec3 face_right_span = vec3(0.15, 0.85, 0.5);
 uniform sampler2D face_tex : source_color, filter_linear_mipmap, repeat_disable;
 // Per eye (x left, y right): size, height (0 shut .. 1 open), pupil size
 // (under 1 when wide-eyed).
@@ -312,7 +316,9 @@ float doodle_extras(vec2 f, int extras, vec2 lc, vec2 rc, float s) {
 // each boil. Returns its colour and how much it covers (ink and the whites).
 vec4 drawn_part(vec2 f, vec2 c, vec2 box, int cell, bool mirror, float s) {
 	vec2 uv = (f - c) / box * 0.5 + 0.5;
-	uv.y = 1.0 - uv.y;
+	// Seen from the front, the ball's +x is on your left: flipped so the
+	// drawing reads as drawn.
+	uv = 1.0 - uv;
 	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
 		return vec4(0.0);
 	}
@@ -321,7 +327,10 @@ vec4 drawn_part(vec2 f, vec2 c, vec2 box, int cell, bool mirror, float s) {
 	}
 	uv += vec2(wobble(uv.y * 6.0 + s * 5.0), wobble(uv.x * 6.0 + s * 5.0 + 3.0)) * 0.006;
 	uv = clamp(uv, 0.004, 0.996);
-	return texture(face_tex, vec2((float(cell) + uv.x) / 4.0, uv.y));
+	vec4 t = texture(face_tex, vec2((float(cell) + uv.x) / float(face_cells), uv.y));
+	// Crisp edges, even where a drawing was scaled up from a small one.
+	t.a = smoothstep(0.15, 0.65, t.a);
+	return t;
 }
 
 // Whichever of two drawn parts covers more here: they don't overlap.
@@ -333,23 +342,24 @@ vec4 drawn_either(vec4 a, vec4 b) {
 // grown when wide-eyed, nudged toward where it looks. A blink is a line.
 // Returns its colour and cover; `area` gets the eye's area, which flashes
 // when it glints.
-vec4 drawn_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, bool mirror, float s, inout float area) {
+vec4 drawn_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, int cell, vec3 span, bool mirror, float s, inout float area) {
 	// The painter's dashed guide (0.65 of the box) is the built-in eye size.
 	float box = 0.28 * size * (1.0 + wide * 0.3);
 	area = max(area, 1.0 - smoothstep(0.7, 1.1, length((f - c) / box)));
 	vec2 at = c + look * 0.04;
 	// The eye's own middle, which stays put as it squashes.
-	float mid = (0.5 - face_eye_span.z) * 2.0 * box;
+	float mid = (0.5 - span.z) * 2.0 * box;
 	if (open < 0.3) {
-		float u0 = mirror ? 1.0 - face_eye_span.y : face_eye_span.x;
-		float u1 = mirror ? 1.0 - face_eye_span.x : face_eye_span.y;
-		vec2 a = vec2(at.x + (u0 - 0.5) * 2.0 * box, at.y + mid);
-		vec2 b = vec2(at.x + (u1 - 0.5) * 2.0 * box, at.y + mid);
+		// Across the drawn eye (its x runs the other way to the ball's,
+		// unless mirrored).
+		float across = mirror ? 1.0 : -1.0;
+		vec2 a = vec2(at.x + across * (span.x - 0.5) * 2.0 * box, at.y + mid);
+		vec2 b = vec2(at.x + across * (span.y - 0.5) * 2.0 * box, at.y + mid);
 		return vec4(vec3(0.03, 0.02, 0.09), ink_stroke(f, a, b, 0.036));
 	}
 	float h = min(open, 1.2);
 	at.y += mid * (1.0 - h);
-	return drawn_part(f, at, vec2(box, box * h), 0, mirror, s);
+	return drawn_part(f, at, vec2(box, box * h), cell, mirror, s);
 }
 
 void fragment() {
@@ -411,10 +421,13 @@ void fragment() {
 		vec4 drawn = vec4(0.0);
 		if (face_drawn) {
 			float area = 0.0;
-			vec4 l = drawn_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, false, s, area);
-			vec4 r = drawn_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, true, s + 1.0, area);
+			bool own_right = face_cells > 4;
+			// The eye as drawn is the one on your left: the ball's +x side (rc).
+			vec4 l = drawn_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, 0, face_eye_span, false, s, area);
+			vec4 r = drawn_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy,
+				own_right ? 4 : 0, own_right ? face_right_span : face_eye_span, !own_right, s + 1.0, area);
 			vec4 eyes_drawn = drawn_either(l, r);
-			vec4 happy_drawn = drawn_either(drawn_part(f, lc, vec2(0.28), 1, false, s), drawn_part(f, rc, vec2(0.28), 1, true, s + 1.0));
+			vec4 happy_drawn = drawn_either(drawn_part(f, rc, vec2(0.28), 1, false, s), drawn_part(f, lc, vec2(0.28), 1, true, s + 1.0));
 			drawn = happy > 0.5 ? happy_drawn : eyes_drawn;
 			drawn = drawn_either(drawn, drawn_part(f, vec2(0.0, -0.22), vec2(0.3), startled > 0.5 ? 3 : 2, false, s + 2.0));
 			le = vec2(0.0, area);

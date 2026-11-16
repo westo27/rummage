@@ -12,8 +12,9 @@ extends RefCounted
 
 const FOLDER: String = "res://faces"
 ## A drawn face is four square cells side by side: eye, happy eye, mouth,
-## startled mouth.
-enum Cell { EYE, HAPPY_EYE, MOUTH, STARTLED_MOUTH }
+## startled mouth. A fifth, when there is one, is a right eye of its own (for
+## lopsided faces); otherwise the right eye is the eye mirrored.
+enum Cell { EYE, HAPPY_EYE, MOUTH, STARTLED_MOUTH, RIGHT_EYE }
 const CELLS: int = 4
 
 enum Eyes { DOTS, RINGS, LASHES, BEANS, GOOGLY, SLEEPY, STARS, HEARTS, SPIRAL, WINK }
@@ -65,11 +66,14 @@ var drawn: Texture2D = null
 ## Where the drawn eye sits in its square (0..1): left edge, right edge,
 ## middle height. A blink is a line across exactly that.
 var eye_span: Vector3 = DEFAULT_SPAN
+## The same for the right eye, when the face has one of its own.
+var right_span: Vector3 = DEFAULT_SPAN
 
 const DEFAULT_SPAN := Vector3(0.15, 0.85, 0.5)
 
 static var _drawn_faces: Array[Texture2D] = []
 static var _drawn_spans: Array[Vector3] = []
+static var _drawn_right_spans: Array[Vector3] = []
 static var _drawn_loaded: bool = false
 
 
@@ -80,6 +84,7 @@ static func random() -> DoodleFace:
 		var pick: int = randi() % faces.size()
 		face.drawn = faces[pick]
 		face.eye_span = _drawn_spans[pick]
+		face.right_span = _drawn_right_spans[pick]
 		face.lop = randf_range(-1.0, 1.0)
 		return face
 	return variant(IN_PLAY.pick_random())
@@ -93,6 +98,7 @@ static func drawn_faces() -> Array[Texture2D]:
 			var tex: Texture2D = load_drawn(name)
 			_drawn_faces.append(tex)
 			_drawn_spans.append(measure_eye(tex.get_image()))
+			_drawn_right_spans.append(measure_eye(tex.get_image(), Cell.RIGHT_EYE))
 	return _drawn_faces
 
 
@@ -123,9 +129,11 @@ static func load_drawn(name: String) -> Texture2D:
 
 
 ## Where the ink of a drawn face's eye sits in its square: see eye_span.
-static func measure_eye(atlas: Image) -> Vector3:
+static func measure_eye(atlas: Image, which: int = Cell.EYE) -> Vector3:
 	var cell: int = atlas.get_height()
-	var eye := atlas.get_region(Rect2i(0, 0, cell, cell))
+	if (which + 1) * cell > atlas.get_width():
+		return DEFAULT_SPAN
+	var eye := atlas.get_region(Rect2i(which * cell, 0, cell, cell))
 	if eye.is_compressed():
 		eye.decompress()
 	var used: Rect2i = eye.get_used_rect()
@@ -163,6 +171,8 @@ func apply(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("face_lop", lop)
 	mat.set_shader_parameter("face_drawn", drawn != null)
 	mat.set_shader_parameter("face_eye_span", eye_span)
+	mat.set_shader_parameter("face_right_span", right_span)
+	mat.set_shader_parameter("face_cells", cells())
 	mat.set_shader_parameter("face_tex", drawn)
 
 
@@ -201,19 +211,27 @@ func draw(canvas: CanvasItem, radius: float) -> void:
 			canvas.draw_arc(m - Vector2(0.0, mr * 0.6), mr, PI * 0.18, PI * 0.82, 10, INK, w, true)
 
 
-## The hand-drawn face: its eye (mirrored for the right) and mouth cells, at
-## the shader's positions.
+## How many cells this drawn face has (4, or 5 with its own right eye).
+func cells() -> int:
+	return CELLS if drawn == null else roundi(float(drawn.get_width()) / drawn.get_height())
+
+
+## The hand-drawn face: its eyes and mouth cells, at the shader's positions.
 func _draw_drawn(canvas: CanvasItem, radius: float) -> void:
 	var cell: float = drawn.get_height()
+	var own_right: bool = cells() > CELLS
 	var eye_box: float = 0.41 * radius
 	for side: float in [-1.0, 1.0]:
 		var tilt: float = lop * 0.2 * side
 		var at := Vector2(0.435 * side, -0.116 + tilt * 0.14) * radius
 		var box: float = eye_box * (1.0 - tilt)
-		# Mirroring the right eye: draw it with x flipped about its centre.
-		canvas.draw_set_transform(at, 0.0, Vector2(-1.0 if side > 0.0 else 1.0, 1.0))
+		# The right eye is the eye mirrored (x flipped about its centre),
+		# unless the face has one of its own.
+		var right: bool = side > 0.0
+		canvas.draw_set_transform(at, 0.0, Vector2(-1.0 if right and not own_right else 1.0, 1.0))
+		var which: int = Cell.RIGHT_EYE if right and own_right else Cell.EYE
 		canvas.draw_texture_rect_region(drawn, Rect2(-box, -box, box * 2.0, box * 2.0),
-			Rect2(Cell.EYE * cell, 0.0, cell, cell))
+			Rect2(which * cell, 0.0, cell, cell))
 	var mouth_box: float = 0.435 * radius
 	canvas.draw_set_transform(Vector2(0.0, 0.32 * radius), 0.0, Vector2.ONE)
 	canvas.draw_texture_rect_region(drawn, Rect2(-mouth_box, -mouth_box, mouth_box * 2.0, mouth_box * 2.0),

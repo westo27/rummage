@@ -64,6 +64,9 @@ var _name_edit: LineEdit
 var _faces: OptionButton
 var _status: Label
 var _made_label: Label
+## A face's own right eye, when it came with one (from a face sheet): kept as
+## it is through edits and saves, since the painter draws the mirrored eye.
+var _right_eye: Image = null
 var _mood_label: Label
 var _part_buttons: Array[Button] = []
 
@@ -314,7 +317,10 @@ func _select_part(index: int) -> void:
 ## blank happy eye or startled mouth stays blank: the game makes it on
 ## loading, and the painter keeps making it as you change the eye or mouth.
 func _atlas(for_saving: bool = false) -> Image:
-	var atlas := Image.create(SIZE * DoodleFace.CELLS, SIZE, false, Image.FORMAT_RGBA8)
+	var cells: int = DoodleFace.CELLS + (1 if _right_eye != null else 0)
+	var atlas := Image.create(SIZE * cells, SIZE, false, Image.FORMAT_RGBA8)
+	if _right_eye != null:
+		atlas.blit_rect(_right_eye, Rect2i(0, 0, SIZE, SIZE), Vector2i(DoodleFace.CELLS * SIZE, 0))
 	for i in DoodleFace.CELLS:
 		var blank_made: bool = i in [DoodleFace.Cell.HAPPY_EYE, DoodleFace.Cell.STARTLED_MOUTH] \
 			and _parts[i].get_used_rect().size.x <= 0
@@ -352,10 +358,17 @@ func _load(face_name: String) -> void:
 		_parts[i] = part
 		_undo[i] = []
 		_revision[i] += 1
+	_right_eye = null
+	if atlas.get_width() >= cell * (DoodleFace.CELLS + 1):
+		_right_eye = atlas.get_region(Rect2i(DoodleFace.CELLS * cell, 0, cell, cell))
+		if cell != SIZE:
+			_right_eye.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
 	_name_edit.text = face_name
 	_show_part()
 	_dirty = true
 	_status.text = "Loaded %s" % face_name
+	if _right_eye != null:
+		_status.text += " (its right eye is its own and is kept as it is)"
 
 
 func _new_face() -> void:
@@ -363,6 +376,7 @@ func _new_face() -> void:
 		_parts[i] = _blank()
 		_undo[i] = []
 		_revision[i] += 1
+	_right_eye = null
 	_name_edit.text = ""
 	_faces.select(-1)
 	_show_part()
@@ -389,6 +403,8 @@ func _process(delta: float) -> void:
 		var atlas := _atlas()
 		_material.set_shader_parameter("face_tex", DoodleFace.texture_from(atlas))
 		_material.set_shader_parameter("face_eye_span", DoodleFace.measure_eye(atlas))
+		_material.set_shader_parameter("face_right_span", DoodleFace.measure_eye(atlas, DoodleFace.Cell.RIGHT_EYE))
+		_material.set_shader_parameter("face_cells", atlas.get_width() / SIZE)
 	_time += delta
 	_mood_left -= delta
 	if _mood_left <= 0.0:

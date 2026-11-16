@@ -45,7 +45,7 @@ func _run() -> void:
 	await _wait(0.5)
 	Input.action_release("move_forward")
 	var walked: float = player.global_position.x - start_x
-	_check("walks forward at about 4.5 m/s", absf(walked - 2.25) < 0.3, "moved %.2f m in 0.5 s" % walked)
+	_check("walks forward at about 3.5 m/s", absf(walked - 1.75) < 0.3, "moved %.2f m in 0.5 s" % walked)
 
 	player.global_position = Vector3(-4.6, 0.05, 0.0)
 	await _wait(0.2)

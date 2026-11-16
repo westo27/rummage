@@ -20,11 +20,13 @@ extends Resource
 @export_group("Player")
 @export var walk_speed: float = 4.5
 @export var run_speed: float = 7.5
-## Hold C or Ctrl. Running has no effect while crouched.
-@export var crouch_speed: float = 1.4
-## Head height (eyes above the feet) standing and crouched, metres.
+## Hold C or Ctrl to crouch, Z to lie flat. Running has no effect while down.
+@export var crouch_speed: float = 2.5
+@export var prone_speed: float = 1.4
+## Head height (eyes above the feet) standing, crouched and lying flat, metres.
 @export var stand_eye_height: float = 1.15
-@export var crouch_eye_height: float = 0.16
+@export var crouch_eye_height: float = 0.6
+@export var prone_eye_height: float = 0.16
 ## Radians of turn per pixel of mouse movement.
 @export var mouse_sensitivity: float = 0.0004
 ## Props this light or lighter are "clutter": the player walks through them,

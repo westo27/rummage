@@ -50,7 +50,7 @@ func _run() -> void:
 	creature.reset_physics_interpolation()
 
 	# Lie down by the bed before aiming (mid-crouch the aim tilts at the floor).
-	Input.action_press("crouch")
+	Input.action_press("prone")
 	await _wait(1.5)
 	player.global_position = Vector3(2.4, 0.05, 0.5)
 	player.reset_physics_interpolation()
@@ -75,7 +75,7 @@ func _run() -> void:
 	await _wait(AFTER_CATCH)
 	_recording = false
 	_file.close()
-	Input.action_release("crouch")
+	Input.action_release("prone")
 	print("RESULT %d frames %dx%d in %s" % [_frames_written, SIZE.x, SIZE.y, ProjectSettings.globalize_path(OUT)])
 	get_tree().quit()
 

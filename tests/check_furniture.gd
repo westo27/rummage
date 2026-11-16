@@ -49,12 +49,12 @@ func _run() -> void:
 	await _wait(1.0)
 	_check("standing, you can't see under the bed", under.state == Creature.State.HIDDEN, "state=%s" % under.state)
 	_player.global_position = Vector3(2.3, 0.05, 0.3)
-	Input.action_press("crouch")
+	Input.action_press("prone")
 	await _wait(0.6)
 	_aim_at(under.global_position)
 	await _wait(0.5)
 	_check("crouching and looking under the bed finds it", under.state != Creature.State.HIDDEN, "state=%s" % under.state)
-	Input.action_release("crouch")
+	Input.action_release("prone")
 	_check("the bed never moved", bed.global_position.distance_to(bed_at) < 0.001, "")
 
 	# --- Through the wardrobe into the box room ---

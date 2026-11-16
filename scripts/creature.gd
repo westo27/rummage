@@ -697,13 +697,13 @@ func _stands_on_floor(prop: Prop) -> bool:
 	return not hit.is_empty() and not (hit.collider is Prop)
 
 
-## True when the player is crouched, close by and looking right at this
-## creature, with nothing in the way but what it's hiding under (the bed's
-## frame would otherwise block the low view under it).
+## True when the player is lying flat (most of the way down), close by and
+## looking right at this creature, with nothing in the way but what it's hiding
+## under (the bed's frame would otherwise block the low view under it).
 func _is_spotted() -> bool:
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	var player := _player() as CollisionObject3D
-	if camera == null or player == null or player.get("crouch") == null or player.get("crouch") < 0.5:
+	if camera == null or player == null or player.get("crouch") == null or player.get("crouch") < 0.75:
 		return false
 	var eye: Vector3 = camera.global_position
 	var to_me: Vector3 = global_position - eye

@@ -48,14 +48,14 @@ func _run() -> void:
 
 	# --- Spot the bed creatures, then go through the wardrobe ---
 	# (check_furniture covers both in detail; here they're part of a full game.)
-	Input.action_press("crouch")
+	Input.action_press("prone")
 	for i in 4:
 		var c := _main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature
 		_player.global_position = Vector3(c.global_position.x, 0.05, -0.2)
 		await _wait(0.6)
 		_aim_at(c.global_position)
 		await _wait(0.3)
-	Input.action_release("crouch")
+	Input.action_release("prone")
 	var bed_hidden: int = 0
 	for i in 4:
 		if (_main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:

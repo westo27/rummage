@@ -66,7 +66,7 @@ func _build() -> void:
 	quit.pressed.connect(_on_quit)
 	stack.add_child(quit)
 
-	_hint = UiStyle.label("WASD to move  ·  hold left mouse to grab  ·  Q to ping  ·  Esc to pause",
+	_hint = UiStyle.label("WASD to move  ·  C crouch  ·  Z lie down  ·  hold left mouse to grab  ·  Q to ping  ·  Esc to pause",
 		UiStyle.HINT_FONT_SIZE, UiStyle.CREAM_SOFT, 400)
 	_hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

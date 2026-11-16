@@ -71,7 +71,7 @@ func _run() -> void:
 	creature.global_position = UNDER_BED
 	creature.reset_physics_interpolation()
 	# Get right down first: aiming mid-crouch would tilt the view at the carpet.
-	Input.action_press("crouch")
+	Input.action_press("prone")
 	await _frames(60)
 	await _stand(Vector3(2.55, 0.05, 0.6), Vector3(2.55, 0.3, -1.6), 30)
 	(_main.get_node("Ping") as Ping)._ping()
@@ -90,7 +90,7 @@ func _run() -> void:
 	_shoot("itch_4_catch")
 	_reach = -1.0
 	Engine.time_scale = 1.0
-	Input.action_release("crouch")
+	Input.action_release("prone")
 	await get_tree().create_timer(1.0).timeout
 
 	# 5. The playroom by lamplight.

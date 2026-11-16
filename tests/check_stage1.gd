@@ -62,14 +62,28 @@ func _run() -> void:
 	Input.action_press("crouch")
 	await _wait(0.4)
 	var head: Node3D = player.get_node("Head")
-	_check("crouching lowers the head", head.position.y < 0.7, "head y=%.2f" % head.position.y)
+	_check("crouching lowers the head part way", absf(head.position.y - 0.6) < 0.05, "head y=%.2f" % head.position.y)
 	start_x = player.global_position.x
 	Input.action_press("move_forward")
 	await _wait(0.5)
 	Input.action_release("move_forward")
 	walked = player.global_position.x - start_x
-	_check("crouch-walks at about 1.4 m/s", absf(walked - 0.7) < 0.2, "moved %.2f m in 0.5 s" % walked)
+	_check("crouch-walks at about 2.5 m/s", absf(walked - 1.25) < 0.2, "moved %.2f m in 0.5 s" % walked)
 	Input.action_release("crouch")
+	await _wait(0.4)
+	_check("letting go stands back up", head.position.y > 1.1, "head y=%.2f" % head.position.y)
+
+	player.global_position = Vector3(-4.6, 0.05, 0.0)
+	Input.action_press("prone")
+	await _wait(0.4)
+	_check("lying flat puts the eyes at the floor", head.position.y < 0.2, "head y=%.2f" % head.position.y)
+	start_x = player.global_position.x
+	Input.action_press("move_forward")
+	await _wait(0.5)
+	Input.action_release("move_forward")
+	walked = player.global_position.x - start_x
+	_check("crawls at about 1.4 m/s", absf(walked - 0.7) < 0.2, "moved %.2f m in 0.5 s" % walked)
+	Input.action_release("prone")
 	await _wait(0.4)
 	_check("letting go stands back up", head.position.y > 1.1, "head y=%.2f" % head.position.y)
 

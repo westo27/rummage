@@ -76,23 +76,35 @@ float wobble(float x) {
 
 // A hand-drawn ink line along a wobbly circle: radius r, thickness w.
 // `from`..`to` limits it to an arc (radians, 0 = right, anticlockwise). A
-// full loop doesn't quite close: it drifts outward as it goes round, so the
-// end overshoots the start, as a pen does.
+// full loop is drawn like a pen stroke: it starts at a fixed point, drifts
+// slightly outward as it goes round, and carries on a little past its start,
+// so the two ends overlap rather than meeting.
 float ink_ring(vec2 f, vec2 c, float r, float w, float s, float from, float to) {
 	float aa = fwidth(f.x) * 1.2;
 	vec2 d = f - c;
 	float ang = atan(d.y, d.x);
 	float k = ang * 1.3 + s * 17.0;
-	float rr = r * (1.0 + 0.11 * wobble(k) + 0.02 * wobble(k * 2.3));
-	if (to - from > 6.2) {
-		float start = hash(floor(s) + 0.5) * 6.283;
-		rr *= 1.0 + 0.12 * (fract((ang - start) / 6.283) - 0.5);
-	}
+	float rr = r * (1.0 + 0.06 * wobble(k) + 0.015 * wobble(k * 2.3));
 	// Felt-tip pressure: thicker in places.
-	float ww = w * (0.7 + 0.6 * (wobble(k * 1.7 + 5.0) * 0.5 + 0.5));
-	float line = 1.0 - smoothstep(ww - aa, ww, abs(length(d) - rr));
-	float span = step(from, ang) * step(ang, to);
-	return line * (to - from > 6.2 ? 1.0 : span);
+	float ww = w * (0.8 + 0.4 * (wobble(k * 1.7 + 5.0) * 0.5 + 0.5));
+	float dist = length(d);
+	if (to - from < 6.2) {
+		float span = step(from, ang) * step(ang, to);
+		return (1.0 - smoothstep(ww - aa, ww, abs(dist - rr))) * span;
+	}
+	// Where the pen started: fixed per marble and eye, so it doesn't jump
+	// about as the ink boils.
+	float start = hash(seed * 13.0 + c.x * 7.0 + c.y * 3.0) * 6.283;
+	float a0 = mod(ang - start, 6.283);
+	float line = 0.0;
+	for (int i = 0; i < 2; i++) {
+		float t = a0 + float(i) * 6.283;  // first time round, then the overlap
+		if (t <= 6.283 + 0.7) {
+			float rt = rr * (1.0 + 0.07 * (t / 6.283 - 0.5));
+			line = max(line, 1.0 - smoothstep(ww - aa, ww, abs(dist - rt)));
+		}
+	}
+	return line;
 }
 
 // A filled wobbly blob: an inked-in dot.
@@ -100,7 +112,7 @@ float ink_dot(vec2 f, vec2 c, vec2 r, float s) {
 	float aa = fwidth(f.x) * 1.2;
 	vec2 d = (f - c) / r;
 	float ang = atan(d.y, d.x);
-	float edge = 1.0 + 0.18 * wobble(ang * 1.5 + s * 13.0);
+	float edge = 1.0 + 0.09 * wobble(ang * 1.5 + s * 13.0);
 	return 1.0 - smoothstep(edge - aa / r.x, edge, length(d));
 }
 

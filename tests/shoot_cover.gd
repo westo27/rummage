@@ -137,7 +137,7 @@ func _title() -> CanvasLayer:
 		_title_text(Color(0.04, 0.01, 0.08, 0.55), Color(0.04, 0.01, 0.08, 0.55), TITLE_OUTLINE + 14),
 	]))
 	# A MarginContainer stacks its children: fill and outline, then the marble.
-	var marble := UiStyle.label("Lost Marbles", TITLE_SIZE, UiStyle.CREAM)
+	var marble := UiStyle.label("Losing My Marbles!", TITLE_SIZE, UiStyle.CREAM)
 	marble.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	UiStyle.set_marble_drift(marble)
 	layer.add_child(_title_row(TITLE_TOP, [
@@ -158,7 +158,7 @@ func _title_row(top: int, labels: Array) -> MarginContainer:
 
 func _title_text(fill: Color, ink: Color, outline: int) -> Label:
 	var l := Label.new()
-	l.text = "Lost Marbles"
+	l.text = "Losing My Marbles!"
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_override("font", UiStyle.font(700))
 	l.add_theme_font_size_override("font_size", TITLE_SIZE)

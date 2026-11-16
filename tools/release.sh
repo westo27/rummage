@@ -1,5 +1,5 @@
 #!/bin/sh
-# Exports Windows, Linux, macOS and web builds and pushes each to its own itch
+# Exports Windows, Linux and macOS builds and pushes each to its own itch
 # channel with butler. butler only uploads what changed since the last push.
 # Usage: tools/release.sh <version>      e.g. tools/release.sh 0.1.1
 set -e
@@ -23,7 +23,7 @@ mkdir -p build; touch build/.gdignore
 
 # preset name | itch channel | output file
 for line in "Windows|windows|ImLosingMyMarbles.exe" "Linux|linux|ImLosingMyMarbles.x86_64" \
-		"macOS|mac|ImLosingMyMarbles.zip" "Web|web|index.html"; do
+		"macOS|mac|ImLosingMyMarbles.zip"; do
 	preset=${line%%|*}; rest=${line#*|}; channel=${rest%%|*}; file=${rest#*|}
 	dir="build/$channel"
 	rm -rf "$dir"; mkdir -p "$dir"
@@ -31,10 +31,10 @@ for line in "Windows|windows|ImLosingMyMarbles.exe" "Linux|linux|ImLosingMyMarbl
 	"$GODOT" --headless --path . --export-release "$preset" "$dir/$file" \
 		2>&1 | grep -E 'ERROR|WARNING' || true
 	[ -f "$dir/$file" ] || { echo "$preset export failed"; exit 1; }
-	[ "$channel" = web ] || [ "$channel" = mac ] || cp fonts/OFL.txt "$dir/font-licence.txt"
+	[ "$channel" = mac ] || cp fonts/OFL.txt "$dir/font-licence.txt"
 done
 
-for channel in windows linux mac web; do
+for channel in windows linux mac; do
 	src="build/$channel"
 	# The Mac export is a zip holding the .app; butler unpacks it on itch's side.
 	[ "$channel" = mac ] && src="build/mac/ImLosingMyMarbles.zip"

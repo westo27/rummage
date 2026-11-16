@@ -2,17 +2,32 @@ extends Node
 ## Renders the itch.io page screenshots: five staged moments of play with the
 ## HUD showing. Needs a real window (no --headless).
 ## Run: Godot --path . --resolution 1920x1080 res://tests/shoot_itch.tscn
+## (add `-- pixel` for the pixel-filter set, saved as itch_*_pixel.png)
 
 const OUT: String = "user://shots"
 const SEED: int = 2
-const UNDER_BED := Vector3(2.5, 0.1, -1.6)
-const CATCH_SPOT := Vector3(2.45, 0.1, -1.17)
+const Drawers := preload("res://scripts/drawers.gd")
+## Shot 3: where the under-bed marbles sit, and the eye lying flat facing them.
+const UNDER_BED_ROW: Array[Vector3] = [
+	Vector3(2.05, 0.056, -1.75), Vector3(2.4, 0.056, -1.55),
+	Vector3(2.75, 0.056, -1.8), Vector3(3.1, 0.056, -1.6),
+]
+const PRONE_EYE := Vector3(2.6, 0.05, -0.55)
+const PRONE_TARGET := Vector3(2.6, 0.08, -1.7)
+## Shot 4: frames after the drawer marble starts its pop.
+const DRAWER_POP_FRAMES: int = 20
 
 var _main: Node
 var _player: CharacterBody3D
 var _head: Node3D
 var _beam: Beam
-var _reach: float = -1.0
+## Hidden creatures that stare at you for the shot (normally they only
+## glance now and then).
+var _peekers: Array[Creature] = []
+## Holds the player at this crouch (0 stand, 0.5 crouched); < 0 leaves it be.
+var _crouch: float = -1.0
+## Added to each file name ("_pixel" for the pixel-filter set).
+var _suffix: String = ""
 
 
 func _ready() -> void:
@@ -20,14 +35,25 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	# Holds the catch beam part-way out (see shoot_cover.gd).
-	if _reach >= 0.0:
-		_beam._catch_started = Time.get_ticks_msec() / 1000.0 - _reach * Beam.CATCH_REACH_TIME
+	for c in _peekers:
+		c._peek_left = 1.0
+		c._peek_next = 1.0
+	if _crouch >= 0.0:
+		_player.set("crouch", _crouch)
 
 
 func _run() -> void:
-	# Press images show the chosen faces.
+	# Press images show the chosen faces, at full resolution unless asked for
+	# the pixel look (`-- pixel`: filter at its finest, dithered).
 	DoodleFace.only = DoodleFace.PRESS_FACES
+	var pixel: bool = "pixel" in OS.get_cmdline_user_args()
+	_suffix = "_pixel" if pixel else ""
+	var settings := Game.settings
+	var saved: Array = [settings.pixel_filter, settings.pixel_strength, settings.pixel_dither]
+	settings.pixel_filter = pixel
+	settings.pixel_strength = 1
+	settings.pixel_dither = true
+	settings.apply_pixel_filter()
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
@@ -68,37 +94,68 @@ func _run() -> void:
 	_beam._grab_armed = false
 	await get_tree().create_timer(0.8).timeout
 
-	# 3. A ping: hidden creatures answer with a glow.
-	var creature := _creature_of(Creature.BODY_COLORS[1])
-	creature.global_position = UNDER_BED
-	creature.reset_physics_interpolation()
+	# 3. Lying flat by the bed: the marbles hiding under it peer back at you.
+	var under_bed: Array[Creature] = []
+	for c in _main.get_node("MainRoomCreatures").get_children():
+		if c is Creature and c.name.begins_with("UnderBed"):
+			under_bed.append(c as Creature)
+	for i in under_bed.size():
+		var c: Creature = under_bed[i]
+		c.reveal_when_spotted = false
+		c.global_position = UNDER_BED_ROW[i]
+		c.reset_physics_interpolation()
+	_peekers = under_bed
+	var startle: float = Game.tune.startle_distance
+	Game.tune.startle_distance = 0.0
 	# Get right down first: aiming mid-crouch would tilt the view at the carpet.
 	Input.action_press("prone")
 	await _frames(60)
-	await _stand(Vector3(2.55, 0.05, 0.6), Vector3(2.55, 0.3, -1.6), 30)
-	(_main.get_node("Ping") as Ping)._ping()
-	await get_tree().create_timer(0.7).timeout
-	_shoot("itch_3_ping")
-	await get_tree().create_timer(4.0).timeout
-
-	# 4. The catch: the creature pulled out from under the bed.
-	creature.global_position = CATCH_SPOT
-	creature.reset_physics_interpolation()
-	await _stand(Vector3(2.3, 0.05, 0.5), Vector3(2.5, 0.3, -1.6))
-	_beam._capture(creature)
-	Engine.time_scale = 0.03
-	_reach = 0.8
-	await get_tree().create_timer(0.12, true, false, true).timeout
-	_shoot("itch_4_catch")
-	_reach = -1.0
-	Engine.time_scale = 1.0
+	await _stand(PRONE_EYE, PRONE_TARGET, 40)
+	# Hidden ones keep whatever way they were facing; turn the faces to us.
+	var cam := get_viewport().get_camera_3d()
+	for c in under_bed:
+		var visual := c.get_node("Visual") as Node3D
+		visual.basis = Basis()
+		visual.look_at(cam.global_position, Vector3.UP)
+		visual.basis = visual.basis * Basis(Vector3.UP, randf_range(-0.25, 0.25)) \
+			* Basis(Vector3.BACK, randf_range(-0.3, 0.3))
+		c.reset_physics_interpolation()
+	await _frames(4)
+	_shoot("itch_3_under_bed")
+	_peekers = []
 	Input.action_release("prone")
+	Game.tune.startle_distance = startle
+	await _frames(30)
+
+	# 4. Pulling open a drawer: the marble hiding in it pops out.
+	var chest := _main.get_node("MainRoomProps/ChestOfDrawers") as Drawers
+	var drawer: Prop = chest.drawers[0]
+	var out_dir: Vector3 = chest.global_basis.z
+	var front: Vector3 = drawer.global_position + out_dir * 0.23
+	_crouch = 0.5
+	await _frames(20)
+	await _stand(front + out_dir * 1.35 + Vector3(0.0, 0.0, 0.55), front + Vector3(0.0, 0.08, 0.0))
+	# Held off-centre, so the beam's glow isn't right on the marble.
+	var handle: Vector3 = front - chest.global_basis.x * 0.28
+	_beam._grab_armed = true
+	_beam._grab(drawer, handle)
+	while chest.drawer_out(0) < Creature.DRAWER_REVEAL_OUT:
+		_beam._hold_distance -= 0.01
+		await get_tree().physics_frame
+	await _frames(DRAWER_POP_FRAMES)
+	_shoot("itch_4_drawer")
+	_beam._release()
+	_beam._grab_armed = false
+	_crouch = -1.0
 	await get_tree().create_timer(1.0).timeout
 
 	# 5. The playroom by lamplight.
 	await _stand(Vector3(-0.6, 0.05, -1.6), Vector3(-4.5, 0.4, 1.4))
 	_shoot("itch_5_playroom")
 
+	settings.pixel_filter = saved[0]
+	settings.pixel_strength = saved[1]
+	settings.pixel_dither = saved[2]
 	print("RESULT itch shots in %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 
@@ -111,15 +168,8 @@ func _stand(eye: Vector3, target: Vector3, settle: int = 25) -> void:
 	await _frames(settle)
 
 
-func _creature_of(color: Color) -> Creature:
-	for c in _main.get_node("MainRoomCreatures").get_children():
-		if c is Creature and (c as Creature).body_color == color:
-			return c as Creature
-	return null
-
-
 func _shoot(shot_name: String) -> void:
-	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [OUT, shot_name])
+	get_viewport().get_texture().get_image().save_png("%s/%s%s.png" % [OUT, shot_name, _suffix])
 
 
 func _look(target: Vector3) -> void:

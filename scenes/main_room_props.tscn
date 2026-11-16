@@ -194,6 +194,162 @@ mass = 0.56
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.77, 1.364, 0.488)
 mass = 0.65
 
+[node name="ShelfBook28" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.0092, 0, 1, 0, 0.0092, 0, 1, -4.7787, 0.164, -0.34)
+mass = 0.83
+
+[node name="ShelfBook29" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9997, 0, -0.0224, 0, 1, 0, 0.0224, 0, 0.9997, -4.7702, 0.164, -0.294)
+mass = 0.68
+
+[node name="ShelfBook30" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9997, 0, -0.0231, 0, 1, 0, 0.0231, 0, 0.9997, -4.7708, 0.164, -0.248)
+mass = 0.52
+
+[node name="ShelfBook31" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.0035, 0, 1, 0, 0.0035, 0, 1, -4.7805, 0.164, -0.202)
+mass = 0.55
+
+[node name="ShelfBook32" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0.9455, 0.3256, 0, -0.3256, 0.9455, -4.7727, 0.165, -0.122)
+mass = 0.91
+
+[node name="ShelfBook33" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9958, -0.0918, 0, 0, 0, -1, 0.0918, 0.9958, 0, -4.7755, 0.064, 0.0831)
+mass = 0.97
+
+[node name="ShelfBook34" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9998, 0.0188, 0, 0, 0, -1, -0.0188, 0.9998, 0, -4.7721, 0.106, 0.0914)
+mass = 0.52
+
+[node name="ShelfBook35" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9962, 0.0875, 0, 0, 0, -1, -0.0875, 0.9962, 0, -4.7742, 0.148, 0.0715)
+mass = 0.56
+
+[node name="ShelfBook36" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9999, 0, -0.01, 0, 1, 0, 0.01, 0, 0.9999, -4.764, 0.164, 0.304)
+mass = 0.59
+
+[node name="ShelfBook37" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0.0043, 0, 1, 0, -0.0043, 0, 1, -4.7679, 0.164, 0.534)
+mass = 0.69
+
+[node name="ShelfBook38" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0.0025, 0, 1, 0, -0.0025, 0, 1, -4.7806, 0.164, 0.58)
+mass = 0.53
+
+[node name="ShelfBook39" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9999, 0, -0.0154, 0, 1, 0, 0.0154, 0, 0.9999, -4.767, 0.164, 0.626)
+mass = 0.71
+
+[node name="ShelfBook40" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0.9455, 0.3256, 0, -0.3256, 0.9455, -4.7751, 0.165, 0.706)
+mass = 0.79
+
+[node name="ShelfBook41" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.0025, 0, 1, 0, 0.0025, 0, 1, -4.7754, 0.764, -0.34)
+mass = 0.90
+
+[node name="ShelfBook42" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9999, 0, 0.0104, 0, 1, 0, -0.0104, 0, 0.9999, -4.7766, 0.764, -0.294)
+mass = 0.79
+
+[node name="ShelfBook43" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0.9455, 0.3256, 0, -0.3256, 0.9455, -4.7704, 0.765, -0.214)
+mass = 0.94
+
+[node name="ShelfBook44" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9984, 0.056, 0, 0, 0, -1, -0.056, 0.9984, 0, -4.7742, 0.664, 0.1315)
+mass = 0.56
+
+[node name="ShelfBook45" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9998, -0.02, 0, 0, 0, -1, 0.02, 0.9998, 0, -4.7649, 0.706, 0.1116)
+mass = 0.74
+
+[node name="ShelfBook46" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9997, 0, -0.0241, 0, 1, 0, 0.0241, 0, 0.9997, -4.7673, 0.764, 0.534)
+mass = 0.88
+
+[node name="ShelfBook47" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0.0038, 0, 1, 0, -0.0038, 0, 1, -4.7627, 0.764, 0.58)
+mass = 0.66
+
+[node name="ShelfBook48" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9999, 0, 0.0102, 0, 1, 0, -0.0102, 0, 0.9999, -4.7689, 0.764, 0.626)
+mass = 0.79
+
+[node name="ShelfBook49" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.0023, 0, 1, 0, 0.0023, 0, 1, -4.7635, 0.764, 0.672)
+mass = 0.97
+
+[node name="ShelfBook50" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.0014, 0, 1, 0, 0.0014, 0, 1, -4.7674, 0.764, 0.718)
+mass = 0.53
+
+[node name="ShelfBook51" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0.9455, 0.3256, 0, -0.3256, 0.9455, -4.7666, 0.765, 0.798)
+mass = 0.82
+
+[node name="ShelfBook52" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9997, 0, 0.0258, 0, 1, 0, -0.0258, 0, 0.9997, -4.7639, 1.364, -0.34)
+mass = 0.64
+
+[node name="ShelfBook53" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.006, 0, 1, 0, 0.006, 0, 1, -4.7673, 1.364, -0.294)
+mass = 0.51
+
+[node name="ShelfBook54" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.002, 0, 1, 0, 0.002, 0, 1, -4.7783, 1.364, -0.248)
+mass = 0.56
+
+[node name="ShelfBook55" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0, 0, 0.9455, 0.3256, 0, -0.3256, 0.9455, -4.7807, 1.365, -0.168)
+mass = 0.88
+
+[node name="ShelfBook56" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9998, 0, -0.0194, 0, 1, 0, 0.0194, 0, 0.9998, -4.7766, 1.364, 0.304)
+mass = 0.70
+
+[node name="ShelfBook57" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9998, 0, 0.0194, 0, 1, 0, -0.0194, 0, 0.9998, -4.7802, 1.364, 0.258)
+mass = 0.72
+
+[node name="ShelfBook58" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, 0.0026, 0, 1, 0, -0.0026, 0, 1, -4.7626, 1.364, 0.534)
+mass = 0.91
+
+[node name="ShelfBook59" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9998, 0, 0.0191, 0, 1, 0, -0.0191, 0, 0.9998, -4.7759, 1.364, 0.58)
+mass = 0.71
+
+[node name="ShelfBook60" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9994, -0.0345, 0, 0, 0, -1, 0.0345, 0.9994, 0, -4.7623, 1.264, 0.791)
+mass = 0.58
+
+[node name="ShelfBook61" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9969, -0.079, 0, 0, 0, -1, 0.079, 0.9969, 0, -4.7754, 1.306, 0.7736)
+mass = 0.74
+
+[node name="ShelfBook62" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9998, 0.0218, 0, 0, 0, -1, -0.0218, 0.9998, 0, -4.7747, 1.348, 0.7681)
+mass = 0.71
+
+[node name="ShelfBook63" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9995, -0.0319, 0, 0, 0, -1, 0.0319, 0.9995, 0, -4.7687, 1.39, 0.7909)
+mass = 0.85
+
+[node name="ShelfBook64" parent="." instance=ExtResource("book")]
+transform = Transform3D(1, 0, -0.0025, 0, 1, 0, 0.0025, 0, 1, -4.7697, 0.764, 0.304)
+mass = 0.96
+
+[node name="ShelfBook65" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9999, 0, 0.0153, 0, 1, 0, -0.0153, 0, 0.9999, -4.7799, 1.364, 0.212)
+mass = 0.65
+
+[node name="ShelfBook66" parent="." instance=ExtResource("book")]
+transform = Transform3D(0.9998, 0, -0.0214, 0, 1, 0, 0.0214, 0, 0.9998, -4.7642, 1.364, 0.166)
+mass = 0.85
+
 [node name="FloorPileA_1" parent="." instance=ExtResource("book")]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.6063, 0.022, 0.8936)
 mass = 0.79

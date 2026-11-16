@@ -6,22 +6,63 @@ extends RefCounted
 ## The creature's shader (creature_marble.gdshader) draws it in 3D; draw()
 ## here is the bag's small 2D version.
 
-enum Eyes { DOTS, RINGS, LASHES }
-enum Mouth { SMILE, GRIN, WONKY }
+enum Eyes { DOTS, RINGS, LASHES, BEANS, GOOGLY, SLEEPY, STARS, HEARTS, SPIRAL, WINK }
+enum Mouth { SMILE, GRIN, WONKY, CAT, TONGUE, BUCK, ZIGZAG, KISS, TOOTHY }
+## Extra bits, as flags.
+const BROWS: int = 1
+const NOSE: int = 2
+const FRECKLES: int = 4
+const TASH: int = 8
+const GLASSES: int = 16
+const TUFT: int = 32
+
+## The named faces: [name, eyes, mouth, extras].
+const VARIANTS: Array = [
+	["Classic", Eyes.DOTS, Mouth.SMILE, 0],
+	["Ringo", Eyes.RINGS, Mouth.GRIN, 0],
+	["Lashes", Eyes.LASHES, Mouth.SMILE, 0],
+	["Bean", Eyes.BEANS, Mouth.CAT, 0],
+	["Googly", Eyes.GOOGLY, Mouth.WONKY, 0],
+	["Dozy", Eyes.SLEEPY, Mouth.SMILE, 0],
+	["Starry", Eyes.STARS, Mouth.GRIN, 0],
+	["Lovey", Eyes.HEARTS, Mouth.SMILE, 0],
+	["Cheeky", Eyes.DOTS, Mouth.TONGUE, 0],
+	["Bucky", Eyes.RINGS, Mouth.BUCK, NOSE],
+	["Swot", Eyes.DOTS, Mouth.SMILE, GLASSES | NOSE],
+	["Worrier", Eyes.GOOGLY, Mouth.ZIGZAG, BROWS],
+	["Freckles", Eyes.RINGS, Mouth.GRIN, FRECKLES],
+	["Tash", Eyes.DOTS, Mouth.SMILE, TASH | NOSE],
+	["Kissy", Eyes.LASHES, Mouth.KISS, 0],
+	["Toothy", Eyes.BEANS, Mouth.TOOTHY, BROWS],
+	["Dizzy", Eyes.SPIRAL, Mouth.WONKY, 0],
+	["Tufty", Eyes.DOTS, Mouth.CAT, TUFT],
+	["Winky", Eyes.WINK, Mouth.TONGUE, 0],
+	["Posh", Eyes.LASHES, Mouth.SMILE, BROWS | NOSE],
+]
+## Which of VARIANTS creatures pick from.
+const IN_PLAY: Array[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 const INK := Color(0.03, 0.02, 0.09)
 const CHEEK := Color(1.0, 0.42, 0.55, 0.6)
 
 var eyes: Eyes = Eyes.DOTS
 var mouth: Mouth = Mouth.SMILE
+var extras: int = 0
 ## -1..1: one eye a touch bigger and higher than the other.
 var lop: float = 0.0
 
 
 static func random() -> DoodleFace:
+	return variant(IN_PLAY.pick_random())
+
+
+## One of VARIANTS, drawn a little lopsided at random.
+static func variant(index: int) -> DoodleFace:
 	var face := DoodleFace.new()
-	face.eyes = randi() % Eyes.size() as Eyes
-	face.mouth = randi() % Mouth.size() as Mouth
+	var v: Array = VARIANTS[index]
+	face.eyes = v[1]
+	face.mouth = v[2]
+	face.extras = v[3]
 	face.lop = randf_range(-1.0, 1.0)
 	return face
 
@@ -29,6 +70,7 @@ static func random() -> DoodleFace:
 func apply(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("face_eyes", eyes)
 	mat.set_shader_parameter("face_mouth", mouth)
+	mat.set_shader_parameter("face_extras", extras)
 	mat.set_shader_parameter("face_lop", lop)
 
 

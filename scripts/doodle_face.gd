@@ -61,8 +61,14 @@ var extras: int = 0
 var lop: float = 0.0
 ## A face drawn in the face painter, or null for a built-in doodle.
 var drawn: Texture2D = null
+## Where the drawn eye sits in its square (0..1): left edge, right edge,
+## middle height. A blink is a line across exactly that.
+var eye_span: Vector3 = DEFAULT_SPAN
+
+const DEFAULT_SPAN := Vector3(0.15, 0.85, 0.5)
 
 static var _drawn_faces: Array[Texture2D] = []
+static var _drawn_spans: Array[Vector3] = []
 static var _drawn_loaded: bool = false
 
 
@@ -70,7 +76,9 @@ static func random() -> DoodleFace:
 	var faces: Array[Texture2D] = drawn_faces()
 	if not faces.is_empty():
 		var face := DoodleFace.new()
-		face.drawn = faces.pick_random()
+		var pick: int = randi() % faces.size()
+		face.drawn = faces[pick]
+		face.eye_span = _drawn_spans[pick]
 		face.lop = randf_range(-1.0, 1.0)
 		return face
 	return variant(IN_PLAY.pick_random())
@@ -81,7 +89,9 @@ static func drawn_faces() -> Array[Texture2D]:
 	if not _drawn_loaded:
 		_drawn_loaded = true
 		for name: String in face_names():
-			_drawn_faces.append(load_drawn(name))
+			var tex: Texture2D = load_drawn(name)
+			_drawn_faces.append(tex)
+			_drawn_spans.append(measure_eye(tex.get_image()))
 	return _drawn_faces
 
 
@@ -111,6 +121,19 @@ static func load_drawn(name: String) -> Texture2D:
 	return texture_from(image)
 
 
+## Where the ink of a drawn face's eye sits in its square: see eye_span.
+static func measure_eye(atlas: Image) -> Vector3:
+	var cell: int = atlas.get_height()
+	var eye := atlas.get_region(Rect2i(0, 0, cell, cell))
+	if eye.is_compressed():
+		eye.decompress()
+	var used: Rect2i = eye.get_used_rect()
+	if used.size.x <= 0:
+		return DEFAULT_SPAN
+	return Vector3(float(used.position.x) / cell, float(used.end.x) / cell,
+		(used.position.y + used.size.y * 0.5) / cell)
+
+
 ## The face painter's live texture uses this too.
 static func texture_from(image: Image) -> ImageTexture:
 	image = image.duplicate() as Image
@@ -138,6 +161,7 @@ func apply(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("face_extras", extras)
 	mat.set_shader_parameter("face_lop", lop)
 	mat.set_shader_parameter("face_drawn", drawn != null)
+	mat.set_shader_parameter("face_eye_span", eye_span)
 	mat.set_shader_parameter("face_tex", drawn)
 
 

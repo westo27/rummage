@@ -28,6 +28,10 @@ uniform float face_lop = 0.0;
 // square cells side by side, ink in the alpha: eye, happy eye, mouth,
 // startled mouth. Used in place of the built-in doodles when face_drawn.
 uniform bool face_drawn = false;
+// Where the drawn eye's ink sits in its square (0..1): left edge, right
+// edge, middle height. A blink is a line across that; a squint squashes the
+// eye about its middle.
+uniform vec3 face_eye_span = vec3(0.15, 0.85, 0.5);
 uniform sampler2D face_tex : source_color, filter_linear_mipmap, repeat_disable;
 // Per eye (x left, y right): size, height (0 shut .. 1 open), pupil size
 // (under 1 when wide-eyed).
@@ -333,12 +337,19 @@ vec4 drawn_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, bo
 	// The painter's dashed guide (0.65 of the box) is the built-in eye size.
 	float box = 0.28 * size * (1.0 + wide * 0.3);
 	area = max(area, 1.0 - smoothstep(0.7, 1.1, length((f - c) / box)));
-	if (open < 0.3) {
-		float shut = ink_stroke(f, c - vec2(box * 0.8, 0.0), c + vec2(box * 0.8, 0.0), 0.036);
-		return vec4(vec3(0.03, 0.02, 0.09), shut);
-	}
 	vec2 at = c + look * 0.04;
-	return drawn_part(f, at, vec2(box, box * min(open, 1.2)), 0, mirror, s);
+	// The eye's own middle, which stays put as it squashes.
+	float mid = (0.5 - face_eye_span.z) * 2.0 * box;
+	if (open < 0.3) {
+		float u0 = mirror ? 1.0 - face_eye_span.y : face_eye_span.x;
+		float u1 = mirror ? 1.0 - face_eye_span.x : face_eye_span.y;
+		vec2 a = vec2(at.x + (u0 - 0.5) * 2.0 * box, at.y + mid);
+		vec2 b = vec2(at.x + (u1 - 0.5) * 2.0 * box, at.y + mid);
+		return vec4(vec3(0.03, 0.02, 0.09), ink_stroke(f, a, b, 0.036));
+	}
+	float h = min(open, 1.2);
+	at.y += mid * (1.0 - h);
+	return drawn_part(f, at, vec2(box, box * h), 0, mirror, s);
 }
 
 void fragment() {

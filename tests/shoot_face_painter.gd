@@ -4,7 +4,8 @@ extends Node
 ## sample is deleted again afterwards (pass `-- keep` to keep it, to see it
 ## in the game). Needs a real window.
 ## Run: Godot --path . --resolution 1400x800 res://tests/shoot_face_painter.tscn
-## Writes face_painter.png to user://shots.
+## Writes face_painter.png (and face_painter_blink.png, the preview with its
+## eyes shut) to user://shots.
 
 const OUT: String = "user://shots"
 const SAMPLE: String = "zz_painter_check"
@@ -22,9 +23,10 @@ func _run() -> void:
 	var c := Vector2(256, 256)
 	# Eye: a loop with a filled pupil.
 	painter.call("_select_part", 0)
-	_loop(painter, c, 150.0)
-	painter.set("_brush", 40.0)
-	_loop(painter, c + Vector2(10, 25), 25.0)
+	# Smaller than the guide and off-centre, so the blink has to find it.
+	_loop(painter, c + Vector2(-30, 30), 95.0)
+	painter.set("_brush", 34.0)
+	_loop(painter, c + Vector2(-20, 50), 18.0)
 	painter.set("_brush", 18.0)
 	# Happy eye: an arch.
 	painter.call("_select_part", 1)
@@ -44,6 +46,17 @@ func _run() -> void:
 	print("%s  loads back, 4 cells wide" % ("PASS" if tex != null and tex.get_width() == tex.get_height() * 4 else "FAIL"))
 	await _frames(150)  # let the preview run into its moods
 	get_viewport().get_texture().get_image().save_png("%s/face_painter.png" % OUT)
+	# Shut its eyes and look again: the blink line should span the drawn eye.
+	var eyes := painter.get("_eyes") as CreatureEyes
+	painter.set("_mood_index", 0)
+	painter.set("_mood_left", 100.0)
+	eyes.mood = CreatureEyes.Mood.NORMAL
+	await _frames(20)
+	# Held at the middle of a blink (fully shut), frame after frame.
+	for i in 6:
+		eyes.set("_blink_left", CreatureEyes.BLINK_SECONDS * 0.5 + 0.02)
+		await get_tree().process_frame
+	get_viewport().get_texture().get_image().save_png("%s/face_painter_blink.png" % OUT)
 	if not "keep" in OS.get_cmdline_user_args():
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	print("RESULT face painter shot in %s" % ProjectSettings.globalize_path(OUT))

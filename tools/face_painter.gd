@@ -11,8 +11,7 @@ extends Control
 ## doodles.
 ##
 ## Left mouse draws, right mouse rubs out, Ctrl+Z undoes. The pen is felt-tip:
-## slightly see-through ink, so overlapping strokes come out darker, with soft
-## edges. Anything you close off in the eye fills with white (it can be turned
+## one solid colour with a soft, slightly fibrous edge. Anything you close off in the eye fills with white (it can be turned
 ## off), and there's a white pen for touching up. The marble on the right
 ## wears the face as you draw and runs through its moods.
 
@@ -21,8 +20,6 @@ const SIZE: int = 512
 const PART_NAMES: Array[String] = ["Eye", "Happy eye", "Mouth", "Startled mouth"]
 const INK := DoodleFace.INK
 const WHITE := Color(0.98, 0.97, 0.94)
-## How much one pass of the pen covers: a second pass over it goes darker.
-const PEN_OPACITY: float = 0.9
 ## The enclosed-area check runs on the eye shrunk to this size: plenty to
 ## find what's inside the lines, and quick.
 const FILL_GRID: int = 128
@@ -49,8 +46,7 @@ var _dirty: bool = true
 var _pen_white: bool = false
 var _auto_white: bool = true
 ## While drawing: the part as it was before this stroke, and how much the
-## stroke covers each pixel (a stroke doesn't build up on itself, only on
-## earlier strokes, as felt-tip does).
+## stroke covers each pixel (only its soft edge is part-covered).
 var _stroke_base: Image
 var _stroke_mask := PackedFloat32Array()
 var _stroke_length: float = 0.0
@@ -124,9 +120,8 @@ func _to_image(at: Vector2) -> Vector2:
 	return at * float(SIZE) / _canvas.size.x
 
 
-## Felt-tip dabs along a line: a soft, slightly fibrous edge, a touch wider
-## where the pen first lands (the ink pools), and laid over what was there
-## before the stroke at PEN_OPACITY.
+## Felt-tip dabs along a line: solid, with a soft, slightly fibrous edge and
+## a touch wider where the pen first lands.
 func _stamp_line(from: Vector2, to: Vector2) -> void:
 	var image := _parts[_part]
 	var steps: int = maxi(ceili(from.distance_to(to) / (_brush * 0.25)), 1)
@@ -162,7 +157,7 @@ func _stamp_line(from: Vector2, to: Vector2) -> void:
 			if _erasing:
 				image.set_pixel(x, y, Color(base.r, base.g, base.b, base.a * (1.0 - m)))
 			else:
-				var cover: float = m * PEN_OPACITY
+				var cover: float = m
 				var a: float = cover + base.a * (1.0 - cover)
 				var rgb: Color = (pen * cover + base * base.a * (1.0 - cover)) / maxf(a, 0.0001)
 				image.set_pixel(x, y, Color(rgb.r, rgb.g, rgb.b, a))
@@ -352,7 +347,9 @@ func _process(delta: float) -> void:
 	_preview_wait -= delta
 	if _dirty:
 		_dirty = false
-		_material.set_shader_parameter("face_tex", DoodleFace.texture_from(_atlas()))
+		var atlas := _atlas()
+		_material.set_shader_parameter("face_tex", DoodleFace.texture_from(atlas))
+		_material.set_shader_parameter("face_eye_span", DoodleFace.measure_eye(atlas))
 	_time += delta
 	_mood_left -= delta
 	if _mood_left <= 0.0:
@@ -501,7 +498,7 @@ func _build_ui() -> void:
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	side_panel.add_child(_status)
 	var help := Label.new()
-	help.text = "Left mouse draws, right mouse rubs out.\nGo over a line again to darken it.\nClose a loop in the eye and it fills white.\nThe dashed circle is a good eye or mouth size; keep inside the square.\nThe right eye is this one mirrored."
+	help.text = "Left mouse draws, right mouse rubs out.\nClose a loop in the eye and it fills white.\nThe dashed circle is a good eye or mouth size; keep inside the square.\nThe right eye is this one mirrored."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD
 	help.modulate = Color(1, 1, 1, 0.6)
 	side_panel.add_child(help)

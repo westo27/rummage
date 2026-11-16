@@ -26,8 +26,6 @@ const CROUCH_HEIGHT: float = 0.95
 ## Capsule height lying flat: as short as a capsule this wide can be. The eyes
 ## go lower still (prone_eye_height), down at the floor, to peer under the bed.
 const PRONE_HEIGHT: float = 0.7
-## How fast you get up and down (twice the fraction of `crouch` per second).
-const CROUCH_EASE: float = 12.0
 
 ## 0 standing, 0.5 crouched, 1 lying flat. Eased, so the camera dips rather
 ## than snaps.
@@ -149,7 +147,7 @@ func _update_crouch(delta: float) -> void:
 		want = 0.5
 	if want < 1.0 and crouch > 0.5 and not _has_room(_crouch_query, CROUCH_HEIGHT):
 		want = 1.0
-	crouch = move_toward(crouch, want, CROUCH_EASE * delta * 0.5)
+	crouch = move_toward(crouch, want, 0.5 * delta / Game.tune.crouch_time)
 	var height: float = _by_crouch(STAND_HEIGHT, CROUCH_HEIGHT, PRONE_HEIGHT)
 	var capsule := _body_shape.shape as CapsuleShape3D
 	capsule.height = height

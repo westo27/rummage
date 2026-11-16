@@ -336,7 +336,7 @@ func _add(node: Node) -> void:
 func _logo(size: int, top: int) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 10
-	PressLogo.build(layer, size, top)
+	PressLogo.build(layer, size, top, "I’m Losing My")
 	_add(layer)
 
 

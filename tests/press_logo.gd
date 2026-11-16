@@ -16,8 +16,8 @@ const SHADOW_DROP: float = 18.0 / 420.0
 
 
 ## Adds the logo's labels to `parent`, centred across it, `top` pixels down.
-static func build(parent: Node, size: int, top: int) -> void:
-	_line(parent, "Losing My", roundi(size * SMALL), top, size)
+static func build(parent: Node, size: int, top: int, first: String = "Losing My") -> void:
+	_line(parent, first, roundi(size * SMALL), top, size)
 	_line(parent, "Marbles!", size, top + roundi(size * LINE_GAP), size)
 
 

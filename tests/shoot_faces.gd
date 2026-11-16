@@ -6,11 +6,12 @@ extends Node
 
 const CreatureScene: PackedScene = preload("res://scenes/creature.tscn")
 const OUT: String = "user://shots"
-## Rows: a name, the shader face_style, and how far (degrees) the face
-## points below the camera. In play you look down on them from about 35
-## degrees while their faces stay level, so a tilt of 35 shows them as seen.
-const STYLES: Array = [["Now (in play)", 0, 35.0], ["Grin (in play)", 6, 35.0],
-	["Grin, tips up", 6, 15.0], ["Grin head-on", 6, 0.0]]
+## Rows: a name, the shader face_style, how far (degrees) the face points
+## below the camera, and a seed offset (some styles vary by seed). In play
+## you look down on them from about 35 degrees while their faces stay level,
+## so a tilt of 35 shows them as seen.
+const STYLES: Array = [["Doodle (in play)", 7, 35.0, 0.3], ["Doodle", 7, 12.0, 0.0],
+	["Doodle", 7, 12.0, 0.5], ["Doodle", 7, 12.0, 0.9]]
 const GAP: float = 0.15
 ## Expression per column: mood, and where the pupils look (x, y).
 const COLUMNS: Array = [
@@ -59,7 +60,7 @@ func _run() -> void:
 		for col in COLUMNS.size():
 			# The camera looks down +Z from -Z, so screen right is world -X.
 			var x: float = ((COLUMNS.size() - 1) * 0.5 - col) * GAP
-			_creature(Vector3(x, y, 0.0), STYLES[row][1], STYLES[row][2], col, camera)
+			_creature(Vector3(x, y, 0.0), STYLES[row][1], STYLES[row][2], STYLES[row][3], col, camera)
 		var label := UiStyle.label(STYLES[row][0], 26, UiStyle.CREAM)
 		label.position = Vector2(20.0, (row + 0.5) / STYLES.size() * get_viewport().get_visible_rect().size.y - 24.0)
 		labels.add_child(label)
@@ -70,7 +71,7 @@ func _run() -> void:
 	get_tree().quit()
 
 
-func _creature(at: Vector3, style: int, tilt: float, column: int, camera: Camera3D) -> void:
+func _creature(at: Vector3, style: int, tilt: float, seed_offset: float, column: int, camera: Camera3D) -> void:
 	var c := CreatureScene.instantiate() as Creature
 	add_child(c)
 	c.process_mode = Node.PROCESS_MODE_DISABLED
@@ -78,7 +79,7 @@ func _creature(at: Vector3, style: int, tilt: float, column: int, camera: Camera
 	c.global_position = at
 	var mat := (c.get_node("Visual/Body") as MeshInstance3D).material_override as ShaderMaterial
 	mat.set_shader_parameter("tint", Creature.BODY_COLORS[COLOURS[column]])
-	mat.set_shader_parameter("seed", 0.13 * column + 0.31 * style)
+	mat.set_shader_parameter("seed", 0.13 * column + 0.31 * style + seed_offset)
 	mat.set_shader_parameter("face_style", style)
 	var visual := c.get_node("Visual") as Node3D
 	visual.look_at(camera.global_position, Vector3.UP)

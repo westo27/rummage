@@ -55,6 +55,8 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# Press images show the cheerful set of faces.
+	DoodleFace.only = DoodleFace.PRESS_FACES
 	DirAccess.make_dir_recursive_absolute(OUT)
 	await _banner()
 	await _background()

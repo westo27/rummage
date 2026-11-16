@@ -441,8 +441,9 @@ void fragment() {
 			vec4 r = drawn_eye(f, c2, face_box_eye2.z * mix(1.0, eye_size.x, 0.4), eye_height.x, wide.x, pupil_offset.xy,
 				own_right ? 4 : 0, own_right ? face_right_span : face_eye_span, !own_right, s + 1.0, area);
 			vec4 eyes_drawn = drawn_either(l, r);
-			vec4 happy_drawn = drawn_either(drawn_part(f, c1, vec2(face_box_eye.z), 1, false, s),
-				drawn_part(f, c2, vec2(face_box_eye2.z), 1, true, s + 1.0));
+			// Happy eyes get a bigger box (DoodleFace.HAPPY_BOX), so the arch reads.
+			vec4 happy_drawn = drawn_either(drawn_part(f, c1, vec2(face_box_eye.z * 1.6), 1, false, s),
+				drawn_part(f, c2, vec2(face_box_eye2.z * 1.6), 1, true, s + 1.0));
 			drawn = happy > 0.5 ? happy_drawn : eyes_drawn;
 			drawn = drawn_either(drawn, drawn_part(f, cm, vec2(face_box_mouth.z), startled > 0.5 ? 3 : 2, false, s + 2.0));
 			if (face_cells > 5) {

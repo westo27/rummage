@@ -73,6 +73,12 @@ var right_span: Vector3 = DEFAULT_SPAN
 var layout: Dictionary = LAYOUT
 
 const DEFAULT_SPAN := Vector3(0.15, 0.85, 0.5)
+## How much wider a made happy eye is than the eye it comes from.
+const HAPPY_GROW: float = 1.7
+## The game draws the happy eye in a box this much bigger than the eye's
+## (creature_marble.gdshader's HAPPY_BOX), so a big arch fits: a made one is
+## drawn this much smaller in its cell, at the eye's pen weight once scaled.
+const HAPPY_BOX: float = 1.6
 ## Where a drawn face's parts go, as seen from the front (x to your right, y
 ## up, in units of the face): each box's middle and half its size. These are
 ## the painter's; a face from a sheet has its own, saved beside it as
@@ -89,6 +95,15 @@ static var _drawn_spans: Array[Vector3] = []
 static var _drawn_right_spans: Array[Vector3] = []
 static var _drawn_layouts: Array[Dictionary] = []
 static var _drawn_loaded: bool = false
+## When set (before the first face is picked), only these drawn faces are
+## used: the press images use PRESS_FACES.
+static var only: Array[String] = []
+
+## The cheerful, varied set for press images: grins, tongue, teeth, cat
+## mouth, hearts, kisses, a wink, > <, a snout, a contented smile.
+const PRESS_FACES: Array[String] = ["doodle_02", "doodle_03", "doodle_04", "doodle_06",
+	"doodle_07", "doodle_09", "doodle_13", "doodle_14", "doodle_17", "doodle_19",
+	"doodle_20", "doodle_25", "doodle_27", "doodle_28", "doodle_30"]
 
 
 static func random() -> DoodleFace:
@@ -109,6 +124,8 @@ static func drawn_faces() -> Array[Texture2D]:
 	if not _drawn_loaded:
 		_drawn_loaded = true
 		for name: String in face_names():
+			if not only.is_empty() and not name in only:
+				continue
 			var tex: Texture2D = load_drawn(name)
 			_drawn_faces.append(tex)
 			_drawn_spans.append(measure_eye(tex.get_image()))
@@ -313,7 +330,8 @@ static func fill_missing(atlas: Image) -> Image:
 
 
 ## The happy eye: the top edge of the eye, traced as a closed "^" arch, in
-## the eye's own pen weight. Small eyes get a bigger arch, so it reads.
+## the eye's own pen weight, HAPPY_GROW times as wide as the eye (within its
+## box), so it reads.
 static func happy_from_eye(eye: Image) -> Image:
 	eye = _rgba(eye)
 	var size: int = eye.get_width()
@@ -335,18 +353,22 @@ static func happy_from_eye(eye: Image) -> Image:
 	# Trace along the outside of the line: shift down by half the pen.
 	for i in tops.size():
 		tops[i].y += weight * 0.5
-	# Smooth out the steps, then scale up about the eye's middle if it's small.
+	# Smooth out the steps, then scale up about the eye's middle: a happy eye
+	# is a big, clear arch, wider than the eye and filling most of its box.
 	tops = _smooth(tops, 3)
 	var middle := Vector2(used.get_center())
-	var min_width: float = size * 0.3
-	var grow: float = maxf(min_width / maxf(used.size.x, 1.0), 1.0)
+	var width: float = clampf(maxf(used.size.x * HAPPY_GROW, size * 0.75), 1.0, size * 1.3)
+	var grow: float = maxf(width / maxf(used.size.x, 1.0), 1.0)
 	var lift: float = (used.size.y * 0.5 - weight) * 0.5
 	for i in tops.size():
 		# A flat-topped eye still needs to read as a curve: bow it a little.
 		var t: float = float(i) / (tops.size() - 1) * 2.0 - 1.0
 		var p: Vector2 = tops[i] + Vector2(0.0, lift + t * t * size * 0.04)
 		tops[i] = middle + (p - middle) * grow
-	draw_stroke(out, tops, weight * 0.5)
+		# Into the bigger happy box: about the cell's middle, HAPPY_BOX smaller.
+		var c := Vector2(size, size) * 0.5
+		tops[i] = c + (tops[i] - c) / HAPPY_BOX
+	draw_stroke(out, tops, weight * 0.5 / HAPPY_BOX)
 	return out
 
 

@@ -30,6 +30,8 @@ const MOUTH_BAND: float = 0.2
 ## Faces (numbered from 1, along the rows) whose eyes aren't their biggest
 ## blobs, where the eye is the highest one instead (hearts or tears below).
 const EYES_HIGHEST: Array[int] = [7, 32]
+## Faces left out (their tears touch their eyes, so they can't be split).
+const SKIP: Array[int] = [29, 36]
 ## Gaps (sheet pixels) that split rows of faces, and faces within a row.
 const ROW_GAP: int = 8
 const FACE_GAP: int = 26
@@ -60,6 +62,8 @@ func _run() -> void:
 		for face: Array in _split(row, 0, FACE_GAP):
 			count += 1
 			var face_name: String = "%s_%02d" % [prefix, count]
+			if count in SKIP:
+				continue
 			var made: Array = _face(face, ink, w, count in EYES_HIGHEST)
 			if made.is_empty():
 				print("skipped %s: couldn't find two eyes" % face_name)

@@ -33,6 +33,8 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# Press images show the cheerful set of faces.
+	DoodleFace.only = DoodleFace.PRESS_FACES
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()

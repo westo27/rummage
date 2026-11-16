@@ -143,9 +143,10 @@ func hint_text() -> String:
 	return _hint_label.text if _hint_label.visible else ""
 
 
-## Drops a ball of this colour into the bag. Called by main.gd on each catch.
-func add_to_bag(color: Color) -> void:
-	_bag.drop(color)
+## Drops a ball of this colour and face into the bag. Called by main.gd on
+## each catch.
+func add_to_bag(color: Color, face: DoodleFace) -> void:
+	_bag.drop(color, face)
 
 
 func _build_win_screen() -> void:

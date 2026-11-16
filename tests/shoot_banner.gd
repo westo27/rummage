@@ -178,6 +178,7 @@ func _pose(creature: Creature) -> void:
 	var mat := body.material_override as ShaderMaterial
 	mat.set_shader_parameter("tint", Creature.BODY_COLORS.pick_random())
 	mat.set_shader_parameter("seed", randf())
+	DoodleFace.random().apply(mat)
 	var visual := creature.get_node("Visual") as Node3D
 	# Turned a little off square, and rolled, so the faces sit at all angles.
 	visual.basis = Basis(Vector3.BACK, randf_range(-0.6, 0.6)) \

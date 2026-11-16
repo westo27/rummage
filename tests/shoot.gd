@@ -65,7 +65,7 @@ func _run() -> void:
 	# Fill the bag partway and let the pile settle.
 	var hud := main.get_node("HUD") as Hud
 	for i in 14:
-		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()])
+		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()], DoodleFace.random())
 	hud.set_caught(14, 25)
 	await get_tree().create_timer(4.5).timeout
 	_shoot("bag")
@@ -73,7 +73,7 @@ func _run() -> void:
 	hud._bag._viewport.get_texture().get_image().save_png("%s/bag_closeup.png" % OUT)
 	# And completely full, as at the end of a game.
 	for i in 11:
-		hud.add_to_bag(Creature.BODY_COLORS[(i + 3) % Creature.BODY_COLORS.size()])
+		hud.add_to_bag(Creature.BODY_COLORS[(i + 3) % Creature.BODY_COLORS.size()], DoodleFace.random())
 	hud.set_caught(25, 25)
 	await get_tree().create_timer(4.0).timeout
 	hud._bag._viewport.get_texture().get_image().save_png("%s/bag_full.png" % OUT)

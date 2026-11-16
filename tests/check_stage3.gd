@@ -205,9 +205,15 @@ func _run() -> void:
 		sideways = maxf(sideways, Vector2(cower._visual.position.x, cower._visual.position.z).length())
 	_check("a cowering creature bounces", highest - lowest > 0.02, "%.3f m" % (highest - lowest))
 	_check("and doesn't shiver sideways", sideways < 0.001, "%.4f m" % sideways)
-	_check("it settles upright", cower._visual.global_basis.y.angle_to(Vector3.UP) < 0.1, "")
-	var to_player: Vector3 = (_player.global_position - cower.global_position) * Vector3(1, 0, 1)
-	_check("facing the player", (-cower._visual.global_basis.z).angle_to(to_player) < 0.2, "")
+	# Settled: not leaning to either side, face tipped part way up to your eyes.
+	_check("it settles upright", absf(cower._visual.global_basis.x.y) < 0.1, "")
+	var to_eye: Vector3 = cower._player_eye() - cower.global_position
+	var flat := Vector3(to_eye.x, 0.0, to_eye.z)
+	var up: float = atan2(to_eye.y, flat.length()) * Creature.FACE_TIP
+	var expected: Vector3 = flat.normalized() * cos(up) + Vector3.UP * sin(up)
+	var face: Vector3 = -cower._visual.global_basis.z
+	_check("facing the player, tipped up", face.angle_to(expected) < 0.2,
+		"%.2f rad off" % face.angle_to(expected))
 
 	# --- Eyes: it blinks, winks while it waits, and is happy to be caught ---
 	var least_open: float = 1.0

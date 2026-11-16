@@ -80,13 +80,14 @@ a root node and a script.
   pre-selected and the arrow keys do nothing. Esc still backs out of menus.
 - **The marble bag** (`scripts/marble_bag.gd`, `scripts/bag_marble.gd`) sits
   in the HUD's bottom-right corner. Each catch drops a ball in that
-  creature's colour, with eyes, into a clear bag where it rolls and
+  creature's colour, wearing its face, into a clear bag where it rolls and
   piles up. It's a SubViewport with its own 2D physics world, so the balls
   can't touch the 3D game. One function, `_outline()`, gives the bag's shape
   for both drawing and the walls the balls hit, so the two always match.
   The balls are glass marbles like the menu text
   (`shaders/glass_marble.gdshader`: smoky glass, white edge light, a swirl in
-  the creature's colour, bubbles), with the eyes drawn plain on top. The bag
+  the creature's colour, bubbles), with its felt-tip face drawn plain on top
+  (`DoodleFace.draw`). The bag
   is clear film: faint fill, fine white edges, reflections and creases, a
   gathered neck. No bow, no tag. Balls clack like glass marbles when they land and knock together
   (`Tones.clack`: a bright crack with a very short two-pitch glass ring,
@@ -611,24 +612,29 @@ out over its front once it's out `DRAWER_REVEAL_OUT` (0.2 m), heading
 straight out for 0.6 s before steering away from you. Knocks don't reveal
 them.
 
-## The creatures' eyes
+## The creatures' faces
 
-The creatures are cheeky and playful, and all of it is in the eyes
-(`scripts/creature_eyes.gd`, on Visual/Eyes). The body is a glass marble
-matching its marble in the bag (`shaders/creature_marble.gdshader`: smoky
-glass, swirl in its colour seen through the ball, bubbles, edge light), and
-the eyes are painted flat on it by the same shader, which creature_eyes.gd
-feeds each tick: blink, widen, squint, where the pupils look (up to 42° off
-straight ahead), happy arcs, glint. `tests/shoot_creature.tscn` renders a
-close-up row of moods.
-- Always: blinks every 2-5 s; catchlights on the pupils; the whites glow
-  faintly so they read as white at night.
+The creatures are cheeky and playful, and all of it is in the face. The
+body is a glass marble matching its marble in the bag
+(`shaders/creature_marble.gdshader`: smoky glass, swirl in its colour seen
+through the ball, bubbles, edge light). The face is drawn on in felt-tip, as
+if by the child who owns them: wobbly blue-black ink, pencil-scribbled pink
+cheeks, and lines that "boil" (redrawn 6 times a second). Each creature picks
+its own face at spawn (`scripts/doodle_face.gd`: dot, ring or lashed eyes;
+smile, grin or wonky mouth; a little lopsided), shared with its bag marble.
+The shader draws it and `scripts/creature_eyes.gd` (on Visual/Eyes) feeds it
+each tick: blink, widen (bigger eyes, an "o" mouth), squint, where the pupils
+look, happy arcs and grin, glint. Turned to look at you, it tips its face 70%
+of the way up to your eyes (`FACE_TIP`), since you always look down on it.
+`tests/shoot_faces.tscn` renders a sheet of random faces in every mood;
+`tests/shoot_creature.tscn` a row in the room.
+- Always: blinks every 2-5 s; a highlight left blank in each pupil.
 - Hidden: every 3-8 s it peeks at you for a second; its giveaway (and a
-  ping) makes the eyes glint, bright enough for bloom.
+  ping) makes the pupil highlights glint, bright enough for bloom.
 - Found: wide eyes for 0.35 s, then a cheeky squint as it bolts.
 - Running and cowering: it keeps its eyes on you, and winks now and then
   while it waits.
-- Caught: happy ^ ^ arcs as it's pulled into the beam.
+- Caught: happy ^ ^ arcs and a big grin as it's pulled into the beam.
 Timings are constants at the top of creature_eyes.gd and creature.gd.
 
 A cover lifted by the beam (an upturned crate) used to be able to scoop its

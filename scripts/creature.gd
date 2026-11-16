@@ -76,6 +76,9 @@ const LAND_MIN_SPEED: float = 0.6
 const LAND_BOUNCE: float = 0.012
 ## How quickly a stopped creature rolls back upright to look at you (per s).
 const SETTLE_RATE: float = 6.0
+## How much of the way up to your eyes it tips its face: you look down on
+## it, so a level face would show you mostly the top of the ball.
+const FACE_TIP: float = 0.7
 ## While hidden, it now and then peeks out at you: this often, for this long.
 const PEEK_GAP_MIN: float = 3.0
 const PEEK_GAP_MAX: float = 8.0
@@ -118,6 +121,8 @@ var _base_pitch: float = 1.0
 ## Picked at random when the creature spawns. The HUD's marble bag uses it so
 ## the ball that drops in is the same colour as the creature you caught.
 var body_color: Color = Color.WHITE
+## Its felt-tip face, also picked at spawn and shared with its bag marble.
+var face: DoodleFace = DoodleFace.random()
 ## Time spent cowering, for the bounce, and a random offset so a group of
 ## them doesn't bob in step.
 var _bounce_time: float = 0.0
@@ -336,10 +341,13 @@ func _update_cowering(delta: float) -> void:
 	_visual.position.y = absf(sin(_bounce_time * BOUNCE_RATE * PI)) * BOUNCE_HEIGHT
 	var player := _player()
 	if player != null:
-		var to_player: Vector3 = _flat(player.global_position - global_position)
+		var to_eye: Vector3 = _player_eye() - global_position
+		var to_player: Vector3 = _flat(to_eye)
 		if to_player.length() > 0.01:
+			var up: float = atan2(to_eye.y, Vector2(to_eye.x, to_eye.z).length()) * FACE_TIP
+			var look: Vector3 = to_player * cos(up) + Vector3.UP * sin(up)
 			# Slerp turns smoothly from one orientation to another.
-			var facing := Basis.looking_at(to_player, Vector3.UP)
+			var facing := Basis.looking_at(look, Vector3.UP)
 			_visual.basis = _visual.basis.orthonormalized().slerp(facing, minf(SETTLE_RATE * delta, 1.0))
 	_check_left -= delta
 	if _check_left > 0.0:
@@ -835,5 +843,6 @@ func _apply_random_color() -> void:
 	var mat := body.material_override.duplicate() as ShaderMaterial
 	mat.set_shader_parameter("tint", color)
 	mat.set_shader_parameter("seed", randf())
+	face.apply(mat)
 	body.material_override = mat
 	_glow.light_color = color

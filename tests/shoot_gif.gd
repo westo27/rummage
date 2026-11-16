@@ -38,7 +38,7 @@ func _run() -> void:
 
 	var hud := _main.get_node("HUD") as Hud
 	for i in 9:
-		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()])
+		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()], DoodleFace.random())
 	hud.set_caught(9, 25)
 	# Lesson prompts and aim prompts both use this label: keep it out of shot.
 	(hud.get_node("Hint") as CanvasItem).self_modulate.a = 0.0

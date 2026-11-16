@@ -41,7 +41,7 @@ func _run() -> void:
 	# A game partway through: some marbles in the bag.
 	var hud := _main.get_node("HUD") as Hud
 	for i in 9:
-		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()])
+		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()], DoodleFace.random())
 	hud.set_caught(9, 25)
 	hud.set_time(204.0)
 	await get_tree().create_timer(4.0).timeout

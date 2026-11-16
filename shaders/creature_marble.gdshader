@@ -26,7 +26,8 @@ uniform float white_glow = 0.35;
 // 0 round whites with pupils. 1 glossy black bead eyes, 2 tiny dot eyes,
 // 3 big sparkly eyes: those three with blush and a little mouth. 4 and 5
 // cat's-eye marbles: glowing eyes floating inside the glass, seen through
-// it, with a slit pupil (4) or a round one (5).
+// it, with a slit pupil (4) or a round one (5). 6 a friendly grin: outlined
+// eyes with big pupils, low and wide, over a big open smile.
 uniform int face_style = 0;
 
 // The face as seen head-on, as on the bag's marble: eye centres and radii
@@ -170,6 +171,56 @@ vec4 glass_eye(vec3 p, vec3 dir, vec3 c, float radius, float height, float wide,
 	return vec4(col, cover);
 }
 
+// Inside an ellipse centred `c` with radii `r`, antialiased: 0..1.
+float blob(vec2 f, vec2 c, vec2 r) {
+	float aa = fwidth(f.x) * 1.5;
+	vec2 d = (f - c) / r;
+	return 1.0 - smoothstep(1.0 - aa / min(r.x, r.y), 1.0, length(d));
+}
+
+// The grin face's eye: an outlined white, a big dark pupil sitting low and
+// a little inward (so it looks at you), two highlights. Returns (colour,
+// cover); its whites add to `emit` so they still read in the dark.
+vec4 grin_eye(vec2 f, vec2 c, float size, float height, float psize, vec2 look, float inward, inout vec3 emit) {
+	vec2 r = vec2(0.13, 0.17) * size * vec2(1.0, max(height, 0.03));
+	float line = 0.024;
+	float outer = blob(f, c, r + line);
+	float white = blob(f, c, r);
+	float pr = mix(0.085, 0.108, clamp(psize, 0.0, 1.0)) * size;
+	vec2 pc = c + vec2(inward * 0.02, -0.03 * size) + look * r * 0.45;
+	float pupil = blob(f, pc, vec2(pr, pr * 1.12)) * white;
+	float spark = max(blob(f, pc + vec2(-0.4, 0.42) * pr, vec2(0.36 * pr)),
+		blob(f, pc + vec2(0.42, -0.4) * pr, vec2(0.16 * pr)) * 0.9) * pupil * step(0.35, height);
+	vec3 col = vec3(0.12, 0.04, 0.1);  // the outline
+	col = mix(col, vec3(1.0, 0.99, 0.96), white);
+	col = mix(col, vec3(0.05, 0.03, 0.08), pupil);
+	col = mix(col, vec3(1.0), spark);
+	emit += white * ((1.0 - pupil) * white_glow + spark) * vec3(1.0);
+	return vec4(col, outer);
+}
+
+// The grin's mouth: a big open "D" smile with a tongue, or a little "o"
+// when startled. Returns (colour, cover).
+vec4 grin_mouth(vec2 f, float wide, float happy_amount) {
+	vec3 lip = vec3(0.12, 0.04, 0.1);
+	if (wide > 0.5) {
+		vec2 c = vec2(0.0, -0.21);
+		float o = blob(f, c, vec2(0.065, 0.08));
+		float inside = blob(f, c, vec2(0.045, 0.06));
+		return vec4(mix(lip, vec3(0.38, 0.05, 0.1), inside), o);
+	}
+	float grow = 1.0 + happy_amount * 0.15;
+	vec2 c = vec2(0.0, -0.15);
+	vec2 r = vec2(0.15, 0.14) * grow;
+	float top = 1.0 - smoothstep(-0.006, 0.006, f.y - c.y);  // flat top edge
+	float outer = blob(f, c, r + 0.022) * (1.0 - smoothstep(-0.006, 0.006, f.y - c.y - 0.022));
+	float inside = blob(f, c, r) * top;
+	float tongue = blob(f, c + vec2(0.0, -r.y * 0.78), vec2(r.x * 0.55, r.y * 0.45)) * inside;
+	vec3 col = mix(lip, vec3(0.42, 0.06, 0.12), inside);
+	col = mix(col, vec3(1.0, 0.45, 0.5), tongue);
+	return vec4(col, outer);
+}
+
 void fragment() {
 	// The ball as a unit sphere in its own space: the face looks down -Z.
 	vec3 p = normalize(obj_pos);
@@ -212,7 +263,27 @@ void fragment() {
 	// The face, painted flat on the front of the ball. Paint isn't glossy,
 	// so the pupils stay black whatever the glass reflects.
 	float paint = 0.0;
-	if (face_style >= 4) {
+	if (face_style == 6 && p.z < 0.0) {
+		// Drawn at 1.4x: a big face, filling the front of the ball.
+		vec2 f = vec2(p.x, p.y) / 1.4;
+		vec2 wide = clamp((1.0 - pupil_size) / 0.4, 0.0, 1.0);
+		vec3 eye_emit = vec3(0.0);
+		// Low on the face and set wide apart, as in a baby's face.
+		vec4 l = grin_eye(f, vec2(-0.25, 0.04), eye_size.x, eye_height.x, pupil_size.x, pupil_offset.xy, 1.0, eye_emit);
+		vec4 r = grin_eye(f, vec2(0.25, 0.04), eye_size.y, eye_height.y, pupil_size.y, pupil_offset.zw, -1.0, eye_emit);
+		float cover = max(l.a, r.a) * (1.0 - happy);
+		float blush = max(blob(f, vec2(-0.43, -0.13), vec2(0.1, 0.06)), blob(f, vec2(0.43, -0.13), vec2(0.1, 0.06))) * 0.45;
+		col = mix(col, vec3(1.0, 0.45, 0.55), blush);
+		col = mix(col, l.rgb * l.a + r.rgb * r.a, cover);
+		emit = mix(emit, eye_emit, cover);
+		float arcs = max(arc(f, vec2(-0.25, 0.04), 0.85), arc(f, vec2(0.25, 0.04), 0.85)) * happy;
+		col = mix(col, vec3(0.12, 0.04, 0.1), arcs);
+		vec4 m = grin_mouth(f, max(wide.x, wide.y) * (1.0 - happy), happy);
+		col = mix(col, m.rgb, m.a);
+		float dark = max(arcs, m.a);
+		emit = mix(emit, vec3(0.0), dark * (1.0 - cover));
+		paint = max(max(cover, dark), blush);
+	} else if (face_style >= 4 && face_style <= 5) {
 		// Bent going into the glass, so the eyes swim a little as it turns.
 		vec3 bent = refract(into, p, 1.0 / 1.45);
 		vec2 wide = clamp((1.0 - pupil_size) / 0.4, 0.0, 1.0);

@@ -6,8 +6,11 @@ extends Node
 
 const CreatureScene: PackedScene = preload("res://scenes/creature.tscn")
 const OUT: String = "user://shots"
-## Rows: a name and the shader face_style it shows.
-const STYLES: Array = [["Now", 0], ["Sparkle", 3], ["Cat slit", 4], ["Cat round", 5]]
+## Rows: a name, the shader face_style, and how far (degrees) the face
+## points below the camera. In play you look down on them from about 35
+## degrees while their faces stay level, so a tilt of 35 shows them as seen.
+const STYLES: Array = [["Now (in play)", 0, 35.0], ["Grin (in play)", 6, 35.0],
+	["Grin, tips up", 6, 15.0], ["Grin head-on", 6, 0.0]]
 const GAP: float = 0.15
 ## Expression per column: mood, and where the pupils look (x, y).
 const COLUMNS: Array = [
@@ -56,8 +59,8 @@ func _run() -> void:
 		for col in COLUMNS.size():
 			# The camera looks down +Z from -Z, so screen right is world -X.
 			var x: float = ((COLUMNS.size() - 1) * 0.5 - col) * GAP
-			_creature(Vector3(x, y, 0.0), STYLES[row][1], col, camera)
-		var label := UiStyle.label(STYLES[row][0], 34, UiStyle.CREAM)
+			_creature(Vector3(x, y, 0.0), STYLES[row][1], STYLES[row][2], col, camera)
+		var label := UiStyle.label(STYLES[row][0], 26, UiStyle.CREAM)
 		label.position = Vector2(20.0, (row + 0.5) / STYLES.size() * get_viewport().get_visible_rect().size.y - 24.0)
 		labels.add_child(label)
 	for i in 30:
@@ -67,7 +70,7 @@ func _run() -> void:
 	get_tree().quit()
 
 
-func _creature(at: Vector3, style: int, column: int, camera: Camera3D) -> void:
+func _creature(at: Vector3, style: int, tilt: float, column: int, camera: Camera3D) -> void:
 	var c := CreatureScene.instantiate() as Creature
 	add_child(c)
 	c.process_mode = Node.PROCESS_MODE_DISABLED
@@ -79,6 +82,7 @@ func _creature(at: Vector3, style: int, column: int, camera: Camera3D) -> void:
 	mat.set_shader_parameter("face_style", style)
 	var visual := c.get_node("Visual") as Node3D
 	visual.look_at(camera.global_position, Vector3.UP)
+	visual.basis = visual.basis * Basis(Vector3.RIGHT, deg_to_rad(-tilt))
 	var eyes := c.get_node("Visual/Eyes") as CreatureEyes
 	var setup: Array = COLUMNS[column]
 	eyes.mood = setup[0]

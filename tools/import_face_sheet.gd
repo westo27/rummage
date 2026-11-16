@@ -4,22 +4,23 @@ extends Node
 ##
 ## Each face's ink is split into its left eye, right eye and mouth: blobs of
 ## ink near the face's middle are the mouth, the rest belong to the eye on
-## their side (brows, tears, blush marks and all). They're scaled so the two
-## eyes sit as far apart as the game puts them, keeping the face's own
-## proportions, and saved with a right eye of their own, so lopsided faces
-## (winks, one raised brow) stay lopsided. The happy eye and startled mouth
-## are left blank, for the game to make from the eye and mouth.
+## their side (brows, tears, blush marks and all). The whole face is scaled to
+## fit the front of the ball, and each part gets a snug box at the spot it
+## was drawn: the boxes are saved beside the face as <name>.json, so it looks
+## as drawn. It has a right eye of its own, so lopsided faces (winks, one
+## raised brow) stay lopsided. The happy eye and startled mouth are left
+## blank, for the game to make from the eye and mouth.
 ## Run: Godot --path . res://tools/import_face_sheet.tscn -- <sheet.png> <name prefix>
 ## (defaults: res://art/face_sheet.png, "doodle"). Existing faces are replaced.
 
 const CELL: int = 256
-## Where the game puts each part, in face units (see creature_marble.gdshader):
-## eye centres, the eye box's half-size, the mouth's centre and half-size.
-const EYE_X: float = 0.3
-const EYE_Y: float = 0.08
-const EYE_BOX: float = 0.28
-const MOUTH_Y: float = -0.22
-const MOUTH_BOX: float = 0.3
+## How big the face is on the ball, in face units (see creature_marble.gdshader):
+## at most this wide and tall, its middle this high.
+const FACE_WIDTH: float = 0.82
+const FACE_HEIGHT: float = 0.62
+const FACE_Y: float = -0.03
+## Room round each part inside its box, in face units.
+const PAD: float = 0.025
 ## Blobs whose middle is within this share of the face's width of its centre
 ## line are the mouth.
 const MOUTH_BAND: float = 0.2
@@ -53,11 +54,12 @@ func _run() -> void:
 		for face: Array in _split(row, 0, FACE_GAP):
 			count += 1
 			var face_name: String = "%s_%02d" % [prefix, count]
-			var atlas: Image = _face(face, ink, w)
-			if atlas == null:
+			var made: Array = _face(face, ink, w)
+			if made.is_empty():
 				print("skipped %s: couldn't find two eyes" % face_name)
 				continue
-			atlas.save_png("%s/%s.png" % [DoodleFace.FOLDER, face_name])
+			(made[0] as Image).save_png("%s/%s.png" % [DoodleFace.FOLDER, face_name])
+			DoodleFace.save_layout(face_name, made[1])
 			print("made %s" % face_name)
 	print("RESULT %d faces from %s" % [count, sheet_path])
 	get_tree().quit()
@@ -121,99 +123,81 @@ func _split(blobs: Array, axis: int, gap: int) -> Array:
 	return groups
 
 
-## One face's atlas: eye, (blank) happy eye, mouth, (blank) startled mouth,
-## right eye. Null if it hasn't got ink on both sides.
-func _face(blobs: Array, ink: PackedFloat32Array, w: int) -> Image:
-	var lo := Vector2i(1000000, 1000000)
-	var hi := Vector2i(-1, -1)
-	for b: Dictionary in blobs:
-		lo = Vector2i(mini(lo.x, (b["lo"] as Vector2i).x), mini(lo.y, (b["lo"] as Vector2i).y))
-		hi = Vector2i(maxi(hi.x, (b["hi"] as Vector2i).x), maxi(hi.y, (b["hi"] as Vector2i).y))
-	var cx: float = (lo.x + hi.x) * 0.5
-	var width: float = hi.x - lo.x
+## One face: its atlas (eye, blank happy eye, mouth, blank startled mouth,
+## right eye) and its layout, as [atlas, layout]. Empty if it hasn't got ink
+## on both sides of its mouth.
+func _face(blobs: Array, ink: PackedFloat32Array, w: int) -> Array:
+	var box: Rect2 = _box(blobs)
+	var cx: float = box.get_center().x
 	var left: Array = []
 	var right: Array = []
 	var mouth: Array = []
 	for b: Dictionary in blobs:
 		var dx: float = (b["mid"] as Vector2).x - cx
-		if absf(dx) < width * MOUTH_BAND:
+		if absf(dx) < box.size.x * MOUTH_BAND:
 			mouth.append(b)
 		elif dx < 0.0:
 			left.append(b)
 		else:
 			right.append(b)
 	if left.is_empty() or right.is_empty():
-		return null
-	var lc: Vector2 = _centre(left)
-	var rc: Vector2 = _centre(right)
-	# Sheet pixels to face units: the eyes land 2 * EYE_X apart.
-	var unit: float = EYE_X * 2.0 / maxf(rc.x - lc.x, 1.0)
-	var origin := Vector2((lc.x + rc.x) * 0.5, (lc.y + rc.y) * 0.5)
+		return []
+	# Sheet pixels to face units: the whole face fits the front of the ball.
+	var unit: float = minf(FACE_WIDTH / maxf(box.size.x, 1.0), FACE_HEIGHT / maxf(box.size.y, 1.0))
+	var origin: Vector2 = box.get_center()
+	var place := func(p: Vector2) -> Vector2:
+		return Vector2((p.x - origin.x) * unit, -(p.y - origin.y) * unit + FACE_Y)
 	var atlas := Image.create(CELL * 5, CELL, false, Image.FORMAT_RGBA8)
-	_paste(atlas, DoodleFace.Cell.EYE, left, ink, w, origin, unit, Vector2(-EYE_X, EYE_Y), EYE_BOX)
-	_paste(atlas, DoodleFace.Cell.MOUTH, mouth, ink, w, origin, unit, Vector2(0.0, MOUTH_Y), MOUTH_BOX)
-	_paste(atlas, DoodleFace.Cell.RIGHT_EYE, right, ink, w, origin, unit, Vector2(EYE_X, EYE_Y), EYE_BOX)
-	return atlas
+	var face_layout: Dictionary = DoodleFace.LAYOUT.duplicate()
+	for part: Array in [["eye", DoodleFace.Cell.EYE, left], ["eye2", DoodleFace.Cell.RIGHT_EYE, right],
+			["mouth", DoodleFace.Cell.MOUTH, mouth]]:
+		var group: Array = part[2]
+		if group.is_empty():
+			# No mouth drawn: a box below the eyes, for the startled "o".
+			var eyes_y: float = minf((face_layout["eye"] as Vector3).y, (face_layout["eye2"] as Vector3).y)
+			face_layout["mouth"] = Vector3(0.0, eyes_y - 0.25, 0.18)
+			continue
+		var g: Rect2 = _box(group)
+		var middle: Vector2 = place.call(g.get_center())
+		var half: float = maxf(g.size.x, g.size.y) * unit * 0.5 + PAD
+		face_layout[part[0]] = Vector3(middle.x, middle.y, half)
+		_paste(atlas, part[1], group, ink, w, g, unit, half)
+	return [atlas, face_layout]
 
 
-## The middle of a group of blobs' combined box.
-func _centre(blobs: Array) -> Vector2:
+## The box round a group of blobs, in sheet pixels.
+func _box(blobs: Array) -> Rect2:
 	var lo := Vector2(1e9, 1e9)
 	var hi := Vector2(-1e9, -1e9)
 	for b: Dictionary in blobs:
 		lo = lo.min(Vector2(b["lo"]))
-		hi = hi.max(Vector2(b["hi"]))
-	return (lo + hi) * 0.5
+		hi = hi.max(Vector2(b["hi"]) + Vector2.ONE)
+	return Rect2(lo, hi - lo)
 
 
-## Draws a group of blobs into one cell of the atlas, scaled up from the
-## sheet and placed where the game will put it.
+## Draws a group of blobs into its cell, scaled to fill it, centred as its
+## box is (the layout puts the box where it was on the sheet).
 func _paste(atlas: Image, cell: int, blobs: Array, ink: PackedFloat32Array, w: int,
-		origin: Vector2, unit: float, centre: Vector2, box: float) -> void:
-	if blobs.is_empty():
-		return
-	var lo := Vector2i(1000000, 1000000)
-	var hi := Vector2i(-1, -1)
-	for b: Dictionary in blobs:
-		lo = Vector2i(mini(lo.x, (b["lo"] as Vector2i).x), mini(lo.y, (b["lo"] as Vector2i).y))
-		hi = Vector2i(maxi(hi.x, (b["hi"] as Vector2i).x), maxi(hi.y, (b["hi"] as Vector2i).y))
-	lo -= Vector2i(2, 2)
-	hi += Vector2i(2, 2)
-	# Only this group's ink: the soft edge pixels next to its blobs too.
+		g: Rect2, unit: float, half: float) -> void:
+	var lo := Vector2i(g.position) - Vector2i(2, 2)
+	var size := Vector2i(g.size) + Vector2i(4, 4)
+	# Only this group's ink, with the soft edge pixels next to its blobs.
 	var mine := {}
 	for b: Dictionary in blobs:
 		for k: int in b["pixels"]:
 			for dy in range(-2, 3):
 				for dx in range(-2, 3):
 					mine[k + dy * w + dx] = true
-	var size := hi - lo + Vector2i.ONE
 	var crop := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+	var ink_color: Color = DoodleFace.INK
 	for y in size.y:
 		for x in size.x:
 			var k: int = (lo.y + y) * w + lo.x + x
 			if mine.has(k):
-				var ink_color: Color = DoodleFace.INK
 				crop.set_pixel(x, y, Color(ink_color.r, ink_color.g, ink_color.b, ink[k]))
-	# Sheet pixels to cell pixels.
-	var scale: float = unit / (box * 2.0) * CELL
+	# Sheet pixels to cell pixels; the box's middle lands on the cell's.
+	var scale: float = unit / (half * 2.0) * CELL
 	var scaled := Vector2i(maxi(roundi(size.x * scale), 1), maxi(roundi(size.y * scale), 1))
-	crop.resize(scaled.x, scaled.y, Image.INTERPOLATE_CUBIC)
-	# Where the crop's corner lands: face units, then the cell's 0..1.
-	var f := Vector2((lo.x - origin.x) * unit, -(lo.y - origin.y) * unit)
-	var uv := Vector2((f.x - centre.x) / (box * 2.0) + 0.5, 0.5 - (f.y - centre.y) / (box * 2.0))
-	var at := Vector2i(roundi(uv.x * CELL), roundi(uv.y * CELL))
-	# Kept inside its own cell.
-	var src := Rect2i(Vector2i.ZERO, scaled)
-	var dst := at
-	if dst.x < 0:
-		src.position.x -= dst.x
-		src.size.x += dst.x
-		dst.x = 0
-	if dst.y < 0:
-		src.position.y -= dst.y
-		src.size.y += dst.y
-		dst.y = 0
-	src.size.x = mini(src.size.x, CELL - dst.x)
-	src.size.y = mini(src.size.y, CELL - dst.y)
-	if src.size.x > 0 and src.size.y > 0:
-		atlas.blend_rect(crop, src, dst + Vector2i(cell * CELL, 0))
+	crop.resize(scaled.x, scaled.y, Image.INTERPOLATE_BILINEAR)
+	var at := Vector2i(CELL, CELL) / 2 - scaled / 2
+	atlas.blend_rect(crop, Rect2i(Vector2i.ZERO, scaled), at + Vector2i(cell * CELL, 0))

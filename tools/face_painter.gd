@@ -67,6 +67,8 @@ var _made_label: Label
 ## A face's own right eye, when it came with one (from a face sheet): kept as
 ## it is through edits and saves, since the painter draws the mirrored eye.
 var _right_eye: Image = null
+## Where the parts go: the painter's own unless the face came with one.
+var _layout: Dictionary = DoodleFace.LAYOUT
 var _mood_label: Label
 var _part_buttons: Array[Button] = []
 
@@ -339,6 +341,8 @@ func _save() -> void:
 	DirAccess.make_dir_recursive_absolute(DoodleFace.FOLDER)
 	var path: String = "%s/%s.png" % [DoodleFace.FOLDER, face_name]
 	var err: Error = _atlas(true).save_png(path)
+	if err == OK:
+		DoodleFace.save_layout(face_name, _layout)
 	_status.text = ("Saved %s" % path) if err == OK else ("Couldn't save (%s)" % error_string(err))
 	_refresh_faces(face_name)
 
@@ -359,6 +363,8 @@ func _load(face_name: String) -> void:
 		_undo[i] = []
 		_revision[i] += 1
 	_right_eye = null
+	_layout = DoodleFace.load_layout(face_name)
+	DoodleFace.apply_layout(_material, _layout)
 	if atlas.get_width() >= cell * (DoodleFace.CELLS + 1):
 		_right_eye = atlas.get_region(Rect2i(DoodleFace.CELLS * cell, 0, cell, cell))
 		if cell != SIZE:
@@ -377,6 +383,8 @@ func _new_face() -> void:
 		_undo[i] = []
 		_revision[i] += 1
 	_right_eye = null
+	_layout = DoodleFace.LAYOUT
+	DoodleFace.apply_layout(_material, _layout)
 	_name_edit.text = ""
 	_faces.select(-1)
 	_show_part()
@@ -458,6 +466,7 @@ func _build_preview() -> void:
 	_material = (_creature.get_node("Visual/Body") as MeshInstance3D).material_override as ShaderMaterial
 	_set_colour(1)
 	_material.set_shader_parameter("face_drawn", true)
+	DoodleFace.apply_layout(_material, _layout)
 	_material.set_shader_parameter("face_lop", 0.0)
 
 

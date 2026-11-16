@@ -63,7 +63,7 @@ func _run() -> void:
 		var centre := Vector3(((COLUMNS - 1) * 0.5 - col) * TRIO_GAP,
 			((rows - 1) * 0.5 - row) * ROW_GAP + 0.012, 0.0)
 		for m in MOODS.size():
-			_creature(centre + Vector3((1 - m) * BALL_GAP, 0.0, 0.0), tex, i, MOODS[m], camera)
+			_creature(centre + Vector3((1 - m) * BALL_GAP, 0.0, 0.0), tex, names[i], i, MOODS[m], camera)
 		label_at.append(centre)
 	await get_tree().process_frame
 	for i in names.size():
@@ -80,7 +80,7 @@ func _run() -> void:
 	get_tree().quit()
 
 
-func _creature(at: Vector3, tex: Texture2D, index: int, mood: CreatureEyes.Mood, camera: Camera3D) -> void:
+func _creature(at: Vector3, tex: Texture2D, face_name: String, index: int, mood: CreatureEyes.Mood, camera: Camera3D) -> void:
 	var c := CreatureScene.instantiate() as Creature
 	add_child(c)
 	c.process_mode = Node.PROCESS_MODE_DISABLED
@@ -93,6 +93,7 @@ func _creature(at: Vector3, tex: Texture2D, index: int, mood: CreatureEyes.Mood,
 	face.drawn = tex
 	face.eye_span = DoodleFace.measure_eye(tex.get_image())
 	face.right_span = DoodleFace.measure_eye(tex.get_image(), DoodleFace.Cell.RIGHT_EYE)
+	face.layout = DoodleFace.load_layout(face_name)
 	face.apply(mat)
 	var visual := c.get_node("Visual") as Node3D
 	visual.look_at(camera.global_position, Vector3.UP)

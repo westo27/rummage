@@ -68,12 +68,24 @@ var drawn: Texture2D = null
 var eye_span: Vector3 = DEFAULT_SPAN
 ## The same for the right eye, when the face has one of its own.
 var right_span: Vector3 = DEFAULT_SPAN
+## Where each drawn part goes: see LAYOUT.
+var layout: Dictionary = LAYOUT
 
 const DEFAULT_SPAN := Vector3(0.15, 0.85, 0.5)
+## Where a drawn face's parts go, as seen from the front (x to your right, y
+## up, in units of the face): each box's middle and half its size. These are
+## the painter's; a face from a sheet has its own, saved beside it as
+## <name>.json.
+const LAYOUT := {
+	"eye": Vector3(-0.3, 0.08, 0.28),
+	"eye2": Vector3(0.3, 0.08, 0.28),
+	"mouth": Vector3(0.0, -0.22, 0.3),
+}
 
 static var _drawn_faces: Array[Texture2D] = []
 static var _drawn_spans: Array[Vector3] = []
 static var _drawn_right_spans: Array[Vector3] = []
+static var _drawn_layouts: Array[Dictionary] = []
 static var _drawn_loaded: bool = false
 
 
@@ -85,7 +97,7 @@ static func random() -> DoodleFace:
 		face.drawn = faces[pick]
 		face.eye_span = _drawn_spans[pick]
 		face.right_span = _drawn_right_spans[pick]
-		face.lop = randf_range(-1.0, 1.0)
+		face.layout = _drawn_layouts[pick]
 		return face
 	return variant(IN_PLAY.pick_random())
 
@@ -99,6 +111,7 @@ static func drawn_faces() -> Array[Texture2D]:
 			_drawn_faces.append(tex)
 			_drawn_spans.append(measure_eye(tex.get_image()))
 			_drawn_right_spans.append(measure_eye(tex.get_image(), Cell.RIGHT_EYE))
+			_drawn_layouts.append(load_layout(name))
 	return _drawn_faces
 
 
@@ -126,6 +139,43 @@ static func load_drawn(name: String) -> Texture2D:
 	else:
 		image = Image.load_from_file(ProjectSettings.globalize_path(path))
 	return texture_from(fill_missing(image))
+
+
+## A drawn face's layout: from <name>.json beside it, else the painter's.
+static func load_layout(name: String) -> Dictionary:
+	var path: String = "%s/%s.json" % [FOLDER, name]
+	if not FileAccess.file_exists(path):
+		return LAYOUT
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not data is Dictionary:
+		return LAYOUT
+	var out: Dictionary = LAYOUT.duplicate()
+	for key: String in LAYOUT:
+		var v: Variant = (data as Dictionary).get(key)
+		if v is Array and (v as Array).size() == 3:
+			out[key] = Vector3(v[0], v[1], v[2])
+	return out
+
+
+## Saves a layout beside a face (or removes it, for the painter's).
+static func save_layout(name: String, face_layout: Dictionary) -> void:
+	var path: String = "%s/%s.json" % [FOLDER, name]
+	if face_layout == LAYOUT:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		return
+	var data := {}
+	for key: String in face_layout:
+		var v: Vector3 = face_layout[key]
+		data[key] = [snappedf(v.x, 0.0001), snappedf(v.y, 0.0001), snappedf(v.z, 0.0001)]
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data, "\t"))
+
+
+static func apply_layout(mat: ShaderMaterial, face_layout: Dictionary) -> void:
+	mat.set_shader_parameter("face_box_eye", face_layout["eye"])
+	mat.set_shader_parameter("face_box_eye2", face_layout["eye2"])
+	mat.set_shader_parameter("face_box_mouth", face_layout["mouth"])
 
 
 ## Where the ink of a drawn face's eye sits in its square: see eye_span.
@@ -173,6 +223,7 @@ func apply(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("face_eye_span", eye_span)
 	mat.set_shader_parameter("face_right_span", right_span)
 	mat.set_shader_parameter("face_cells", cells())
+	apply_layout(mat, layout)
 	mat.set_shader_parameter("face_tex", drawn)
 
 
@@ -220,22 +271,22 @@ func cells() -> int:
 func _draw_drawn(canvas: CanvasItem, radius: float) -> void:
 	var cell: float = drawn.get_height()
 	var own_right: bool = cells() > CELLS
-	var eye_box: float = 0.41 * radius
-	for side: float in [-1.0, 1.0]:
-		var tilt: float = lop * 0.2 * side
-		var at := Vector2(0.435 * side, -0.116 + tilt * 0.14) * radius
-		var box: float = eye_box * (1.0 - tilt)
-		# The right eye is the eye mirrored (x flipped about its centre),
-		# unless the face has one of its own.
-		var right: bool = side > 0.0
-		canvas.draw_set_transform(at, 0.0, Vector2(-1.0 if right and not own_right else 1.0, 1.0))
-		var which: int = Cell.RIGHT_EYE if right and own_right else Cell.EYE
-		canvas.draw_texture_rect_region(drawn, Rect2(-box, -box, box * 2.0, box * 2.0),
-			Rect2(which * cell, 0.0, cell, cell))
-	var mouth_box: float = 0.435 * radius
-	canvas.draw_set_transform(Vector2(0.0, 0.32 * radius), 0.0, Vector2.ONE)
-	canvas.draw_texture_rect_region(drawn, Rect2(-mouth_box, -mouth_box, mouth_box * 2.0, mouth_box * 2.0),
-		Rect2(Cell.MOUTH * cell, 0.0, cell, cell))
+	# Face units to the ball's radius: the shader draws the face 1.45x.
+	var to_ball: float = 1.45 * radius
+	# The right eye is the eye mirrored (x flipped about its middle), unless
+	# the face has one of its own.
+	var parts: Array = [
+		["eye", Cell.EYE, false],
+		["eye2", Cell.RIGHT_EYE if own_right else Cell.EYE, not own_right],
+		["mouth", Cell.MOUTH, false],
+	]
+	for part: Array in parts:
+		var box: Vector3 = layout[part[0]]
+		var at := Vector2(box.x, -box.y) * to_ball
+		var size: float = box.z * to_ball
+		canvas.draw_set_transform(at, 0.0, Vector2(-1.0 if part[2] else 1.0, 1.0))
+		canvas.draw_texture_rect_region(drawn, Rect2(-size, -size, size * 2.0, size * 2.0),
+			Rect2(int(part[1]) * cell, 0.0, cell, cell))
 	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 

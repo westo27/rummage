@@ -25,6 +25,16 @@ func _run() -> void:
 			panel.pressed.emit()
 	await _frames(12)
 	_shoot("settings")
+	for child in title.get_children():
+		if child is SettingsMenu:
+			(child as SettingsMenu)._close()
+	await _frames(4)
+
+	for panel in _panels(title):
+		if panel.label_text == "Credits":
+			panel.pressed.emit()
+	await _frames(12)
+	_shoot("credits")
 	title.queue_free()
 	await _frames(4)
 

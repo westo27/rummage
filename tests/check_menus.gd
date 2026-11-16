@@ -33,8 +33,8 @@ func _run() -> void:
 	var labels: Array[String] = []
 	for p in panels:
 		labels.append(p.label_text)
-	_check("title screen shows Play, Settings and Quit", labels == ["Play", "Settings", "Quit"],
-		"%s" % [labels])
+	_check("title screen shows Play, Settings, Quit and Credits",
+		labels == ["Play", "Settings", "Quit", "Credits"], "%s" % [labels])
 	var focusable: int = 0
 	for p in panels:
 		if p.focus_mode != Control.FOCUS_NONE:
@@ -155,7 +155,23 @@ func _run() -> void:
 	steppers[14].pressed.emit()  # Back
 	await _wait(0.2)
 	_check("Back closes the settings page", _settings_under(title) == null, "")
-	_check("the title panels come back", _panels_under(title).size() == 3, "")
+	_check("the title panels come back", _panels_under(title).size() == 4, "")
+
+	# --- Credits page ---
+	panels[3].pressed.emit()  # Credits
+	await _wait(0.2)
+	var credits: CreditsPage = null
+	for child in title.get_children():
+		if child is CreditsPage:
+			credits = child as CreditsPage
+	_check("Credits opens the credits page", credits != null, "")
+	var credit_words: Array[MenuPanel] = _panels_under(title)
+	_check("only Back shows over the credits",
+		credit_words.size() == 1 and credit_words[0].label_text == "Back", "%d" % credit_words.size())
+	_press("ui_cancel")
+	await _wait(0.2)
+	_check("Esc closes the credits page", not is_instance_valid(credits), "")
+	_check("the title panels come back after the credits", _panels_under(title).size() == 4, "")
 
 	var reloaded := Settings.new()
 	reloaded.load_from_disk()

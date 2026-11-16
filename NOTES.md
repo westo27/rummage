@@ -114,6 +114,8 @@ a root node and a script.
   a dark shade (`UiStyle.title_shade`); the whole room dims under Settings.
   `tests/shoot_title.tscn` shoots four points along the drift.
 - **The mouse pointer** is the normal system arrow (the custom hand was removed).
+- `scripts/credits_page.gd`: credits and licences (Godot, Jolt, Coiny), opened
+  from a small Credits word in the title's bottom-right corner.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu, in three sections: Controls, Sound and Graphics. Each
   setting is a −/+ stepper rather than a slider, so

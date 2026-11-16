@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 
 VERSION="$1"
 GODOT="/c/Program Files/Godot/Godot_v4.7.2-stable_win64.exe"
+PATH="/c/Tools/butler:$PATH"
 : "${ITCH_TARGET:?set ITCH_TARGET=user/game-slug}"
 [ -n "$VERSION" ] || { echo "usage: tools/release.sh <version>"; exit 1; }
 

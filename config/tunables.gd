@@ -21,8 +21,8 @@ extends Resource
 @export var walk_speed: float = 3.5
 @export var run_speed: float = 7.5
 ## Hold C or Ctrl to crouch, Z to lie flat. Running has no effect while down.
-@export var crouch_speed: float = 1.0
-@export var prone_speed: float = 1.0
+@export var crouch_speed: float = 0.5
+@export var prone_speed: float = 0.5
 ## Head height (eyes above the feet) standing, crouched and lying flat, metres.
 @export var stand_eye_height: float = 1.15
 @export var crouch_eye_height: float = 0.6

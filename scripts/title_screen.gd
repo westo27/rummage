@@ -10,6 +10,7 @@ extends Control
 var _panels: VBoxContainer
 var _hint: Label
 var _credits_word: MenuPanel
+var _version: Label
 ## The settings or credits page while one is open.
 var _page: Control = null
 
@@ -89,6 +90,16 @@ func _build() -> void:
 	_credits_word.pressed.connect(_on_credits)
 	add_child(_credits_word)
 
+	# The version from Project Settings (release.sh stamps it), faint in the
+	# bottom-left corner so playtesters can say which build they're on.
+	_version = UiStyle.label("v" + str(ProjectSettings.get_setting("application/config/version", "")),
+		24, UiStyle.CREAM_SOFT, 400)
+	_version.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_version.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_version.offset_left = 40.0
+	_version.offset_bottom = -40.0
+	add_child(_version)
+
 func _draw() -> void:
 	if _page != null:
 		# A page fills the middle, so dim the whole room behind it.
@@ -132,6 +143,7 @@ func _set_title_visible(on: bool) -> void:
 	_panels.visible = on
 	_hint.visible = on
 	_credits_word.visible = on
+	_version.visible = on
 
 
 func _on_quit() -> void:

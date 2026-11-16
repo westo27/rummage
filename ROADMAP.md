@@ -30,7 +30,7 @@ Tick items off as they land. Tom decides the order inside each phase.
       (Grace's idea).
 
 ## 4. itch release
-- [x] Decided: Windows only (Forward+ renderer; web would need Compatibility).
+- [x] Decided: Windows, Linux, Mac and web (web uses the Compatibility renderer; Mac is unsigned, so players right-click > Open).
 - [ ] Final settings defaults and a quick performance pass (`bench_gpu`).
 - [ ] Credits and licences (Coiny font, any sounds).
 - [ ] itch page: screenshots, a short GIF, description, price (free / pay what you want).

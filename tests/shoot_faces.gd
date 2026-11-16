@@ -1,12 +1,13 @@
 extends Node
 ## Face styles side by side for picking a look: one row per style (the
-## shader's face_style), one column per expression. Needs a real window.
+## shader's face_style), one column per expression. Edit STYLES to compare others. Needs a real window.
 ## Run: Godot --path . --resolution 1500x1260 res://tests/shoot_faces.tscn
 ## Writes faces.png to user://shots.
 
 const CreatureScene: PackedScene = preload("res://scenes/creature.tscn")
 const OUT: String = "user://shots"
-const STYLES: Array[String] = ["Now", "Bead", "Dot", "Sparkle"]
+## Rows: a name and the shader face_style it shows.
+const STYLES: Array = [["Now", 0], ["Sparkle", 3], ["Cat slit", 4], ["Cat round", 5]]
 const GAP: float = 0.15
 ## Expression per column: mood, and where the pupils look (x, y).
 const COLUMNS: Array = [
@@ -55,8 +56,8 @@ func _run() -> void:
 		for col in COLUMNS.size():
 			# The camera looks down +Z from -Z, so screen right is world -X.
 			var x: float = ((COLUMNS.size() - 1) * 0.5 - col) * GAP
-			_creature(Vector3(x, y, 0.0), row, col, camera)
-		var label := UiStyle.label(STYLES[row], 34, UiStyle.CREAM)
+			_creature(Vector3(x, y, 0.0), STYLES[row][1], col, camera)
+		var label := UiStyle.label(STYLES[row][0], 34, UiStyle.CREAM)
 		label.position = Vector2(20.0, (row + 0.5) / STYLES.size() * get_viewport().get_visible_rect().size.y - 24.0)
 		labels.add_child(label)
 	for i in 30:

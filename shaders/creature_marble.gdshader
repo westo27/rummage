@@ -24,7 +24,9 @@ uniform float happy = 0.0;
 // How brightly the whites glow (they glint from hiding).
 uniform float white_glow = 0.35;
 // 0 round whites with pupils. 1 glossy black bead eyes, 2 tiny dot eyes,
-// 3 big sparkly eyes: the last three with blush and a little mouth.
+// 3 big sparkly eyes: those three with blush and a little mouth. 4 and 5
+// cat's-eye marbles: glowing eyes floating inside the glass, seen through
+// it, with a slit pupil (4) or a round one (5).
 uniform int face_style = 0;
 
 // The face as seen head-on, as on the bag's marble: eye centres and radii
@@ -134,6 +136,40 @@ float mouth(vec2 f, float wide, float scale) {
 	return ring * step(d.y, -0.022 * scale);
 }
 
+// One eye floating inside the glass, like the vane of a cat's-eye marble:
+// the view ray, bent as it enters the ball at `p`, is traced to a small
+// glowing ball (squashed by `height` as it blinks). Returns (colour, how
+// much eye covers here) and adds its glow to `emit`.
+vec4 glass_eye(vec3 p, vec3 dir, vec3 c, float radius, float height, float wide, vec2 look, bool slit, inout vec3 emit) {
+	vec3 scale = vec3(radius, radius * max(height, 0.03), radius);
+	vec3 o = (p - c) / scale;
+	vec3 d = dir / scale;
+	float a = dot(d, d);
+	float b = dot(o, d);
+	float disc = b * b - a * (dot(o, o) - 1.0);
+	if (disc <= 0.0) {
+		return vec4(0.0);
+	}
+	vec3 n = o + d * ((-b - sqrt(disc)) / a);
+	// Soft edge from how close the ray came to missing.
+	float cover = smoothstep(0.0, 0.08 * a, disc);
+	vec2 e = n.xy;
+	float r = length(e);
+	// Amber, like a cat's, with a touch of the body's colour; darker at the rim.
+	vec3 amber = mix(vec3(0.95, 0.42, 0.04), tint.rgb, 0.15);
+	vec3 iris = mix(amber, vec3(1.0, 0.8, 0.3), smoothstep(0.7, 0.0, r) * 0.7);
+	iris = mix(iris, amber * 0.45, smoothstep(0.78, 1.0, r));
+	vec2 pr = slit ? vec2(mix(0.16, 0.5, wide), 0.82) : vec2(mix(0.38, 0.55, wide));
+	float pupil = 1.0 - smoothstep(0.9, 1.0, length((e - look * 0.35 - vec2(0.0, -0.05)) / pr));
+	float spark = 1.0 - smoothstep(0.15, 0.2, length(e - vec2(-0.32, 0.38)));
+	spark = max(spark, (1.0 - smoothstep(0.06, 0.09, length(e - vec2(0.3, -0.35)))) * 0.8);
+	spark *= step(0.35, height);
+	vec3 col = mix(iris, vec3(0.0), pupil);
+	col = mix(col, vec3(1.0), spark);
+	emit += cover * (iris * (1.0 - pupil) * (0.05 + white_glow * 0.5) + spark * vec3(0.6));
+	return vec4(col, cover);
+}
+
 void fragment() {
 	// The ball as a unit sphere in its own space: the face looks down -Z.
 	vec3 p = normalize(obj_pos);
@@ -176,7 +212,29 @@ void fragment() {
 	// The face, painted flat on the front of the ball. Paint isn't glossy,
 	// so the pupils stay black whatever the glass reflects.
 	float paint = 0.0;
-	if (p.z < 0.0 && face_style == 0) {
+	if (face_style >= 4) {
+		// Bent going into the glass, so the eyes swim a little as it turns.
+		vec3 bent = refract(into, p, 1.0 / 1.45);
+		vec2 wide = clamp((1.0 - pupil_size) / 0.4, 0.0, 1.0);
+		vec3 eye_emit = vec3(0.0);
+		// Sunk well into the ball, so they swim behind the glass.
+		vec4 l = glass_eye(p, bent, vec3(-0.28, 0.1, -0.45), 0.25 * eye_size.x, eye_height.x, wide.x,
+			pupil_offset.xy, face_style == 4, eye_emit);
+		vec4 r = glass_eye(p, bent, vec3(0.28, 0.1, -0.45), 0.25 * eye_size.y, eye_height.y, wide.y,
+			pupil_offset.zw, face_style == 4, eye_emit);
+		float cover = max(l.a, r.a) * (1.0 - happy);
+		// Seen through a little of the glass's own colour.
+		col = mix(col, mix(l.rgb * l.a + r.rgb * r.a, col, 0.1), cover);
+		emit = mix(emit, eye_emit, cover);
+		// Happy squeezes them shut into arcs, painted on the front.
+		vec2 f = vec2(p.x, p.y);
+		float arcs = p.z < 0.0 ? max(arc(f, vec2(-0.3, 0.12), 0.85), arc(f, vec2(0.3, 0.12), 0.85)) * happy : 0.0;
+		col = mix(col, vec3(1.0, 0.6, 0.12), arcs);
+		emit = mix(emit, vec3(1.0, 0.55, 0.1) * (0.5 + white_glow), arcs);
+		// Still behind the glass: its highlight sits on top.
+		col = mix(col, vec3(1.0), glint * 0.9);
+		paint = arcs;
+	} else if (p.z < 0.0 && face_style == 0) {
 		vec2 f = vec2(p.x, p.y);
 		vec3 eye_emit = vec3(0.0);
 		vec4 l = eye(f, vec2(-EYE_CENTRE.x, EYE_CENTRE.y), eye_size.x, eye_height.x, pupil_size.x, pupil_offset.xy, eye_emit);

@@ -64,9 +64,9 @@ var _name_edit: LineEdit
 var _faces: OptionButton
 var _status: Label
 var _made_label: Label
-## A face's own right eye, when it came with one (from a face sheet): kept as
-## it is through edits and saves, since the painter draws the mirrored eye.
-var _right_eye: Image = null
+## A face's own right eye and still extras, when it came with them (from a
+## face sheet): kept as they are through edits and saves.
+var _kept: Array[Image] = []
 ## Where the parts go: the painter's own unless the face came with one.
 var _layout: Dictionary = DoodleFace.LAYOUT
 var _mood_label: Label
@@ -319,10 +319,10 @@ func _select_part(index: int) -> void:
 ## blank happy eye or startled mouth stays blank: the game makes it on
 ## loading, and the painter keeps making it as you change the eye or mouth.
 func _atlas(for_saving: bool = false) -> Image:
-	var cells: int = DoodleFace.CELLS + (1 if _right_eye != null else 0)
+	var cells: int = DoodleFace.CELLS + _kept.size()
 	var atlas := Image.create(SIZE * cells, SIZE, false, Image.FORMAT_RGBA8)
-	if _right_eye != null:
-		atlas.blit_rect(_right_eye, Rect2i(0, 0, SIZE, SIZE), Vector2i(DoodleFace.CELLS * SIZE, 0))
+	for k in _kept.size():
+		atlas.blit_rect(_kept[k], Rect2i(0, 0, SIZE, SIZE), Vector2i((DoodleFace.CELLS + k) * SIZE, 0))
 	for i in DoodleFace.CELLS:
 		var blank_made: bool = i in [DoodleFace.Cell.HAPPY_EYE, DoodleFace.Cell.STARTLED_MOUTH] \
 			and _parts[i].get_used_rect().size.x <= 0
@@ -362,19 +362,20 @@ func _load(face_name: String) -> void:
 		_parts[i] = part
 		_undo[i] = []
 		_revision[i] += 1
-	_right_eye = null
+	_kept.clear()
 	_layout = DoodleFace.load_layout(face_name)
 	DoodleFace.apply_layout(_material, _layout)
-	if atlas.get_width() >= cell * (DoodleFace.CELLS + 1):
-		_right_eye = atlas.get_region(Rect2i(DoodleFace.CELLS * cell, 0, cell, cell))
+	for k in range(DoodleFace.CELLS, atlas.get_width() / cell):
+		var kept := atlas.get_region(Rect2i(k * cell, 0, cell, cell))
 		if cell != SIZE:
-			_right_eye.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
+			kept.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
+		_kept.append(kept)
 	_name_edit.text = face_name
 	_show_part()
 	_dirty = true
 	_status.text = "Loaded %s" % face_name
-	if _right_eye != null:
-		_status.text += " (its right eye is its own and is kept as it is)"
+	if not _kept.is_empty():
+		_status.text += " (its own right eye and extras are kept as they are)"
 
 
 func _new_face() -> void:
@@ -382,7 +383,7 @@ func _new_face() -> void:
 		_parts[i] = _blank()
 		_undo[i] = []
 		_revision[i] += 1
-	_right_eye = null
+	_kept.clear()
 	_layout = DoodleFace.LAYOUT
 	DoodleFace.apply_layout(_material, _layout)
 	_name_edit.text = ""

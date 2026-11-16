@@ -3,8 +3,11 @@ extends Node
 ## rows) into drawn faces in res://faces, one per face on the sheet.
 ##
 ## Each face's ink is split into its left eye, right eye and mouth: blobs of
-## ink near the face's middle are the mouth, the rest belong to the eye on
-## their side (brows, tears, blush marks and all). The whole face is scaled to
+## ink near the face's middle are the mouth; on each side the biggest blob is
+## the eye, and the rest (brows, tears, hearts, blush marks, a "!") go on a
+## still layer that doesn't blink or change with the mood. A blob off to one
+## side but below the eyes is part of the mouth (a crooked smile); one in the
+## middle but above the eyes is a brow, on the still layer. The whole face is scaled to
 ## fit the front of the ball, and each part gets a snug box at the spot it
 ## was drawn: the boxes are saved beside the face as <name>.json, so it looks
 ## as drawn. It has a right eye of its own, so lopsided faces (winks, one
@@ -24,6 +27,9 @@ const PAD: float = 0.025
 ## Blobs whose middle is within this share of the face's width of its centre
 ## line are the mouth.
 const MOUTH_BAND: float = 0.2
+## Faces (numbered from 1, along the rows) whose eyes aren't their biggest
+## blobs, where the eye is the highest one instead (hearts or tears below).
+const EYES_HIGHEST: Array[int] = [7, 32]
 ## Gaps (sheet pixels) that split rows of faces, and faces within a row.
 const ROW_GAP: int = 8
 const FACE_GAP: int = 26
@@ -54,7 +60,7 @@ func _run() -> void:
 		for face: Array in _split(row, 0, FACE_GAP):
 			count += 1
 			var face_name: String = "%s_%02d" % [prefix, count]
-			var made: Array = _face(face, ink, w)
+			var made: Array = _face(face, ink, w, count in EYES_HIGHEST)
 			if made.is_empty():
 				print("skipped %s: couldn't find two eyes" % face_name)
 				continue
@@ -126,7 +132,7 @@ func _split(blobs: Array, axis: int, gap: int) -> Array:
 ## One face: its atlas (eye, blank happy eye, mouth, blank startled mouth,
 ## right eye) and its layout, as [atlas, layout]. Empty if it hasn't got ink
 ## on both sides of its mouth.
-func _face(blobs: Array, ink: PackedFloat32Array, w: int) -> Array:
+func _face(blobs: Array, ink: PackedFloat32Array, w: int, eyes_highest: bool) -> Array:
 	var box: Rect2 = _box(blobs)
 	var cx: float = box.get_center().x
 	var left: Array = []
@@ -142,16 +148,40 @@ func _face(blobs: Array, ink: PackedFloat32Array, w: int) -> Array:
 			right.append(b)
 	if left.is_empty() or right.is_empty():
 		return []
+	# Each side's eye; the rest of that side is still extras, or mouth.
+	var eye_l: Dictionary = _eye(left, eyes_highest)
+	var eye_r: Dictionary = _eye(right, eyes_highest)
+	var eyes_bottom: float = maxf((eye_l["hi"] as Vector2i).y, (eye_r["hi"] as Vector2i).y)
+	var extras: Array = []
+	for b: Dictionary in left + right:
+		if b == eye_l or b == eye_r:
+			continue
+		var off: float = absf((b["mid"] as Vector2).x - cx) / box.size.x
+		if (b["lo"] as Vector2i).y > eyes_bottom and off < 0.33:
+			mouth.append(b)
+		else:
+			extras.append(b)
+	left = [eye_l]
+	right = [eye_r]
+	# Ink in the middle but above the eyes is a brow, not the mouth.
+	var eyes_mid: float = ((eye_l["mid"] as Vector2).y + (eye_r["mid"] as Vector2).y) * 0.5
+	for b: Dictionary in mouth.duplicate():
+		if (b["mid"] as Vector2).y < eyes_mid:
+			mouth.erase(b)
+			extras.append(b)
 	# Sheet pixels to face units: the whole face fits the front of the ball.
 	var unit: float = minf(FACE_WIDTH / maxf(box.size.x, 1.0), FACE_HEIGHT / maxf(box.size.y, 1.0))
 	var origin: Vector2 = box.get_center()
 	var place := func(p: Vector2) -> Vector2:
 		return Vector2((p.x - origin.x) * unit, -(p.y - origin.y) * unit + FACE_Y)
-	var atlas := Image.create(CELL * 5, CELL, false, Image.FORMAT_RGBA8)
+	var cells: int = 6 if not extras.is_empty() else 5
+	var atlas := Image.create(CELL * cells, CELL, false, Image.FORMAT_RGBA8)
 	var face_layout: Dictionary = DoodleFace.LAYOUT.duplicate()
 	for part: Array in [["eye", DoodleFace.Cell.EYE, left], ["eye2", DoodleFace.Cell.RIGHT_EYE, right],
-			["mouth", DoodleFace.Cell.MOUTH, mouth]]:
+			["mouth", DoodleFace.Cell.MOUTH, mouth], ["extra", DoodleFace.Cell.EXTRAS, extras]]:
 		var group: Array = part[2]
+		if group.is_empty() and part[0] == "extra":
+			continue
 		if group.is_empty():
 			# No mouth drawn: a box below the eyes, for the startled "o".
 			var eyes_y: float = minf((face_layout["eye"] as Vector3).y, (face_layout["eye2"] as Vector3).y)
@@ -163,6 +193,18 @@ func _face(blobs: Array, ink: PackedFloat32Array, w: int) -> Array:
 		face_layout[part[0]] = Vector3(middle.x, middle.y, half)
 		_paste(atlas, part[1], group, ink, w, g, unit, half)
 	return [atlas, face_layout]
+
+
+## A side's eye: its biggest blob, or its highest.
+func _eye(side: Array, highest: bool) -> Dictionary:
+	var best: Dictionary = side[0]
+	for b: Dictionary in side:
+		if highest:
+			if (b["mid"] as Vector2).y < (best["mid"] as Vector2).y and (b["pixels"] as PackedInt32Array).size() > 30:
+				best = b
+		elif (b["pixels"] as PackedInt32Array).size() > (best["pixels"] as PackedInt32Array).size():
+			best = b
+	return best
 
 
 ## The box round a group of blobs, in sheet pixels.

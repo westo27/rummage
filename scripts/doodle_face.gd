@@ -13,8 +13,9 @@ extends RefCounted
 const FOLDER: String = "res://faces"
 ## A drawn face is four square cells side by side: eye, happy eye, mouth,
 ## startled mouth. A fifth, when there is one, is a right eye of its own (for
-## lopsided faces); otherwise the right eye is the eye mirrored.
-enum Cell { EYE, HAPPY_EYE, MOUTH, STARTLED_MOUTH, RIGHT_EYE }
+## lopsided faces); otherwise the right eye is the eye mirrored. A sixth is
+## extras that stay still whatever the mood (brows, tears, hearts).
+enum Cell { EYE, HAPPY_EYE, MOUTH, STARTLED_MOUTH, RIGHT_EYE, EXTRAS }
 const CELLS: int = 4
 
 enum Eyes { DOTS, RINGS, LASHES, BEANS, GOOGLY, SLEEPY, STARS, HEARTS, SPIRAL, WINK }
@@ -80,6 +81,7 @@ const LAYOUT := {
 	"eye": Vector3(-0.3, 0.08, 0.28),
 	"eye2": Vector3(0.3, 0.08, 0.28),
 	"mouth": Vector3(0.0, -0.22, 0.3),
+	"extra": Vector3(0.0, 0.0, 0.5),
 }
 
 static var _drawn_faces: Array[Texture2D] = []
@@ -176,6 +178,7 @@ static func apply_layout(mat: ShaderMaterial, face_layout: Dictionary) -> void:
 	mat.set_shader_parameter("face_box_eye", face_layout["eye"])
 	mat.set_shader_parameter("face_box_eye2", face_layout["eye2"])
 	mat.set_shader_parameter("face_box_mouth", face_layout["mouth"])
+	mat.set_shader_parameter("face_box_extra", face_layout.get("extra", LAYOUT["extra"]))
 
 
 ## Where the ink of a drawn face's eye sits in its square: see eye_span.
@@ -280,8 +283,10 @@ func _draw_drawn(canvas: CanvasItem, radius: float) -> void:
 		["eye2", Cell.RIGHT_EYE if own_right else Cell.EYE, not own_right],
 		["mouth", Cell.MOUTH, false],
 	]
+	if cells() > Cell.EXTRAS:
+		parts.append(["extra", Cell.EXTRAS, false])
 	for part: Array in parts:
-		var box: Vector3 = layout[part[0]]
+		var box: Vector3 = layout.get(part[0], LAYOUT[part[0]])
 		var at := Vector2(box.x, -box.y) * to_ball
 		var size: float = box.z * to_ball
 		canvas.draw_set_transform(at, 0.0, Vector2(-1.0 if part[2] else 1.0, 1.0))

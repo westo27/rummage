@@ -43,6 +43,8 @@ uniform vec3 face_right_span = vec3(0.15, 0.85, 0.5);
 uniform vec3 face_box_eye = vec3(-0.3, 0.08, 0.28);
 uniform vec3 face_box_eye2 = vec3(0.3, 0.08, 0.28);
 uniform vec3 face_box_mouth = vec3(0.0, -0.22, 0.3);
+// Extras that stay still whatever the mood (cell 5, when there is one).
+uniform vec3 face_box_extra = vec3(0.0, 0.0, 0.5);
 uniform sampler2D face_tex : source_color, filter_linear_mipmap, repeat_disable;
 // Per eye (x left, y right): size, height (0 shut .. 1 open), pupil size
 // (under 1 when wide-eyed).
@@ -443,6 +445,10 @@ void fragment() {
 				drawn_part(f, c2, vec2(face_box_eye2.z), 1, true, s + 1.0));
 			drawn = happy > 0.5 ? happy_drawn : eyes_drawn;
 			drawn = drawn_either(drawn, drawn_part(f, cm, vec2(face_box_mouth.z), startled > 0.5 ? 3 : 2, false, s + 2.0));
+			if (face_cells > 5) {
+				vec2 ce = vec2(-face_box_extra.x, face_box_extra.y);
+				drawn = drawn_either(drawn, drawn_part(f, ce, vec2(face_box_extra.z), 5, false, s + 3.0));
+			}
 			le = vec2(0.0, area);
 			re = vec2(0.0);
 			arcs = 0.0;

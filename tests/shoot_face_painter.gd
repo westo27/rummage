@@ -56,13 +56,14 @@ func _loop(painter: Control, centre: Vector2, r: float) -> void:
 
 ## A stroke along an arc, as the mouse would draw it (y down on the canvas).
 func _arc(painter: Control, centre: Vector2, r: float, from: float, to: float) -> void:
-	painter.call("_push_undo")
+	painter.call("_begin_stroke", false)
 	var last := centre + Vector2(cos(from), sin(from)) * r
 	for i in 64:
 		var a: float = lerpf(from, to, (i + 1) / 64.0)
 		var at := centre + Vector2(cos(a), sin(a)) * r
 		painter.call("_stamp_line", last, at)
 		last = at
+	painter.call("_show_part")
 
 
 func _frames(count: int) -> void:

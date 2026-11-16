@@ -305,34 +305,40 @@ float doodle_extras(vec2 f, int extras, vec2 lc, vec2 rc, float s) {
 
 // One cell of the hand-drawn face, placed in a box centred `c` with
 // half-size `box` (mirrored for the right eye), its lines nudged a little
-// each boil. Returns the ink.
-float drawn_part(vec2 f, vec2 c, vec2 box, int cell, bool mirror, float s) {
+// each boil. Returns its colour and how much it covers (ink and the whites).
+vec4 drawn_part(vec2 f, vec2 c, vec2 box, int cell, bool mirror, float s) {
 	vec2 uv = (f - c) / box * 0.5 + 0.5;
 	uv.y = 1.0 - uv.y;
 	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
-		return 0.0;
+		return vec4(0.0);
 	}
 	if (mirror) {
 		uv.x = 1.0 - uv.x;
 	}
 	uv += vec2(wobble(uv.y * 6.0 + s * 5.0), wobble(uv.x * 6.0 + s * 5.0 + 3.0)) * 0.006;
 	uv = clamp(uv, 0.004, 0.996);
-	return texture(face_tex, vec2((float(cell) + uv.x) / 4.0, uv.y)).a;
+	return texture(face_tex, vec2((float(cell) + uv.x) / 4.0, uv.y));
+}
+
+// Whichever of two drawn parts covers more here: they don't overlap.
+vec4 drawn_either(vec4 a, vec4 b) {
+	return a.a >= b.a ? a : b;
 }
 
 // The hand-drawn face's eye: its drawing squashed as it blinks or squints,
 // grown when wide-eyed, nudged toward where it looks. A blink is a line.
-// Returns (ink, the eye's area, which flashes when it glints).
-vec2 drawn_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, bool mirror, float s) {
+// Returns its colour and cover; `area` gets the eye's area, which flashes
+// when it glints.
+vec4 drawn_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, bool mirror, float s, inout float area) {
 	// The painter's dashed guide (0.65 of the box) is the built-in eye size.
 	float box = 0.28 * size * (1.0 + wide * 0.3);
+	area = max(area, 1.0 - smoothstep(0.7, 1.1, length((f - c) / box)));
 	if (open < 0.3) {
-		return vec2(ink_stroke(f, c - vec2(box * 0.8, 0.0), c + vec2(box * 0.8, 0.0), 0.036), 0.0);
+		float shut = ink_stroke(f, c - vec2(box * 0.8, 0.0), c + vec2(box * 0.8, 0.0), 0.036);
+		return vec4(vec3(0.03, 0.02, 0.09), shut);
 	}
 	vec2 at = c + look * 0.04;
-	float ink = drawn_part(f, at, vec2(box, box * min(open, 1.2)), 0, mirror, s);
-	float area = 1.0 - smoothstep(0.7, 1.1, length((f - c) / box));
-	return vec2(ink, area);
+	return drawn_part(f, at, vec2(box, box * min(open, 1.2)), 0, mirror, s);
 }
 
 void fragment() {
@@ -391,11 +397,19 @@ void fragment() {
 		float m;
 		float extras = 0.0;
 		float startled = max(wide.x, wide.y) * (1.0 - happy);
+		vec4 drawn = vec4(0.0);
 		if (face_drawn) {
-			le = drawn_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, false, s);
-			re = drawn_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, true, s + 1.0);
-			arcs = max(drawn_part(f, lc, vec2(0.28), 1, false, s), drawn_part(f, rc, vec2(0.28), 1, true, s + 1.0)) * happy;
-			m = drawn_part(f, vec2(0.0, -0.22), vec2(0.3), startled > 0.5 ? 3 : 2, false, s + 2.0);
+			float area = 0.0;
+			vec4 l = drawn_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, false, s, area);
+			vec4 r = drawn_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, true, s + 1.0, area);
+			vec4 eyes_drawn = drawn_either(l, r);
+			vec4 happy_drawn = drawn_either(drawn_part(f, lc, vec2(0.28), 1, false, s), drawn_part(f, rc, vec2(0.28), 1, true, s + 1.0));
+			drawn = happy > 0.5 ? happy_drawn : eyes_drawn;
+			drawn = drawn_either(drawn, drawn_part(f, vec2(0.0, -0.22), vec2(0.3), startled > 0.5 ? 3 : 2, false, s + 2.0));
+			le = vec2(0.0, area);
+			re = vec2(0.0);
+			arcs = 0.0;
+			m = 0.0;
 		} else {
 			le = doodle_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, face_eyes, -1.0, s);
 			re = doodle_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, face_eyes, 1.0, s + 1.0);
@@ -412,6 +426,14 @@ void fragment() {
 		float line = max(max(max(eyes, arcs), m), extras);
 		col = mix(col, vec3(0.03, 0.02, 0.09), line);
 		emit = mix(emit, vec3(0.0), line * 0.9);
+		if (face_drawn) {
+			// The drawing's own colours: ink, and whites that glow faintly so
+			// they still read as white at night.
+			float whiteness = dot(drawn.rgb, vec3(0.333));
+			col = mix(col, drawn.rgb, drawn.a);
+			emit = mix(emit, drawn.rgb * whiteness * white_glow, drawn.a);
+			line = drawn.a;
+		}
 		// A glint (white_glow above its resting level) lights the glass round
 		// the eyes, enough for the bloom: two eyes shining from hiding.
 		emit += vec3(1.0) * flash * (1.0 - line) * max(white_glow - 0.35, 0.0) * 2.0;

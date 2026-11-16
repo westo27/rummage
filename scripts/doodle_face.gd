@@ -99,11 +99,9 @@ static var _drawn_loaded: bool = false
 ## used: the press images use PRESS_FACES.
 static var only: Array[String] = []
 
-## The cheerful, varied set for press images: grins, tongue, teeth, cat
-## mouth, hearts, kisses, a wink, > <, a snout, a contented smile.
-const PRESS_FACES: Array[String] = ["doodle_02", "doodle_03", "doodle_04", "doodle_06",
-	"doodle_07", "doodle_09", "doodle_13", "doodle_14", "doodle_17", "doodle_19",
-	"doodle_20", "doodle_25", "doodle_27", "doodle_28", "doodle_30"]
+## The faces the press images use.
+const PRESS_FACES: Array[String] = ["doodle_01", "doodle_06", "doodle_07", "doodle_08",
+	"doodle_26", "doodle_34"]
 
 
 static func random() -> DoodleFace:

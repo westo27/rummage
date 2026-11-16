@@ -33,7 +33,7 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	# Press images show the cheerful set of faces.
+	# Press images show the chosen faces.
 	DoodleFace.only = DoodleFace.PRESS_FACES
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
@@ -234,7 +234,8 @@ func _pose(at: Vector3, colour: int, mood: CreatureEyes.Mood, stray: float = 0.0
 	visual.basis = Basis()
 	visual.look_at(_camera.global_position, Vector3.UP)
 	var eyes := _eyes(c)
-	eyes.mood = mood
+	# Drawn faces show as drawn: their own mouths, not the startled "o".
+	eyes.mood = CreatureEyes.Mood.NORMAL if c.face.drawn != null else mood
 	eyes.set("_white_glow", CreatureEyes.WHITE_GLOW)
 	var side := Vector3(randf_range(-1.0, 1.0), randf_range(-0.5, 0.5), 0.0) * stray * 0.5
 	eyes.look_target = _camera.global_position + _camera.global_basis * side

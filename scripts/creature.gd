@@ -23,6 +23,9 @@ enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 ## pulled, and pops out once it's open far enough. Nothing else reveals it.
 @export var drawer_furniture: NodePath
 @export var drawer_index: int = 0
+## Hiding in a lidded box (a LiddedBox): it sits on the floor inside, rides
+## along, and pops out once the lid is off or the box is tipped on its side.
+@export var hiding_box: NodePath
 
 ## When false, only moving the covering object reveals this creature; flying
 ## objects bouncing nearby don't.
@@ -121,6 +124,8 @@ const LUMP_RADIUS: float = 0.1
 const TREAD_DISTANCE: float = 0.35
 ## A free nook counts as this much (m) nearer than a spot behind a prop.
 const NOOK_BONUS: float = 1.0
+## A box tipped further than this from upright (degrees) lets its creature out.
+const BOX_TIP_DEGREES: float = 70.0
 const BODY_COLORS: Array[Color] = [
 	Color(0.45, 0.95, 0.4), Color(1.0, 0.55, 0.75), Color(1.0, 0.85, 0.25),
 	Color(0.45, 0.8, 1.0), Color(0.85, 0.55, 1.0), Color(1.0, 0.6, 0.3),
@@ -155,6 +160,9 @@ var _furniture: Prop = null
 var _drawer: Prop = null
 ## Where the creature sits, in the drawer's own coordinates.
 var _drawer_spot: Transform3D
+## Set when hiding in a box (see hiding_box), and where it sits in the box.
+var _box: LiddedBox = null
+var _box_spot: Transform3D
 ## Seconds left heading straight out of the drawer before it starts steering
 ## away from the player (which could mean back through the furniture).
 var _escape_left: float = 0.0
@@ -199,6 +207,8 @@ func _ready() -> void:
 	if not drawer_furniture.is_empty():
 		# Deferred so the furniture has found its drawers (its own _ready).
 		_settle_in_drawer.call_deferred()
+	elif not hiding_box.is_empty():
+		_settle_in_box.call_deferred()
 	elif not inside.is_empty():
 		_settle_inside.call_deferred()
 	else:
@@ -260,11 +270,25 @@ func _settle_in_drawer() -> void:
 	_drawer = _furniture.drawers[drawer_index]
 	var floor_shape := _drawer.get_node("FloorShape") as CollisionShape3D
 	var floor_top: float = floor_shape.position.y + (floor_shape.shape as BoxShape3D).size.y * 0.5
-	var radius: float = ((get_node("CollisionShape3D") as CollisionShape3D).shape as SphereShape3D).radius
-	var spot := Vector3(0.0, floor_top + radius + 0.003, DRAWER_FRONT_OFFSET)
+	var spot := Vector3(0.0, floor_top + _radius() + 0.003, DRAWER_FRONT_OFFSET)
 	_drawer_spot = Transform3D(Basis.IDENTITY, spot)
 	global_transform = _drawer.global_transform * _drawer_spot
 	reset_physics_interpolation()
+
+
+## Moves into the box: sitting in the middle of its floor.
+func _settle_in_box() -> void:
+	_box = get_node_or_null(hiding_box) as LiddedBox
+	if _box == null:
+		return
+	var spot := Vector3(0.0, _box.floor_top() + _radius() + 0.003, 0.0)
+	_box_spot = Transform3D(Basis.IDENTITY, spot)
+	global_transform = _box.global_transform * _box_spot
+	reset_physics_interpolation()
+
+
+func _radius() -> float:
+	return ((get_node("CollisionShape3D") as CollisionShape3D).shape as SphereShape3D).radius
 
 
 func _physics_process(delta: float) -> void:
@@ -317,6 +341,9 @@ func _update_hidden(delta: float) -> void:
 	if _drawer != null:
 		_update_in_drawer(delta)
 		return
+	if _box != null:
+		_update_in_box(delta)
+		return
 	if _container != null:
 		_update_inside(delta)
 		return
@@ -344,24 +371,51 @@ func _update_in_drawer(delta: float) -> void:
 	if _furniture.drawer_out(drawer_index) > DRAWER_REVEAL_OUT:
 		_pop_out_of_drawer()
 		return
+	_shut_in_tell(delta)
+
+
+## Rides the box, and pops out when the lid comes off or it's tipped over.
+func _update_in_box(delta: float) -> void:
+	global_transform = _box.global_transform * _box_spot
+	var tipped: bool = _box.global_basis.y.angle_to(Vector3.UP) > deg_to_rad(BOX_TIP_DEGREES)
+	if not _box.lid_on() or tipped:
+		_pop_out_of_box()
+		return
+	_shut_in_tell(delta)
+
+
+## Only tells that fit somewhere shut in: no hop, no shuffling a cover.
+func _shut_in_tell(delta: float) -> void:
 	_tell_left -= delta
 	if _tell_left <= 0.0:
 		_tell_left = randf_range(Game.tune.tell_interval_min, Game.tune.tell_interval_max)
-		# Only tells that fit in a drawer: no hop, no shuffling a cover.
 		squeak(1.0)
 		_eyes.glint()
 		flash()
 
 
-func _pop_out_of_drawer() -> void:
-	# Through the drawer and the furniture for a moment, so the front panel
-	# doesn't catch it on the way up and out.
-	for body: Prop in [_drawer, _furniture]:
+## Lets it pass through these for a moment, so walls and panels don't catch
+## it on the way up and out.
+func _pass_through_briefly(bodies: Array[Prop]) -> void:
+	for body in bodies:
 		add_collision_exception_with(body)
 		get_tree().create_timer(ESCAPE_SECONDS, false, true).timeout.connect(
 			func() -> void:
 				if is_instance_valid(body) and is_inside_tree():
 					remove_collision_exception_with(body))
+
+
+func _pop_out_of_box() -> void:
+	_pass_through_briefly([_box, _box.lid])
+	_box = null
+	_reveal()
+	# Up and over the wall, away from the player.
+	velocity.y = Game.tune.pop_speed * 1.4
+	_escape_left = 0.5
+
+
+func _pop_out_of_drawer() -> void:
+	_pass_through_briefly([_drawer, _furniture])
 	var out_dir: Vector3 = _flat(_drawer.global_basis.z)
 	_drawer = null
 	_reveal()

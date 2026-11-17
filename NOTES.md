@@ -30,7 +30,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 │           └─ BeamMesh the curved beam ribbon, rebuilt each frame
 ├─ Landing             scenes/landing.tscn: the lesson's box, bin, creature and clutter
 ├─ MainRoomProps        scenes/main_room_props.tscn: playroom and bedroom props
-├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (11 playroom, 10 bedroom)
+├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 23 creatures (12 playroom, 11 bedroom)
 ├─ SideRoomProps        scenes/side_room_props.tscn: the box room
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
@@ -215,7 +215,7 @@ Three more hints, each shown by tutorial.gd once the lesson is done:
   there.
 - "Press Q to ping", once only, after 10 s with no creature found while the
   ping is ready. It goes when you ping or after 6 s. The lesson creature counts like any other
-(26 in all), so its lift arrives before the house. The timer runs from the
+(28 in all), so its lift arrives before the house. The timer runs from the
 start. A ping from the landing can reach a couple of playroom creatures
 through the wall.
 
@@ -340,6 +340,12 @@ child up past your bedtime". So it's night.
   with three 2 kg drawers; pull one with the beam and the others stay shut.
   Shoved hard, the 20 kg chest tips forward a little and its bottom drawer
   can catch on the floor.
+- **Lidded boxes** (`scripts/lidded_box.gd`): the shoe boxes and shape sorter
+  are hollow, with a loose lid (its own light Prop, with a skirt that sits
+  outside the walls). Lift it off with the beam, drop it back on. A creature
+  with `hiding_box` set sits inside, rides along, and pops out once the lid
+  is 5 cm off its seat or the box tips past 70°. One hides in the lower
+  shoe box (the other one is stacked on it) and one in the shape sorter.
 - **Parts can't lift their furniture.** Drawers and wardrobe doors know their
   furniture (`Prop.part_of`). While the beam holds one and the furniture is
   over the lift limit, the furniture is frozen in place (`Prop.plant()`), so
@@ -526,6 +532,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority |
 | check_stage4 | ping range and cooldown, spotting the bed creatures, side room, win, timer, marble bag (one ball per catch, none escape), restart |
 | check_furniture | furniture is fixed and the beam ignores it; drawers, doors, bins and the chair still grab; crouching and looking finds the bed creatures; you walk through the wardrobe into the box room |
+| check_boxes | lidded boxes: lids sit on, the beam lifts one off without taking the box, the creature inside pops out and gets clear; tipping a shut box lets its creature out |
 | check_floor_clutter | the player wades through clutter and is blocked by furniture |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |

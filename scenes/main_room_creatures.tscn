@@ -81,3 +81,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.68, 0.088, 0.45)
 [node name="InBedsideDrawer" parent="." instance=ExtResource("creature")]
 drawer_furniture = NodePath("../../MainRoomProps/BedsideTable")
 drawer_index = 0
+
+[node name="InShoeBox" parent="." instance=ExtResource("creature")]
+hiding_box = NodePath("../../MainRoomProps/ShoeBoxLow")
+
+[node name="InShapeSorter" parent="." instance=ExtResource("creature")]
+hiding_box = NodePath("../../MainRoomProps/ShapeSorter")

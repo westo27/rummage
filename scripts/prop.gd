@@ -328,11 +328,16 @@ func _assign_collision_layer() -> void:
 		collision_mask = LAYER_WORLD | LAYER_PLAYER | LAYER_PROPS | LAYER_CLUTTER
 
 
+## The meshes the random tint recolours together.
+func _tinted_meshes() -> Array[MeshInstance3D]:
+	return _meshes
+
+
 func _apply_random_tint() -> void:
 	# One random shift per object, applied to all its parts, so a crate's panels match.
 	var hue_shift: float = randf_range(-tint_variation, tint_variation) * 0.5
 	var value_shift: float = randf_range(-0.15, 0.15) * tint_variation
-	for mesh in _meshes:
+	for mesh in _tinted_meshes():
 		var base := mesh.material_override as StandardMaterial3D
 		if base == null:
 			continue

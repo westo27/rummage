@@ -239,7 +239,7 @@ func _run() -> void:
 	main = get_tree().current_scene
 	var caught: String = (main.get_node("HUD") as Hud).caught_text()
 	_check("Restart reloads the game unpaused",
-		not get_tree().paused and caught == "0 / 26", "'%s'" % caught)
+		not get_tree().paused and caught == "0 / 28", "'%s'" % caught)
 
 	# --- Quit to title ---
 	_press("release_mouse")

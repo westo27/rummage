@@ -1,9 +1,13 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+[ext_resource type="Script" path="res://scripts/lidded_box.gd" id="1_box"]
+[ext_resource type="Script" path="res://scripts/prop.gd" id="2_prop"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_box"]
 albedo_color = Color(0.3, 0.6, 0.55, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_inside"]
+albedo_color = Color(0.2, 0.42, 0.38, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_lid"]
 albedo_color = Color(0.86, 0.7, 0.48, 1)
@@ -11,23 +15,41 @@ albedo_color = Color(0.86, 0.7, 0.48, 1)
 [sub_resource type="StandardMaterial3D" id="Mat_hole"]
 albedo_color = Color(0.08, 0.07, 0.07, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_red"]
-albedo_color = Color(0.88, 0.22, 0.2, 1)
+[sub_resource type="BoxMesh" id="Mesh_Floor"]
+size = Vector3(0.2, 0.012, 0.2)
 
-[sub_resource type="StandardMaterial3D" id="Mat_yellow"]
-albedo_color = Color(0.97, 0.85, 0.25, 1)
+[sub_resource type="BoxShape3D" id="Shape_Floor"]
+size = Vector3(0.2, 0.012, 0.2)
 
-[sub_resource type="BoxMesh" id="Mesh_Box"]
-size = Vector3(0.2, 0.16, 0.2)
+[sub_resource type="BoxMesh" id="Mesh_WallLong"]
+size = Vector3(0.2, 0.148, 0.012)
 
-[sub_resource type="BoxShape3D" id="Shape_Box"]
-size = Vector3(0.2, 0.16, 0.2)
+[sub_resource type="BoxShape3D" id="Shape_WallLong"]
+size = Vector3(0.2, 0.148, 0.012)
 
-[sub_resource type="BoxMesh" id="Mesh_Lid"]
-size = Vector3(0.212, 0.022, 0.212)
+[sub_resource type="BoxMesh" id="Mesh_WallEnd"]
+size = Vector3(0.012, 0.148, 0.176)
 
-[sub_resource type="BoxShape3D" id="Shape_Lid"]
-size = Vector3(0.212, 0.022, 0.212)
+[sub_resource type="BoxShape3D" id="Shape_WallEnd"]
+size = Vector3(0.012, 0.148, 0.176)
+
+[sub_resource type="BoxMesh" id="Mesh_LidTop"]
+size = Vector3(0.218, 0.022, 0.218)
+
+[sub_resource type="BoxShape3D" id="Shape_LidTop"]
+size = Vector3(0.218, 0.022, 0.218)
+
+[sub_resource type="BoxMesh" id="Mesh_SkirtLong"]
+size = Vector3(0.218, 0.016, 0.005)
+
+[sub_resource type="BoxShape3D" id="Shape_SkirtLong"]
+size = Vector3(0.218, 0.016, 0.005)
+
+[sub_resource type="BoxMesh" id="Mesh_SkirtEnd"]
+size = Vector3(0.005, 0.016, 0.208)
+
+[sub_resource type="BoxShape3D" id="Shape_SkirtEnd"]
+size = Vector3(0.005, 0.016, 0.208)
 
 [sub_resource type="CylinderMesh" id="Mesh_HoleRound"]
 top_radius = 0.022
@@ -48,47 +70,127 @@ size = Vector3(0.06, 0.004, 0.018)
 [node name="ShapeSorter" type="RigidBody3D"]
 collision_layer = 4
 collision_mask = 7
-mass = 1.5
+mass = 1.2
 continuous_cd = true
-script = ExtResource("1_prop")
+script = ExtResource("1_box")
 hold_radius = 0.15
 impact_material = 0
 tint_variation = 0.2
 
-[node name="Box" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+[node name="Floor" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.084, 0)
+material_override = SubResource("Mat_inside")
+mesh = SubResource("Mesh_Floor")
+
+[node name="FloorShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.084, 0)
+shape = SubResource("Shape_Floor")
+
+[node name="WallFront" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.004, 0.094)
 material_override = SubResource("Mat_box")
-mesh = SubResource("Mesh_Box")
+mesh = SubResource("Mesh_WallLong")
 
-[node name="BoxShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
-shape = SubResource("Shape_Box")
+[node name="WallFrontShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.004, 0.094)
+shape = SubResource("Shape_WallLong")
 
-[node name="Lid" type="MeshInstance3D" parent="."]
+[node name="WallBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.004, -0.094)
+material_override = SubResource("Mat_box")
+mesh = SubResource("Mesh_WallLong")
+
+[node name="WallBackShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.004, -0.094)
+shape = SubResource("Shape_WallLong")
+
+[node name="WallLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.094, -0.004, 0)
+material_override = SubResource("Mat_box")
+mesh = SubResource("Mesh_WallEnd")
+
+[node name="WallLeftShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.094, -0.004, 0)
+shape = SubResource("Shape_WallEnd")
+
+[node name="WallRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.094, -0.004, 0)
+material_override = SubResource("Mat_box")
+mesh = SubResource("Mesh_WallEnd")
+
+[node name="WallRightShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.094, -0.004, 0)
+shape = SubResource("Shape_WallEnd")
+
+[node name="Lid" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.081, 0)
+collision_layer = 4
+collision_mask = 7
+mass = 0.3
+continuous_cd = true
+script = ExtResource("2_prop")
+hold_radius = 0.15
+impact_material = 0
+
+[node name="Top" type="MeshInstance3D" parent="Lid"]
 material_override = SubResource("Mat_lid")
-mesh = SubResource("Mesh_Lid")
+mesh = SubResource("Mesh_LidTop")
 
-[node name="LidShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.081, 0)
-shape = SubResource("Shape_Lid")
+[node name="TopShape" type="CollisionShape3D" parent="Lid"]
+shape = SubResource("Shape_LidTop")
 
-[node name="HoleRound" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.093, -0.05)
+[node name="SkirtFront" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.019, 0.1065)
+material_override = SubResource("Mat_lid")
+mesh = SubResource("Mesh_SkirtLong")
+
+[node name="SkirtFrontShape" type="CollisionShape3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.019, 0.1065)
+shape = SubResource("Shape_SkirtLong")
+
+[node name="SkirtBack" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.019, -0.1065)
+material_override = SubResource("Mat_lid")
+mesh = SubResource("Mesh_SkirtLong")
+
+[node name="SkirtBackShape" type="CollisionShape3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.019, -0.1065)
+shape = SubResource("Shape_SkirtLong")
+
+[node name="SkirtLeft" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1065, -0.019, 0)
+material_override = SubResource("Mat_lid")
+mesh = SubResource("Mesh_SkirtEnd")
+
+[node name="SkirtLeftShape" type="CollisionShape3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1065, -0.019, 0)
+shape = SubResource("Shape_SkirtEnd")
+
+[node name="SkirtRight" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1065, -0.019, 0)
+material_override = SubResource("Mat_lid")
+mesh = SubResource("Mesh_SkirtEnd")
+
+[node name="SkirtRightShape" type="CollisionShape3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1065, -0.019, 0)
+shape = SubResource("Shape_SkirtEnd")
+
+[node name="HoleRound" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.012, -0.05)
 material_override = SubResource("Mat_hole")
 mesh = SubResource("Mesh_HoleRound")
 
-[node name="HoleSquare" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.093, -0.05)
+[node name="HoleSquare" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.012, -0.05)
 material_override = SubResource("Mat_hole")
 mesh = SubResource("Mesh_HoleSquare")
 
-[node name="HoleStar" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.093, 0.05)
+[node name="HoleStar" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.012, 0.05)
 material_override = SubResource("Mat_hole")
 mesh = SubResource("Mesh_HoleStar")
 
-[node name="HoleSlot" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.093, 0.05)
+[node name="HoleSlot" type="MeshInstance3D" parent="Lid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.012, 0.05)
 material_override = SubResource("Mat_hole")
 mesh = SubResource("Mesh_HoleSlot")

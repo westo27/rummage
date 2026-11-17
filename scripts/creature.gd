@@ -641,10 +641,14 @@ func _bump_covers_out_of_the_way() -> void:
 ## A cover being lifted by the beam (an upturned crate, say) would otherwise
 ## scoop the creature up inside it as it pops, and a small one round it (a
 ## bowl's sides, the marbles in it) would hem it in. It passes through those
-## for a moment while it escapes.
+## for a moment while it escapes, but a lifted one only if it's actually under
+## it: a door swinging open beside it stays solid.
 func _slip_out_of_covers() -> void:
 	for prop: Prop in _covers:
-		if not is_instance_valid(prop) or not (prop.is_held or prop.hold_radius <= BUMPABLE_RADIUS):
+		if not is_instance_valid(prop):
+			continue
+		var small: bool = prop.hold_radius <= BUMPABLE_RADIUS
+		if not (small or (prop.is_held and _is_under(prop))):
 			continue
 		add_collision_exception_with(prop)
 		# A timer that runs on physics ticks; when it's done, collide again.
@@ -652,6 +656,15 @@ func _slip_out_of_covers() -> void:
 			func() -> void:
 				if is_instance_valid(prop) and is_inside_tree():
 					remove_collision_exception_with(prop))
+
+
+## Whether `prop` is right over us: a short ray straight up meets it first.
+func _is_under(prop: Prop) -> bool:
+	const REACH: float = 0.6
+	var query := PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.UP * REACH, MASK_PROPS)
+	query.exclude = [get_rid()]
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	return not hit.is_empty() and hit.collider == prop
 
 
 func _start_seeking() -> void:

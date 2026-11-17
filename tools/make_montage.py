@@ -20,13 +20,13 @@ LOGO = "press/banner.png"
 # Building up: one marble, then a few, then furniture, then the chaos.
 ORDER = ["picture", "drawers", "wardrobe", "bin", "bookcase", "bin_throw", "chair"]
 # Seconds cut from the start (the still lead-in) and the end of each clip.
-TRIM_IN = 0.3
-TRIM_OUT = 0.45
+TRIM_IN = 0.35
+TRIM_OUT = 0.2
 # The last one keeps its tail: the scatter is the payoff.
 KEEP_LAST_TAIL = True
-DISSOLVE = 0.2
-FADE_IN = 0.35
-CARD = 2.6
+DISSOLVE = 0.35
+FADE_IN = 0.6
+CARD = 3.2
 
 
 def duration(path):

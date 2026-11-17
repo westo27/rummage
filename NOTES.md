@@ -308,7 +308,9 @@ each room (needs a window).
 - The "main room" layout files hold the playroom and bedroom together; the
   "side room" ones are the box room.
 - New props: `desk.tscn` (10 kg), `chair.tscn` (3 kg), `chest_of_drawers.tscn`
-  (20 kg, three sliding drawers), `beanbag.tscn` (2 kg).
+  (20 kg, three sliding drawers), `beanbag.tscn` (2 kg; its slumped
+  shape, panels and seat dent are built in `scripts/beanbag_mesh.gd`, with a
+  convex hull of it for collision).
 - Small household things, all clutter (0.15–1.8 kg, liftable from the start).
   Playroom: teddy bear, toy car, stacking rings (table), toy drum, floor
   cushion, shape sorter, toy dinosaur. Bedroom: alarm clock (bedside table),
@@ -344,7 +346,8 @@ child up past your bedtime". So it's night.
   are hollow, with a loose lid (its own light Prop, with a skirt that sits
   outside the walls). Lift it off with the beam, drop it back on. A creature
   with `hiding_box` set sits inside, rides along, and pops out once the lid
-  is 5 cm off its seat or the box tips past 70°. One hides in the lower
+  leaves a gap 1.2× the marble's width (`opening_gap`). Tipped with the lid
+  still on, it stays shut in. One hides in the lower
   shoe box (the other one is stacked on it) and one in the shape sorter.
   The plastic bins are lidded boxes too, standing upright with a yellow
   handle on the lid; the six creatures that used to sit under upturned bins
@@ -537,7 +540,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority |
 | check_stage4 | ping range and cooldown, spotting the bed creatures, side room, win, timer, marble bag (one ball per catch, none escape), restart |
 | check_furniture | furniture is fixed and the beam ignores it; drawers, doors, bins and the chair still grab; crouching and looking finds the bed creatures; you walk through the wardrobe into the box room |
-| check_boxes | lidded boxes: lids sit on, the beam lifts one off without taking the box, the creature inside pops out and gets clear; tipping a shut box lets its creature out |
+| check_boxes | lidded boxes: lids sit on, the beam lifts one off without taking the box, the creature inside pops out and gets clear; a jostled lid or a tipped shut box keeps its creature in until the lid falls away |
 | check_floor_clutter | the player walks through clutter without moving it, is blocked by furniture, and can't push the stable door |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |
@@ -617,6 +620,8 @@ in front of the bed, under the slippers. (The playroom trapdoor is gone.)
   rug-only ray hits within 5 cm of where the floor was hit.
 - The rug's own physics layer (6) meets only the floor, so things on it stay
   put and a lifted rug passes through furniture.
+- It casts no shadow: lying flat, it shadowed itself into shimmering blotches
+  under the soft lamp shadows (worst on the low title camera).
 
 ## How creatures move
 

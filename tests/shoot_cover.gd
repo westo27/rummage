@@ -162,27 +162,44 @@ func _shot_burst() -> void:
 		_turn(c, randf_range(-0.35, 0.35), randf_range(-0.8, 0.8))
 		_speed_lines(at, (at - burst_from).normalized(), randf_range(0.09, 0.16), Creature.BODY_COLORS[f[3]])
 
-	# The grabbed one, pulled out toward your hand (off the bottom right of
-	# the frame), stretched along the beam.
-	var hand: Vector3 = _from_camera(Vector3(0.5, -0.45, -0.8))
-	var grabbed_at: Vector3 = near.call(0.1, 0.13, 0.27)
+	# The grabbed one, lifted clear and pulled toward your hand (just below
+	# the bottom of the frame, as in play), stretched along the beam, held in
+	# the beam's glow.
+	var hand: Vector3 = _from_camera(Vector3(0.06, -0.29, -0.7))
+	var grabbed_at: Vector3 = near.call(0.13, 0.2, 0.3)
 	var grabbed := _pose(grabbed_at, PINK, WIDE, 0.0)
-	_stretch(grabbed, (hand - grabbed_at).normalized(), 1.25)
+	_stretch(grabbed, (hand - grabbed_at).normalized(), 1.15)
+	var aura := MeshInstance3D.new()
+	var blob := SphereMesh.new()
+	blob.radius = R * 1.7
+	blob.height = R * 3.4
+	aura.mesh = blob
+	var aura_mat := ShaderMaterial.new()
+	aura_mat.shader = load("res://shaders/beam_aura.gdshader")
+	aura_mat.set_shader_parameter("glow_color", Beam.HOLD_COLOR)
+	aura_mat.set_shader_parameter("intensity", 0.8)
+	aura.material_override = aura_mat
+	aura.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# On the marble's Visual, so it stretches with it.
+	grabbed.get_node("Visual").add_child(aura)
+	_shot_nodes.append(aura)
 	var beam := _main.get_node("Player/Head/Camera3D/Beam") as Node3D
 	# Out from under the hidden player, so it can be seen.
 	beam.process_mode = Node.PROCESS_MODE_DISABLED
 	beam.reparent(_main)
 	beam.set("_camera", _camera)
 	var control: Vector3 = hand.lerp(grabbed_at, 0.5) + Vector3.UP * hand.distance_to(grabbed_at) * 0.12
-	beam.call("_show_beam", hand, control, grabbed_at, Creature.BODY_COLORS[PINK], 0.4)
+	# The holding cyan rather than the catch's creature colour: it stands out
+	# against the marble it's holding.
+	beam.call("_show_beam", hand, control, grabbed_at, Beam.HOLD_COLOR, 0.4)
 	_shot_nodes.append(beam)
-	# Its lights are made for a whole room; here they'd flood the shot, and the
-	# glow where it lands would hide the face.
-	(beam.get("_end_light") as Light3D).light_energy *= 0.3
+	# Its lights are made for a whole room; here they'd flood the shot. The
+	# glow where it lands blooms over the face, and the aura already says "held".
+	(beam.get("_end_light") as Light3D).light_energy *= 0.2
 	(beam.get("_mid_light") as Light3D).light_energy *= 0.2
 	(beam.get("_contact_glow") as Node3D).visible = false
-	# Brighter than in play, to hold its own against the colours.
-	(beam.get("_beam_material") as ShaderMaterial).set_shader_parameter("intensity", 3.5)
+	# A touch dimmer than in play: this close, its bloom would swamp the shot.
+	(beam.get("_beam_material") as ShaderMaterial).set_shader_parameter("intensity", 1.8)
 
 	_omni(_from_camera(Vector3(-0.5, 0.35, -0.1)), Color(1.0, 0.82, 0.62), 0.9, 2.0)  # key
 	_omni(base - away * 0.45 + Vector3(0.1, 0.55, 0.0), Color(0.55, 0.62, 1.0), 1.4, 1.0)  # rim

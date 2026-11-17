@@ -13,7 +13,7 @@ extends Node
 const SMALL_THINGS: Array[String] = ["Teddy", "ToyCar", "StackingRings", "ToyDrum",
 	"ShapeSorter", "ToyDinosaur", "AlarmClock", "DeskGlobe", "PencilPot",
 	"Mug", "SlipperL", "SlipperR", "SchoolBag", "ShoeBoxLow", "ShoeBoxHigh",
-	"FoldedJumpers", "PiggyBank"]
+	"FoldedJumpers", "PiggyBank", "JackInTheBox", "ToyRobot", "HeroFigure", "MonsterFigure"]
 
 var _failures: int = 0
 var _main: Node
@@ -233,6 +233,51 @@ func _run() -> void:
 		"%.3f, %.3f m out" % [chest.drawer_out(1), chest.drawer_out(2)])
 	_check("and the chest stays where it is", (chest as Node3D).global_position.distance_to(chest_at) < 0.1,
 		"moved %.3f m" % (chest as Node3D).global_position.distance_to(chest_at))
+
+	# --- The toy chest's lid lifts on its hinge and drops shut ---
+	var toy_chest: Node = _main.get_node("MainRoomProps/ToyChest")
+	var lid: Prop = toy_chest.lid
+	_check("the toy chest's lid rests shut", toy_chest.lid_angle() < 0.05, "%.2f rad" % toy_chest.lid_angle())
+	var teddy := _main.get_node("MainRoomProps/Teddy") as Node3D
+	_check("the teddy sits on the lid", teddy.global_position.y > 0.6, "y=%.3f" % teddy.global_position.y)
+	teddy.global_position = Vector3(-1.5, 0.3, 0.8)  # out of the way
+	teddy.reset_physics_interpolation()
+	player.global_position = Vector3(-2.5, 0.05, -1.0)
+	player.reset_physics_interpolation()
+	var lid_edge: Vector3 = (toy_chest as Node3D).to_global(Vector3(0.0, 0.24, 0.22))
+	look = (lid_edge - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	beam._grab_armed = true
+	beam._grab(lid, lid_edge)
+	for i in 20:  # look up, lifting the lid's front edge
+		head.rotation.x += 0.025
+		await get_tree().physics_frame
+	_check("the beam lifts the lid", toy_chest.lid_angle() > 0.4, "%.2f rad, held %s" % [toy_chest.lid_angle(), beam.held])
+	beam._grab_armed = false
+	beam._release()
+	await _wait(1.5)
+	_check("let go short of upright, it drops shut", toy_chest.lid_angle() < 0.05, "%.2f rad" % toy_chest.lid_angle())
+	for i in 20:  # flung back hard
+		lid.sleeping = false
+		lid.angular_velocity = Vector3(-14.0, 0.0, 0.0)
+		await get_tree().physics_frame
+	await _wait(1.5)
+	_check("flung past upright, it rests open", toy_chest.lid_angle() > PI / 2.0, "%.2f rad" % toy_chest.lid_angle())
+	_check("and the chest stays put", (toy_chest as Prop).freeze, "")
+
+	# --- The jack-in-the-box waits shut, and pops when it's dropped ---
+	var jack: Prop = _main.get_node("MainRoomProps/JackInTheBox")
+	_check("the jack-in-the-box starts shut", not jack.popped, "")
+	jack.global_position += Vector3(0.0, 0.6, 0.0)
+	jack.reset_physics_interpolation()
+	jack.sleeping = false
+	await _wait(2.0)
+	_check("dropped on the table, it pops", jack.popped and not (jack.get_node("JackShape") as CollisionShape3D).disabled,
+		"popped %s" % jack.popped)
+	_check("and the clown stands up out of it", (jack.get_node("Head") as Node3D).position.y > 0.12,
+		"head y=%.3f" % (jack.get_node("Head") as Node3D).position.y)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

@@ -302,6 +302,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		if _gather_ticks == 0:
 			var speed: float = minf(_gather_total / mass, _gather_velocity_change)
 			Game.impacts.play(impact_material, state.transform.origin, speed, mass)
+			_knocked(speed)
 		return
 
 	if minf(jump, velocity_change) < Game.tune.impact_min_speed:
@@ -314,6 +315,12 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	_gather_total = push - _gather_baseline
 	_gather_velocity_change = velocity_change
 	_gather_ticks = GATHER_TICKS - 1
+
+
+## Called with each knock's speed (m/s) as it plays. For props that react
+## to being knocked (the jack-in-the-box); does nothing here.
+func _knocked(_speed: float) -> void:
+	pass
 
 
 func _now() -> float:

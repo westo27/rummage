@@ -324,6 +324,15 @@ each room (needs a window).
   stacked shoe boxes, folded jumpers and a piggy bank (chest). Their meshes
   are only partly matched by collision shapes (fine detail like wheels and
   pencils is visual only). `check_room` checks they settle where they're put.
+- Playroom toys after Elebits' kid's room (built from primitives, not its
+  models): a **toy chest** (`toy_chest.gd`, 12 kg furniture) on the north
+  wall, its 1.6 kg lid on a hinge along the back (drops shut short of
+  upright, rests open past it), three blocks inside and the teddy on top; a
+  **jack-in-the-box** on the table (`jack_in_the_box.gd`: a knock of 2 m/s or
+  more flips the lid and the clown springs out, posed from code, for good;
+  `Prop._knocked()` is the hook); a tin **robot**; a **hero** and a
+  **monster** figure squaring up by the toy car. `tests/shoot_toys.tscn`
+  shoots them shut and open.
 
 ## The room's look: cosy, up past bedtime
 

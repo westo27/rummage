@@ -35,6 +35,11 @@
 [ext_resource type="PackedScene" path="res://scenes/props/toy_drum.tscn" id="toy_drum"]
 [ext_resource type="PackedScene" path="res://scenes/props/marble_bowl.tscn" id="marble_bowl"]
 [ext_resource type="PackedScene" path="res://scenes/props/glass_marble.tscn" id="glass_marble"]
+[ext_resource type="PackedScene" path="res://scenes/props/toy_chest.tscn" id="toy_chest"]
+[ext_resource type="PackedScene" path="res://scenes/props/jack_in_the_box.tscn" id="jack_in_the_box"]
+[ext_resource type="PackedScene" path="res://scenes/props/toy_robot.tscn" id="toy_robot"]
+[ext_resource type="PackedScene" path="res://scenes/props/hero_figure.tscn" id="hero_figure"]
+[ext_resource type="PackedScene" path="res://scenes/props/monster_figure.tscn" id="monster_figure"]
 
 [node name="MainRoomProps" type="Node3D"]
 
@@ -458,7 +463,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35, 0.03, -0.8)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.03, -1.15)
 
 [node name="Teddy" parent="." instance=ExtResource("teddy_bear")]
-transform = Transform3D(0.9659, 0, 0.2588, 0, 1, 0, -0.2588, 0, 0.9659, -2.1, 0.152, -1.95)
+transform = Transform3D(0.9659, 0, 0.2588, 0, 1, 0, -0.2588, 0, 0.9659, -2.38, 0.637, -1.93)
 
 [node name="ToyCar" parent="." instance=ExtResource("toy_car")]
 transform = Transform3D(0.9063, 0, 0.4226, 0, 1, 0, -0.4226, 0, 0.9063, -3.6, 0.062, 0.5)
@@ -540,3 +545,27 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5087, 0.9132, 1.5444)
 
 [node name="BowlMarble9" parent="." instance=ExtResource("glass_marble")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4080, 0.9132, 1.5997)
+
+[node name="ToyChest" parent="." instance=ExtResource("toy_chest")]
+transform = Transform3D(1.0, 0, 0.0, 0, 1, 0, -0.0, 0, 1.0, -2.5, 0.245, -1.98)
+
+[node name="JackInTheBox" parent="." instance=ExtResource("jack_in_the_box")]
+transform = Transform3D(0.9511, 0, -0.309, 0, 1, 0, 0.309, 0, 0.9511, -2.15, 0.849, 0.15)
+
+[node name="ToyRobot" parent="." instance=ExtResource("toy_robot")]
+transform = Transform3D(0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, 0.9397, -1.55, 0.15, -1.35)
+
+[node name="HeroFigure" parent="." instance=ExtResource("hero_figure")]
+transform = Transform3D(0.3746, 0, 0.9272, 0, 1, 0, -0.9272, 0, 0.3746, -3.35, 0.119, 0.62)
+
+[node name="MonsterFigure" parent="." instance=ExtResource("monster_figure")]
+transform = Transform3D(-0.3746, 0, -0.9272, 0, 1, 0, 0.9272, 0, -0.3746, -3.1, 0.098, 0.72)
+
+[node name="ChestBlock1" parent="." instance=ExtResource("toy_block")]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, -2.72, 0.096, -1.95)
+
+[node name="ChestBlock2" parent="." instance=ExtResource("toy_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.48, 0.096, -2.05)
+
+[node name="ChestBlock3" parent="." instance=ExtResource("toy_block")]
+transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, -2.3, 0.096, -1.88)

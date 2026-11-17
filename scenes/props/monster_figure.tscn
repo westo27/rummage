@@ -1,0 +1,334 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_stand"]
+albedo_color = Color(0.12, 0.12, 0.15, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.0504
+bottom_radius = 0.056
+height = 0.014
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_2"]
+radius = 0.056
+height = 0.014
+
+[sub_resource type="StandardMaterial3D" id="Mat_hide"]
+albedo_color = Color(0.58, 0.36, 0.8, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_belly"]
+albedo_color = Color(0.84, 0.74, 0.94, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_bone"]
+albedo_color = Color(0.99, 0.94, 0.72, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_spikes"]
+albedo_color = Color(0.45, 0.82, 0.36, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+top_radius = 0.0196
+bottom_radius = 0.0224
+height = 0.0364
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4"]
+top_radius = 0
+bottom_radius = 0.0056
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5"]
+top_radius = 0
+bottom_radius = 0.0056
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6"]
+top_radius = 0.0196
+bottom_radius = 0.0224
+height = 0.0364
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_7"]
+top_radius = 0
+bottom_radius = 0.0056
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_8"]
+top_radius = 0
+bottom_radius = 0.0056
+height = 0.0168
+
+[sub_resource type="SphereMesh" id="SphereMesh_9"]
+radius = 0.0644
+height = 0.1288
+
+[sub_resource type="SphereMesh" id="SphereMesh_10"]
+radius = 0.0476
+height = 0.0952
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_11"]
+radius = 0.0616
+
+[sub_resource type="StandardMaterial3D" id="Mat_eyewhite"]
+albedo_color = Color(0.99, 0.99, 0.97, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_12"]
+radius = 0.0238
+height = 0.0476
+
+[sub_resource type="StandardMaterial3D" id="Mat_pupil"]
+albedo_color = Color(0.08, 0.07, 0.1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_13"]
+radius = 0.0112
+height = 0.0224
+
+[sub_resource type="StandardMaterial3D" id="Mat_brow"]
+albedo_color = Color(0.4, 0.22, 0.6, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_14"]
+size = Vector3(0.042, 0.0084, 0.014)
+
+[sub_resource type="StandardMaterial3D" id="Mat_mouth"]
+albedo_color = Color(0.35, 0.08, 0.16, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_15"]
+size = Vector3(0.0476, 0.014, 0.0168)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_16"]
+top_radius = 0.0063
+bottom_radius = 0
+height = 0.0154
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_17"]
+top_radius = 0.0063
+bottom_radius = 0
+height = 0.0154
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_18"]
+top_radius = 0
+bottom_radius = 0.0126
+height = 0.042
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_19"]
+radius = 0.0154
+height = 0.056
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_20"]
+top_radius = 0
+bottom_radius = 0.0049
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_21"]
+top_radius = 0
+bottom_radius = 0.0049
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_22"]
+top_radius = 0
+bottom_radius = 0.0049
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_23"]
+top_radius = 0
+bottom_radius = 0.0126
+height = 0.042
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_24"]
+radius = 0.0154
+height = 0.056
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_25"]
+top_radius = 0
+bottom_radius = 0.0049
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_26"]
+top_radius = 0
+bottom_radius = 0.0049
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_27"]
+top_radius = 0
+bottom_radius = 0.0049
+height = 0.0168
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_28"]
+top_radius = 0
+bottom_radius = 0.0126
+height = 0.0252
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_29"]
+top_radius = 0
+bottom_radius = 0.0126
+height = 0.028
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_30"]
+top_radius = 0
+bottom_radius = 0.0126
+height = 0.0252
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_31"]
+top_radius = 0
+bottom_radius = 0.0196
+height = 0.07
+
+[node name="MonsterFigure" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.14
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.18
+impact_material = 4
+
+[node name="Stand" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.091, 0)
+material_override = SubResource("Mat_stand")
+mesh = SubResource("CylinderMesh_1")
+
+[node name="StandShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.091, 0)
+shape = SubResource("CylinderShape3D_2")
+
+[node name="LegL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0336, -0.0672, 0.0028)
+material_override = SubResource("Mat_hide")
+mesh = SubResource("CylinderMesh_3")
+
+[node name="ToeL1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.0434, -0.0798, 0.028)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_4")
+
+[node name="ToeL2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.0238, -0.0798, 0.028)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_5")
+
+[node name="LegR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0336, -0.0672, 0.0028)
+material_override = SubResource("Mat_hide")
+mesh = SubResource("CylinderMesh_6")
+
+[node name="ToeR1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.0238, -0.0798, 0.028)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_7")
+
+[node name="ToeR2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.0434, -0.0798, 0.028)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_8")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1.08, 0, 0, 0, 0.9, 0, 0, 0)
+material_override = SubResource("Mat_hide")
+mesh = SubResource("SphereMesh_9")
+
+[node name="Belly" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1.1, 0, 0, 0, 0.8, 0, -0.014, 0.0182)
+material_override = SubResource("Mat_belly")
+mesh = SubResource("SphereMesh_10")
+
+[node name="BodyShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0028, 0)
+shape = SubResource("SphereShape3D_11")
+
+[node name="Eye" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0336, 0.042)
+material_override = SubResource("Mat_eyewhite")
+mesh = SubResource("SphereMesh_12")
+
+[node name="Pupil" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0336, 0.0644)
+material_override = SubResource("Mat_pupil")
+mesh = SubResource("SphereMesh_13")
+
+[node name="Brow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9397, 0.342, 0, -0.342, 0.9397, 0, 0.0602, 0.0476)
+material_override = SubResource("Mat_brow")
+mesh = SubResource("BoxMesh_14")
+
+[node name="Mouth" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0084, 0.0588)
+material_override = SubResource("Mat_mouth")
+mesh = SubResource("BoxMesh_15")
+
+[node name="Fang1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.014, -0.0154, 0.0644)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_16")
+
+[node name="Fang2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.014, -0.0154, 0.0644)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_17")
+
+[node name="HornL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.8829, -0.4695, 0, 0.4695, 0.8829, 0, 0, 0, 1, -0.035, 0.0672, -0.0056)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_18")
+
+[node name="ArmL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.7212, -0.6856, 0.0996, 0.6856, 0.6856, -0.2449, 0.0996, 0.2449, 0.9644, -0.0704, 0.0144, 0.0121)
+material_override = SubResource("Mat_hide")
+mesh = SubResource("CapsuleMesh_19")
+
+[node name="ClawL1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0961, 0.0429, 0.0239)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_20")
+
+[node name="ClawL2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0877, 0.0429, 0.0239)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_21")
+
+[node name="ClawL3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0793, 0.0429, 0.0239)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_22")
+
+[node name="HornR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.8829, 0.4695, 0, -0.4695, 0.8829, 0, 0, 0, 1, 0.035, 0.0672, -0.0056)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_23")
+
+[node name="ArmR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.7212, 0.6856, -0.0996, -0.6856, 0.6856, -0.2449, -0.0996, 0.2449, 0.9644, 0.0704, 0.0144, 0.0121)
+material_override = SubResource("Mat_hide")
+mesh = SubResource("CapsuleMesh_24")
+
+[node name="ClawR1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0793, 0.0429, 0.0239)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_25")
+
+[node name="ClawR2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0877, 0.0429, 0.0239)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_26")
+
+[node name="ClawR3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0961, 0.0429, 0.0239)
+material_override = SubResource("Mat_bone")
+mesh = SubResource("CylinderMesh_27")
+
+[node name="Spike1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.3714, 0.9285, 0, -0.9285, 0.3714, 0, 0.0532, -0.0364)
+material_override = SubResource("Mat_spikes")
+mesh = SubResource("CylinderMesh_28")
+
+[node name="Spike2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.3714, 0.9285, 0, -0.9285, 0.3714, 0, 0.0252, -0.056)
+material_override = SubResource("Mat_spikes")
+mesh = SubResource("CylinderMesh_29")
+
+[node name="Spike3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.3714, 0.9285, 0, -0.9285, 0.3714, 0, -0.0084, -0.0644)
+material_override = SubResource("Mat_spikes")
+mesh = SubResource("CylinderMesh_30")
+
+[node name="Tail" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.2873, 0.9578, 0, -0.9578, -0.2873, 0, -0.049, -0.077)
+material_override = SubResource("Mat_hide")
+mesh = SubResource("CylinderMesh_31")

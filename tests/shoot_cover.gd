@@ -35,6 +35,10 @@ func _ready() -> void:
 func _run() -> void:
 	# Press images show the chosen faces.
 	DoodleFace.only = DoodleFace.PRESS_FACES
+	# The game opens fullscreen, which would render at the screen's shape and
+	# squash every marble when scaled to the cover.
+	get_window().mode = Window.MODE_WINDOWED
+	get_window().size = COVER_SIZE * 2
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
@@ -64,7 +68,11 @@ func _run() -> void:
 	_camera.make_current()
 	await _frames(20)
 
-	var shots: Array[String] = ["crowd", "pile", "crate", "sill"]
+	# Name shots after `--` to render only those.
+	var shots: Array[String] = ["crowd", "pile", "crate", "sill", "burst"]
+	var wanted: PackedStringArray = OS.get_cmdline_user_args()
+	if not wanted.is_empty():
+		shots = shots.filter(func(s: String) -> bool: return s in wanted)
 	var sheet := Image.create(COVER_SIZE.x, COVER_SIZE.y, false, Image.FORMAT_RGB8)
 	for shot in shots:
 		_reset()
@@ -79,7 +87,8 @@ func _run() -> void:
 		image.resize(COVER_SIZE.x / 2, COVER_SIZE.y / 2, Image.INTERPOLATE_LANCZOS)
 		sheet.blit_rect(image, Rect2i(Vector2i.ZERO, image.get_size()),
 				Vector2i(shots.find(shot) % 2, shots.find(shot) / 2) * image.get_size())
-	sheet.save_png("%s/cover_sheet.png" % OUT)
+	if shots.size() > 1:
+		sheet.save_png("%s/cover_sheet.png" % OUT)
 	print("RESULT cover shots in %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 
@@ -113,6 +122,72 @@ func _shot_pile() -> void:
 	_grade(1.15, 1.3)
 	_vignette(0.75)
 	_logo(400, 30)
+
+
+## The heap again, the moment the beam yanks one out of its bottom row: the
+## grabbed one stretches toward your hand and the rest burst outward, every
+## face still turned to you. No logo.
+func _shot_burst() -> void:
+	_night(0.06, 0.3, 0.75)
+	var base := Vector3(2.2, 0.0, -0.55)
+	var away := Vector3(0.638, 0.0, 0.77)
+	var right: Vector3 = Vector3.UP.cross(away).normalized()
+	_place_camera(base + away * 1.0 + Vector3(0.0, 0.26, 0.0), base + Vector3(0.0, 0.24, 0.0), 42.0)
+	_focus(1.05, 0.35, 0.12)
+	# A point near the heap: `x` to the right, `y` up, `z` toward the camera.
+	var near := func(x: float, y: float, z: float) -> Vector3:
+		return base + right * x + Vector3.UP * y + away * z
+	var colours := [PINK, YELLOW, BLUE, PURPLE, ORANGE, GREEN]
+
+	# What's left of the bottom row, the front one gone.
+	var spots: Array[Vector3] = _pyramid(base, 4).slice(0, 10)
+	var front: Vector3 = spots[0]
+	for s in spots:
+		if (s - base).dot(away) - absf((s - base).dot(right)) > (front - base).dot(away) - absf((front - base).dot(right)):
+			front = s
+	spots.erase(front)
+	for i in spots.size():
+		var c := _pose(spots[i], colours[(i * 5 + 2) % colours.size()], WIDE, 0.3)
+		_turn(c, randf_range(-0.25, 0.25), randf_range(-0.35, 0.35))
+
+	# The rest flung out from the hole, each with a streak behind it.
+	var burst_from: Vector3 = near.call(0.0, 0.12, 0.05)
+	var flyers := [[0.03, 0.47, 0.0, PINK], [-0.23, 0.38, 0.04, BLUE], [0.25, 0.4, -0.06, YELLOW],
+		[-0.31, 0.19, 0.1, GREEN], [0.33, 0.22, 0.06, PURPLE], [0.1, 0.31, 0.16, ORANGE],
+		[-0.11, 0.28, -0.16, YELLOW], [-0.37, 0.07, -0.08, PINK], [-0.2, 0.52, -0.1, BLUE],
+		[-0.06, 0.18, 0.22, PURPLE]]
+	for f: Array in flyers:
+		var at: Vector3 = near.call(f[0], f[1], f[2])
+		var c := _pose(at, f[3], WIDE, 0.6)
+		_turn(c, randf_range(-0.35, 0.35), randf_range(-0.8, 0.8))
+		_speed_lines(at, (at - burst_from).normalized(), randf_range(0.09, 0.16), Creature.BODY_COLORS[f[3]])
+
+	# The grabbed one, pulled out toward your hand (off the bottom right of
+	# the frame), stretched along the beam.
+	var hand: Vector3 = _from_camera(Vector3(0.5, -0.45, -0.8))
+	var grabbed_at: Vector3 = near.call(0.1, 0.13, 0.27)
+	var grabbed := _pose(grabbed_at, PINK, WIDE, 0.0)
+	_stretch(grabbed, (hand - grabbed_at).normalized(), 1.25)
+	var beam := _main.get_node("Player/Head/Camera3D/Beam") as Node3D
+	# Out from under the hidden player, so it can be seen.
+	beam.process_mode = Node.PROCESS_MODE_DISABLED
+	beam.reparent(_main)
+	beam.set("_camera", _camera)
+	var control: Vector3 = hand.lerp(grabbed_at, 0.5) + Vector3.UP * hand.distance_to(grabbed_at) * 0.12
+	beam.call("_show_beam", hand, control, grabbed_at, Creature.BODY_COLORS[PINK], 0.4)
+	_shot_nodes.append(beam)
+	# Its lights are made for a whole room; here they'd flood the shot, and the
+	# glow where it lands would hide the face.
+	(beam.get("_end_light") as Light3D).light_energy *= 0.3
+	(beam.get("_mid_light") as Light3D).light_energy *= 0.2
+	(beam.get("_contact_glow") as Node3D).visible = false
+	# Brighter than in play, to hold its own against the colours.
+	(beam.get("_beam_material") as ShaderMaterial).set_shader_parameter("intensity", 3.5)
+
+	_omni(_from_camera(Vector3(-0.5, 0.35, -0.1)), Color(1.0, 0.82, 0.62), 0.9, 2.0)  # key
+	_omni(base - away * 0.45 + Vector3(0.1, 0.55, 0.0), Color(0.55, 0.62, 1.0), 1.4, 1.0)  # rim
+	_grade(1.15, 1.3)
+	_vignette(0.75)
 
 
 ## Close on one creature at floor level, the whole gang lined up behind it
@@ -249,6 +324,57 @@ func _turn(c: Creature, yaw: float, roll: float) -> void:
 	var visual := c.get_node("Visual") as Node3D
 	visual.basis = visual.basis * Basis(Vector3.UP, yaw) * Basis(Vector3.BACK, roll)
 	_refresh_eyes(c)
+
+
+## Stretches it `k` times longer along `dir` (world space), thinner across,
+## keeping its volume, like a creature being sucked into the beam.
+func _stretch(c: Creature, dir: Vector3, k: float) -> void:
+	var visual := c.get_node("Visual") as Node3D
+	var thin: float = 1.0 / sqrt(k)
+	var axes: Array[Vector3] = []
+	for e: Vector3 in [Vector3.RIGHT, Vector3.UP, Vector3.BACK]:
+		axes.append(e * thin + dir * dir.dot(e) * (k - thin))
+	visual.basis = Basis(axes[0], axes[1], axes[2]) * visual.basis
+
+
+## Cartoon speed lines: three thin streaks in the creature's colour behind
+## it, against its flight `dir`, fading out `length` metres back. Each is a
+## ribbon turned to face the camera, like the beam.
+func _speed_lines(at: Vector3, dir: Vector3, length: float, colour: Color) -> void:
+	var shader := Shader.new()
+	shader.code = """shader_type spatial;
+render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
+uniform vec4 colour : source_color;
+void fragment() {
+	float across = abs(UV.x * 2.0 - 1.0);
+	// Faint at both ends, so the end by the creature doesn't bloom into it.
+	float fade = smoothstep(0.0, 0.7, UV.y) * smoothstep(1.0, 0.75, UV.y);
+	ALBEDO = mix(colour.rgb, vec3(1.0), 0.4) * (1.0 - across * across) * fade * 0.9;
+}"""
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	mat.set_shader_parameter("colour", colour)
+	var eye: Vector3 = _camera.global_position
+	var across: Vector3 = dir.cross(eye - at).normalized()
+	var mesh := ImmediateMesh.new()
+	for line: Vector2 in [Vector2(-0.6, 0.8), Vector2(0.0, 1.0), Vector2(0.6, 0.7)]:
+		# Starting just behind its edge; the middle line longest.
+		var head: Vector3 = at + across * R * line.x - dir * R * 1.3
+		var tail: Vector3 = head - dir * length * line.y
+		mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
+		for t: float in [0.0, 1.0]:
+			var side: Vector3 = across * lerpf(0.001, 0.0045, t)
+			var point: Vector3 = tail.lerp(head, t)
+			mesh.surface_set_uv(Vector2(0.0, t))
+			mesh.surface_add_vertex(point - side)
+			mesh.surface_set_uv(Vector2(1.0, t))
+			mesh.surface_add_vertex(point + side)
+		mesh.surface_end()
+	var node := MeshInstance3D.new()
+	node.mesh = mesh
+	node.material_override = mat
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_add(node)
 
 
 func _wink(c: Creature) -> void:

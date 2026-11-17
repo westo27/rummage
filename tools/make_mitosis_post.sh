@@ -13,7 +13,8 @@ OUT="press/clips"
 mkdir -p "$RAW" "$OUT"
 trap 'rm -f override.cfg' EXIT
 
-bash tools/make_clips.sh mitosis
+# SKIP_CLIP=1 reuses the clip already in press/clips (when only the card changed).
+[ -n "${SKIP_CLIP:-}" ] || bash tools/make_clips.sh mitosis
 
 # The card. A window can't be taller than the screen, so the tall one is
 # drawn square and padded out in the editor's background colour.

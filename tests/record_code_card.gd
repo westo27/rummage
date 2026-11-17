@@ -90,10 +90,7 @@ func _draw() -> void:
 	var line_h: float = _size * 1.55
 	var gutter: float = _gutter_width_for(_size)
 	var block_h: float = line_h * _lines.size()
-	# The code sits a little above the middle; a slow push in toward line 7.
-	var zoom: float = lerpf(1.0, 1.06, smoothstep(0.0, LENGTH, t))
-	var focus := Vector2(size.x * 0.5, size.y * 0.47)
-	draw_set_transform(focus * (1.0 - zoom), 0.0, Vector2.ONE * zoom)
+	# The code sits a little above the middle.
 	var top: float = (size.y - block_h) * 0.47
 	var left: float = 40.0
 

@@ -23,6 +23,8 @@ section rather than the whole file.
 ## Tests (headless scenes in tests/)
 Run: `godot --headless --path . res://tests/<name>.tscn`, grep `FAIL|RESULT|SCRIPT ERROR`.
 Run only the suites the change touches; the full set once before committing.
+For Tom to watch, run `tools/run_tests.sh [suite ...]` via run_in_terminal (game
+window plus a results console beside it; stops a suite on SCRIPT ERROR or a stall).
 - **Never run check_hiding** (slow, flaky) unless Tom asks.
 - stage1 movement/walls · stage2 beam grab/throw/arc · stage3 creatures ·
   stage4 gates/win/bag · floor_clutter · smoothness · menus (settings, pause;

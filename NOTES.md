@@ -30,7 +30,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 │           └─ BeamMesh the curved beam ribbon, rebuilt each frame
 ├─ Landing             scenes/landing.tscn: the lesson's box, bin, creature and clutter
 ├─ MainRoomProps        scenes/main_room_props.tscn: playroom and bedroom props
-├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 23 creatures (12 playroom, 11 bedroom)
+├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 24 creatures (12 playroom, 12 bedroom)
 ├─ SideRoomProps        scenes/side_room_props.tscn: the box room
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
@@ -215,7 +215,7 @@ Three more hints, each shown by tutorial.gd once the lesson is done:
   there.
 - "Press Q to ping", once only, after 10 s with no creature found while the
   ping is ready. It goes when you ping or after 6 s. The lesson creature counts like any other
-(28 in all), so its lift arrives before the house. The timer runs from the
+(29 in all), so its lift arrives before the house. The timer runs from the
 start. A ping from the landing can reach a couple of playroom creatures
 through the wall.
 
@@ -346,6 +346,9 @@ child up past your bedtime". So it's night.
   with `hiding_box` set sits inside, rides along, and pops out once the lid
   is 5 cm off its seat or the box tips past 70°. One hides in the lower
   shoe box (the other one is stacked on it) and one in the shape sorter.
+  The plastic bins are lidded boxes too, standing upright with a yellow
+  handle on the lid; the six creatures that used to sit under upturned bins
+  (including the lesson one) now hide inside them.
 - **Parts can't lift their furniture.** Drawers and wardrobe doors know their
   furniture (`Prop.part_of`). While the beam holds one and the furniture is
   over the lift limit, the furniture is frozen in place (`Prop.plant()`), so

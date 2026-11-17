@@ -29,10 +29,10 @@ func _run() -> void:
 		nook.remove_from_group("hide_nooks")
 
 	# --- Setup: all hidden, nothing reveals by itself while the room settles ---
-	_check("23 creatures in the main room", _creatures.get_child_count() == 23, "%d" % _creatures.get_child_count())
+	_check("24 creatures in the main room", _creatures.get_child_count() == 24, "%d" % _creatures.get_child_count())
 	await _wait(2.0)
 	var hidden: int = _count_state(Creature.State.HIDDEN)
-	_check("all stay hidden while the room settles", hidden == 23, "%d hidden" % hidden)
+	_check("all stay hidden while the room settles", hidden == 24, "%d hidden" % hidden)
 	var catchable: int = 0
 	for c: Creature in _creatures.get_children():
 		if c._pick_zone.collision_layer != 0:
@@ -78,11 +78,16 @@ func _run() -> void:
 	# box room so it doesn't run under it and out of sight.
 	var table := _props.get_node("Table") as RigidBody3D
 	table.global_position = Vector3(6.8, 0.39, 0.0)
-	# Bin and creature move together to the bedroom floor, lined up with the
-	# doorway so the creature has a long run west into the playroom.
-	var crate: Prop = _props.get_node("ToyBinA")
-	var under: Creature = _creatures.get_node("InToyBinA")
-	crate.global_position = Vector3(2.0, 0.18, -0.3)
+	# An empty bin, lid set aside, goes upside down over a creature on the
+	# bedroom floor, lined up with the doorway so the creature has a long run
+	# west into the playroom.
+	var crate := _props.get_node("Bin09") as LiddedBox
+	var under: Creature = _creatures.get_node("UnderCushion")
+	# The bedside rug lies here now: take its marble out, so its lump doesn't
+	# prop the bin up.
+	_creatures.get_node("UnderRug").free()
+	crate.lid.global_position = Vector3(2.6, 0.02, 0.9)
+	crate.global_transform = Transform3D(Basis(Vector3.RIGHT, PI), Vector3(2.0, 0.18, -0.3))
 	under.global_position = Vector3(2.0, 0.09, -0.3)
 	under._covers = {crate: crate.global_transform}
 	_player.global_position = Vector3(3.9, 0.05, -0.3)
@@ -129,7 +134,7 @@ func _run() -> void:
 	_release("grab")
 	_check("clicking catches the creature", not is_instance_valid(under), "")
 	var hud_text: String = (_main.get_node("HUD") as Hud).caught_text()
-	_check("bag tag shows caught count", hud_text == "1 / 28", "'%s'" % hud_text)
+	_check("bag tag shows caught count", hud_text == "1 / 29", "'%s'" % hud_text)
 	_check("capture didn't grab the bin behind it", _beam.held == null, "held=%s" % _beam.held)
 
 	# --- Chaos reveals: a thrown book hitting a bag scares out the creature behind ---

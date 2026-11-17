@@ -51,7 +51,7 @@ func _run() -> void:
 	_check("the beam holds the lid, not the box", _beam.held == sorter.lid, "")
 	var sorter_at: Vector3 = sorter.global_position
 	for i in 30:
-		_aim_at(top + Vector3(0.0, 0.02 * i, 0.0))
+		_lift_to(top + Vector3(0.0, 0.02 * i, 0.0))
 		await get_tree().physics_frame
 	await _wait(0.3)
 	_check("lid lifted off", not sorter.lid_on(), "")
@@ -64,6 +64,35 @@ func _run() -> void:
 	var away: float = Vector2(in_sorter.global_position.x - sorter.global_position.x,
 		in_sorter.global_position.z - sorter.global_position.z).length()
 	_check("it got out of the box", away > 0.15, "%.2f m from the box" % away)
+
+	# --- A bin: grab its lid by the handle and lift it off ---
+	var bin := props.get_node("Bin01") as LiddedBox
+	var in_bin := _main.get_node("MainRoomCreatures/UnderBin01") as Creature
+	var bin_local: Vector3 = bin.to_local(in_bin.global_position)
+	_check("bin is upright with its lid on", bin.lid_on() and bin.global_basis.y.dot(Vector3.UP) > 0.99, "")
+	_check("bin creature hides inside it", in_bin.state == Creature.State.HIDDEN
+		and absf(bin_local.x) < 0.05 and absf(bin_local.z) < 0.05 and bin_local.y < 0.0, "local %s" % bin_local)
+	_player.global_position = bin.global_position + Vector3(0.0, -0.13, -1.2)
+	_player.reset_physics_interpolation()
+	var handle: Vector3 = (bin.lid.get_node("HandleBar") as Node3D).global_position
+	_aim_at(handle)
+	await _wait(0.1)
+	_beam._grab_armed = true
+	_beam._grab(bin.lid, handle)
+	var bin_at: Vector3 = bin.global_position
+	for i in 30:
+		_lift_to(handle + Vector3(0.0, 0.02 * i, 0.0))
+		await get_tree().physics_frame
+	await _wait(0.3)
+	_check("bin lid lifted off by its handle", not bin.lid_on(), "")
+	_check("the bin stays on the floor", absf(bin.global_position.y - bin_at.y) < 0.02, "")
+	_check("its creature pops out", in_bin.state != Creature.State.HIDDEN, "state=%s" % in_bin.state)
+	_beam._release()
+	_beam._grab_armed = false
+	await _wait(2.0)
+	var bin_away: float = Vector2(in_bin.global_position.x - bin.global_position.x,
+		in_bin.global_position.z - bin.global_position.z).length()
+	_check("it climbs out of the bin", bin_away > 0.25, "%.2f m from the bin" % bin_away)
 
 	# --- Tip the lower shoe box over (lid still on): its creature gets out ---
 	high.global_position += Vector3(0.0, 0.0, -0.8)
@@ -99,3 +128,10 @@ func _check(label: String, ok: bool, detail: String) -> void:
 	if not ok:
 		_failures += 1
 	print("%s  %s  (%s)" % ["PASS" if ok else "FAIL", label, detail])
+
+
+## Points the beam's hold point at `target`: straight up, as a careful
+## player would lift, rather than swinging out in an arc.
+func _lift_to(target: Vector3) -> void:
+	_aim_at(target)
+	_beam._hold_distance = (target - (_beam.get_parent() as Node3D).global_position).length()

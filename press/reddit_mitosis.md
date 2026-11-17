@@ -4,9 +4,10 @@ Video: `press/clips/mitosis_post.mp4` (wide, for Reddit) or
 `mitosis_post_tall.mp4`. Rebuild with `tools/make_mitosis_post.sh`
 (`SKIP_CLIP=1` when only the code card changed).
 
-## Title (pick one)
+## Title
 
-- Flipped one bool in my cosy hide-and-seek game
+**Flipped one bool in my cosy hide-and-seek game** (picked). Spares:
+
 - My marbles were supposed to hide, not reproduce
 - "Do NOT turn on for normal marbles"
 

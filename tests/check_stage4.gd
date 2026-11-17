@@ -35,7 +35,7 @@ func _run() -> void:
 	_player.global_position = Vector3(-1.2, 0.05, 0.35)  # 1.2 m from the creature under Bin01
 	await _wait(0.1)
 	var near: Creature = _main.get_node("MainRoomCreatures/UnderBin01")  # (-1.2, 1.55)
-	var far: Creature = _main.get_node("SideRoomCreatures/BehindSideBag")  # (8.2, 0), ~9 m away
+	var far: Creature = _main.get_node("SideRoomCreatures/InSideBag")  # (8.0, 0), ~9 m away
 	_press("ping")
 	await _wait(0.2)
 	_check("ping: nearby hidden creature glows", near._glow.visible, "")

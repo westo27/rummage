@@ -23,6 +23,10 @@ func _run() -> void:
 	_beam.lift_limit = 10.0
 	_props = _main.get_node("MainRoomProps")
 	_creatures = _main.get_node("MainRoomCreatures")
+	# These checks follow plain fleeing and cowering; diving into nooks has its
+	# own test (check_hiding_places).
+	for nook in get_tree().get_nodes_in_group("hide_nooks"):
+		nook.remove_from_group("hide_nooks")
 
 	# --- Setup: all hidden, nothing reveals by itself while the room settles ---
 	_check("21 creatures in the main room", _creatures.get_child_count() == 21, "%d" % _creatures.get_child_count())
@@ -36,7 +40,7 @@ func _run() -> void:
 	_check("hidden creatures can't be aimed at", catchable == 0, "%d catchable" % catchable)
 	var no_covers: Array[String] = []
 	for c: Creature in _creatures.get_children():
-		if c._covers.is_empty() and c.drawer_furniture.is_empty():  # a drawer is its own cover
+		if c._covers.is_empty() and c.drawer_furniture.is_empty() and c.inside.is_empty() and not c.under_rug:  # a drawer, toy or rug is its own cover
 			no_covers.append(c.name)
 	_check("every hidden creature found a covering prop", no_covers.is_empty(), "missing: %s" % ", ".join(no_covers))
 
@@ -190,7 +194,7 @@ func _run() -> void:
 		"state=%s" % _beam._state)
 
 	# --- Cowering: a happy bounce, not a shiver, and it rolls upright to look at you ---
-	var cower: Creature = _creatures.get_node("UnderBin03")
+	var cower: Creature = _creatures.get_node("InMarbleBowl")  # 2 m west of it is open floor
 	_player.global_position = cower.global_position + Vector3(-2.0, 0, 0)
 	_player.reset_physics_interpolation()
 	cower._visual.basis = Basis(Vector3.RIGHT, 2.0)  # as if it stopped mid-roll

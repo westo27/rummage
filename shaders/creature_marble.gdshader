@@ -28,6 +28,8 @@ uniform float face_lop = 0.0;
 // square cells side by side, ink in the alpha: eye, happy eye, mouth,
 // startled mouth. Used in place of the built-in doodles when face_drawn.
 uniform bool face_drawn = false;
+// Off for a plain marble with no face (the bowl of marbles).
+uniform bool face_shown = true;
 // Where the drawn eye's ink sits in its square (0..1): left edge, right
 // edge, middle height. A blink is a line across that; a squint squashes the
 // eye about its middle.
@@ -414,7 +416,7 @@ void fragment() {
 	// The face, on the front of the ball. Ink isn't glossy, so it stays dark
 	// whatever the glass reflects.
 	float paint = 0.0;
-	if (p.z < 0.0) {
+	if (face_shown && p.z < 0.0) {
 		// Redrawn a little differently six times a second: the ink boils.
 		float s = seed * 31.0 + floor(TIME * 6.0) * 0.37;
 		vec2 f = vec2(p.x, p.y) / 1.45;

@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" path="res://scenes/landing.tscn" id="15_landing"]
 [ext_resource type="Script" path="res://scripts/tutorial.gd" id="16_tutorial"]
 [ext_resource type="Script" path="res://scripts/stable_door.gd" id="17_stable_door"]
+[ext_resource type="Script" path="res://scripts/hide_nook.gd" id="18_nook"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -476,6 +477,35 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 0.05, 5.3)
 [node name="SideRoomProps" parent="." unique_id=1971294074 instance=ExtResource("6_side_props")]
 
 [node name="SideRoomCreatures" parent="." unique_id=778888063 instance=ExtResource("7_side_creatures")]
+
+[node name="HideNooks" type="Node3D" parent="."]
+
+[node name="UnderBedA" type="Marker3D" parent="HideNooks"]
+position = Vector3(2.0, 0.056, -1.45)
+script = ExtResource("18_nook")
+
+[node name="UnderBedB" type="Marker3D" parent="HideNooks"]
+position = Vector3(2.6, 0.056, -1.95)
+script = ExtResource("18_nook")
+
+[node name="UnderBedC" type="Marker3D" parent="HideNooks"]
+position = Vector3(3.3, 0.056, -1.95)
+script = ExtResource("18_nook")
+
+[node name="UnderRugA" type="Marker3D" parent="HideNooks"]
+position = Vector3(-1.65, 0.054, 0.65)
+script = ExtResource("18_nook")
+kind = 1
+
+[node name="UnderRugB" type="Marker3D" parent="HideNooks"]
+position = Vector3(-3.15, 0.054, -0.75)
+script = ExtResource("18_nook")
+kind = 1
+
+[node name="UnderRugC" type="Marker3D" parent="HideNooks"]
+position = Vector3(-1.65, 0.054, -0.75)
+script = ExtResource("18_nook")
+kind = 1
 
 [node name="Landing" parent="." instance=ExtResource("15_landing")]
 

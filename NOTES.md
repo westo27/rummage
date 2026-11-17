@@ -483,7 +483,8 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 | 3 props | 4 | furniture (over 3 kg, fixed) and the wardrobe doors | block the player |
 | 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | marks it catchable (the beam aims with a lock-on cone) |
 | 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and kicks them |
-| 6 rug | 32 | the rug | meets only the floor; the beam can aim at it |
+| 6 rug | 32 | the rug | meets only the floor and lumps; the beam can aim at it |
+| 7 lumps | 64 | hidden creatures' stand-in balls | only clutter and the rug meet them, so a cushion or the rug rests on a hidden marble |
 
 `prop.gd` picks props or clutter by mass when it loads, overriding the layer
 saved in the `.tscn`. Two bodies collide if *either* one's mask includes the
@@ -528,6 +529,7 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_floor_clutter | the player wades through clutter and is blocked by furniture |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |
+| check_hiding_places | new hiders stay put; bowl marbles settle; cushion, pillow and rug sit up on their marbles; tip the drum or shake the bag and they tumble out; treading on the rug lump, knocking the bowl, lifting pillow or cushion reveal; fleeing creatures dive under the bed or rug and hide again |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the beam ends at the grab point |
@@ -676,6 +678,37 @@ middle and top is blocked by a wall, prop or clutter, so a flat book doesn't
 count as cover but a bin or bag does. The spot is re-aimed every tick while
 it runs, so if you move, it heads for the new far side. The constants are at
 the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
+
+**Nooks** (`HideNook` markers under main.tscn's HideNooks: three under the
+bed, three under the rug's free corners) compete with those spots, counted
+`NOOK_BONUS` (1 m) nearer. A creature that reaches one hides properly again:
+under the bed it's found by crouching and looking, under the rug it's a lump.
+One creature per nook.
+
+## Organic hiding places
+
+Seven of the plainer "behind a prop" spots were swapped for these:
+- **Inside a toy** (`inside` on the creature: InToyDrum, InSideBag). It rides
+  inside, collisionless and out of sight; its tells shake the toy. Tip the toy
+  past `TIP_UP` or move it faster than `SHAKE_SPEED` (throw, shake, a hard
+  kick) and it tumbles out of the top.
+- **Lumps** (UnderCushion, UnderPillow, UnderRug with `under_rug`). Every
+  hidden creature leaves an invisible ball on the lumps layer that clutter
+  and the rug rest on, so the cushion and pillow sit up on it and the rug
+  drapes over it. The cushion and pillow start propped at an angle, as they
+  settle. Lift them as usual.
+- **Under the rug** the lump is 0.1 m (`LUMP_RADIUS`), well bigger than the
+  ball, so the coarse cloth shows a bump; the ball itself is hidden, as it
+  would poke through. The lump rises from under the floor so the cloth ends
+  up on top, and the rug is woken while it moves (`rug.wake()`: a resting
+  soft body sleeps through it otherwise). The rug can't be lifted while the
+  table pins it, so a rug lump is found by treading on it (`TREAD_DISTANCE`)
+  or by anything landing on it; its tell is a twitch.
+- **A bowl of marbles** (`marble_bowl.tscn`, nine `glass_marble.tscn`: the
+  creatures' glass with `face_shown` off). InMarbleBowl sits among them
+  facing the wall (`hidden_yaw` 180); its peeks and glows give it away. Knock
+  the bowl or a marble and it bolts, passing through the bowl's sides.
+  Escaping creatures now pass through every small cover for a second.
 
 ## Known quirks (deliberate or tolerated)
 

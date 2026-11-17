@@ -35,6 +35,7 @@ const LAYER_PLAYER: int = 2
 const LAYER_PROPS: int = 4
 const LAYER_CLUTTER: int = 16
 const LAYER_RUG: int = 32
+const LAYER_LUMP: int = 64
 
 const SHUDDER_SECONDS: float = 0.35
 const SHUDDER_AMOUNT: float = 0.035
@@ -320,7 +321,8 @@ func _fix_if_furniture() -> void:
 func _assign_collision_layer() -> void:
 	if mass <= Game.tune.player_push_max_mass:
 		collision_layer = LAYER_CLUTTER
-		collision_mask = LAYER_WORLD | LAYER_PROPS | LAYER_CLUTTER
+		# Lumps: hidden creatures' stand-ins, so clutter can rest on them.
+		collision_mask = LAYER_WORLD | LAYER_PROPS | LAYER_CLUTTER | LAYER_LUMP
 	else:
 		collision_layer = LAYER_PROPS
 		collision_mask = LAYER_WORLD | LAYER_PLAYER | LAYER_PROPS | LAYER_CLUTTER

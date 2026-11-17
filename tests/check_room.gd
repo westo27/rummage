@@ -9,8 +9,9 @@ extends Node
 
 ## Props placed on floors, tables, the desk and the chest. Each must come to
 ## rest where it was put, not slide off, roll away or fall over.
+## (Not the floor cushion: it sits propped on a hidden marble.)
 const SMALL_THINGS: Array[String] = ["Teddy", "ToyCar", "StackingRings", "ToyDrum",
-	"FloorCushion", "ShapeSorter", "ToyDinosaur", "AlarmClock", "DeskGlobe", "PencilPot",
+	"ShapeSorter", "ToyDinosaur", "AlarmClock", "DeskGlobe", "PencilPot",
 	"Mug", "SlipperL", "SlipperR", "SchoolBag", "ShoeBoxLow", "ShoeBoxHigh",
 	"FoldedJumpers", "PiggyBank"]
 

@@ -24,6 +24,28 @@ var _pinned_local: PackedVector3Array = []
 var _count: int = 0
 
 
+func _ready() -> void:
+	add_to_group("rug")
+
+
+## True if the cloth lies over `point`: one of its points is just above it.
+## (Creatures hide under it as lumps; see creature.gd.)
+func covers(point: Vector3) -> bool:
+	for i in _point_count():
+		var at: Vector3 = get_point_transform(i)
+		if Vector2(at.x - point.x, at.z - point.z).length() < 0.12 and at.y > point.y - 0.1 and at.y < point.y + 0.25:
+			return true
+	return false
+
+
+## Wakes the cloth so it notices a lump rising under it or going. A resting
+## soft body sleeps, and something moving into it without a push doesn't
+## wake it; moving one of its points does.
+func wake() -> void:
+	if _point_count() > 0:
+		PhysicsServer3D.soft_body_move_point(get_physics_rid(), 0, get_point_transform(0))
+
+
 ## Pins every point within `radius` of `point` (or the nearest one) to the grip.
 func pin_around(point: Vector3, radius: float) -> void:
 	release_pins()

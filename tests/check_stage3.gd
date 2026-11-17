@@ -73,11 +73,13 @@ func _run() -> void:
 	# box room so it doesn't run under it and out of sight.
 	var table := _props.get_node("Table") as RigidBody3D
 	table.global_position = Vector3(6.8, 0.39, 0.0)
-	# Bin and creature move together to the bedroom floor, lined up with the
-	# doorway so the creature has a long run west into the playroom.
-	var crate: Prop = _props.get_node("ToyBinA")
-	var under: Creature = _creatures.get_node("InToyBinA")
-	crate.global_position = Vector3(2.0, 0.18, -0.3)
+	# An empty bin, lid set aside, goes upside down over a creature on the
+	# bedroom floor, lined up with the doorway so the creature has a long run
+	# west into the playroom.
+	var crate := _props.get_node("Bin09") as LiddedBox
+	var under: Creature = _creatures.get_node("BehindBeanbag")
+	crate.lid.global_position = Vector3(2.6, 0.02, 0.9)
+	crate.global_transform = Transform3D(Basis(Vector3.RIGHT, PI), Vector3(2.0, 0.18, -0.3))
 	under.global_position = Vector3(2.0, 0.09, -0.3)
 	under._covers = {crate: crate.global_transform}
 	_player.global_position = Vector3(3.9, 0.05, -0.3)

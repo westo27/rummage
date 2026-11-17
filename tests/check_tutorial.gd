@@ -69,12 +69,12 @@ func _run() -> void:
 	await _wait(0.6)
 	_check("hint moves on to finding it", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.FIND], "'%s'" % _hud.hint_text())
 
-	# Lift the bin off it (as the beam would) and it's out.
-	var bin: Prop = _main.get_node("Landing/LessonBin")
-	bin.global_position += Vector3(0, 0.8, 0)
-	bin.freeze = true
+	# Lift the bin's lid off (as the beam would) and it's out.
+	var bin := _main.get_node("Landing/LessonBin") as LiddedBox
+	bin.lid.global_position += Vector3(0, 0.8, 0)
+	bin.lid.freeze = true
 	await _wait(1.0)
-	_check("lifting the bin finds it", creature.state != Creature.State.HIDDEN, "%s" % creature.state)
+	_check("lifting the lid finds it", creature.state != Creature.State.HIDDEN, "%s" % creature.state)
 	_check("hint moves on to catching", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.CATCH], "'%s'" % _hud.hint_text())
 	_check("the door is still shut", absf((_main.get_node("House/LandingDoor/Door") as Node3D).rotation.y) < 0.01, "")
 

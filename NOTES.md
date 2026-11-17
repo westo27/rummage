@@ -346,6 +346,9 @@ child up past your bedtime". So it's night.
   with `hiding_box` set sits inside, rides along, and pops out once the lid
   is 5 cm off its seat or the box tips past 70°. One hides in the lower
   shoe box (the other one is stacked on it) and one in the shape sorter.
+  The plastic bins are lidded boxes too, standing upright with a yellow
+  handle on the lid; the six creatures that used to sit under upturned bins
+  (including the lesson one) now hide inside them.
 - **Parts can't lift their furniture.** Drawers and wardrobe doors know their
   furniture (`Prop.part_of`). While the beam holds one and the furniture is
   over the lift limit, the furniture is frozen in place (`Prop.plant()`), so

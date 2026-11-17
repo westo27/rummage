@@ -22,7 +22,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 │  ├─ StableDoor   scripts/stable_door.gd: playroom–bedroom door, top half bolted shut
 │  ├─ LandingDoor  the landing's door; its Door body swings open after the lesson
 │  └─ LampPlayroom, LampMain (bedroom), LampSide (box room), a ReflectionProbe each
-├─ Player          scenes/player.tscn  (scripts/player.gd: move, look, kick clutter)
+├─ Player          scenes/player.tscn  (scripts/player.gd: move, look, brace doors)
 │  ├─ CollisionShape3D  capsule
 │  └─ Head              pitch (up/down); the body itself does yaw (left/right)
 │     └─ Camera3D       top_level, placed by player.gd every frame (see "Smoothness")
@@ -491,7 +491,7 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 | 2 player | 2 | the player capsule | |
 | 3 props | 4 | furniture (over 3 kg, fixed) and the wardrobe doors | block the player |
 | 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | marks it catchable (the beam aims with a lock-on cone) |
-| 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and kicks them |
+| 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and leaves them be |
 | 6 rug | 32 | the rug | meets only the floor and lumps; the beam can aim at it |
 | 7 lumps | 64 | hidden creatures' stand-in balls | only clutter and the rug meet them, so a cushion or the rug rests on a hidden marble |
 
@@ -500,7 +500,9 @@ saved in the `.tscn`. Two bodies collide if *either* one's mask includes the
 other's layer.
 
 - **Player** (mask world + props): blocked by walls and heavy props, never by
-  clutter or creatures.
+  clutter or creatures. **Only the beam moves things:** the player walks
+  through clutter and leaves it be, and a hinged door they touch is frozen
+  (`Prop.brace`) until they step away, since a CharacterBody3D would shove it.
 - **Creatures** (mask world + props + creatures + clutter, set in creature.gd).
 - **Held objects** pass through the player through collision exceptions (prop.gd),
   which are removed once the object is clear of the player after you let go.
@@ -536,10 +538,10 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage4 | ping range and cooldown, spotting the bed creatures, side room, win, timer, marble bag (one ball per catch, none escape), restart |
 | check_furniture | furniture is fixed and the beam ignores it; drawers, doors, bins and the chair still grab; crouching and looking finds the bed creatures; you walk through the wardrobe into the box room |
 | check_boxes | lidded boxes: lids sit on, the beam lifts one off without taking the box, the creature inside pops out and gets clear; tipping a shut box lets its creature out |
-| check_floor_clutter | the player wades through clutter and is blocked by furniture |
+| check_floor_clutter | the player walks through clutter without moving it, is blocked by furniture, and can't push the stable door |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |
-| check_hiding_places | new hiders stay put; bowl marbles settle; cushion, pillow and rug sit up on their marbles; tip the drum or shake the bag and they tumble out; treading on the rug lump, knocking the bowl, lifting pillow or cushion reveal; fleeing creatures dive under the bed or rug and hide again |
+| check_hiding_places | new hiders stay put; bowl marbles settle; cushion, pillow and rug sit up on their marbles; tip the drum or shake the bag and they tumble out; treading on the rug lump does nothing; lifting the rug, knocking the bowl, lifting pillow or cushion reveal; fleeing creatures dive under the bed or rug and hide again |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the beam ends at the grab point |
@@ -558,7 +560,7 @@ They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 The tests prove the systems do what they're meant to in a simulation. They can't
 tell whether any of it is fun or readable. Not verified:
 
-- **Feel:** whether holding, throwing, kicking clutter, the gate pacing and the
+- **Feel:** whether holding, throwing, the gate pacing and the
   hunt are enjoyable. Nothing has been checked by eye.
 - **Sound:** headless runs use a dummy audio driver. I only know a squeak
   *started*, not whether it's audible, pleasant, or easy to locate in 3D.
@@ -699,8 +701,7 @@ One creature per nook.
 Seven of the plainer "behind a prop" spots were swapped for these:
 - **Inside a toy** (`inside` on the creature: InToyDrum, InSideBag). It rides
   inside, collisionless and out of sight; its tells shake the toy. Tip the toy
-  past `TIP_UP` or move it faster than `SHAKE_SPEED` (throw, shake, a hard
-  kick) and it tumbles out of the top.
+  past `TIP_UP` or move it faster than `SHAKE_SPEED` (throw or shake) and it tumbles out of the top.
 - **Lumps** (UnderCushion, UnderPillow, UnderRug with `under_rug`). Every
   hidden creature leaves an invisible ball on the lumps layer that clutter
   and the rug rest on, so the cushion and pillow sit up on it and the rug
@@ -711,8 +712,7 @@ Seven of the plainer "behind a prop" spots were swapped for these:
   would poke through. The lump rises from under the floor so the cloth ends
   up on top, and the rug is woken while it moves (`rug.wake()`: a resting
   soft body sleeps through it otherwise). A rug lump bolts when the rug is
-  lifted, when you tread on it (`TREAD_DISTANCE`)
-  or when something lands on it; its tell is a twitch.
+  lifted or something lands on it (treading on it does nothing); its tell is a twitch.
 - **A bowl of marbles** on the bedroom desk (`marble_bowl.tscn`, nine `glass_marble.tscn`: the
   creatures' glass in grey with `face_shown` off). InMarbleBowl sits among them
   facing the wall (`hidden_yaw` 180); its peeks and glows give it away. Knock
@@ -731,8 +731,6 @@ Seven of the plainer "behind a prop" spots were swapped for these:
 - You can only catch a creature you can see: its middle or its top must be
   in clear view past walls and furniture. One cowering behind a bin or a
   wardrobe door can't be caught through it, and the click grabs the bin.
-- The player pushes clutter like a snowplough: anything dead ahead gets shoved
-  until it reaches a wall.
 - Creatures under the bed ignore jolts and things flying past (you find them
   by looking), but a book slid *under* the bed can still startle them.
 - If a creature falls out of the world it reappears in the playroom–bedroom doorway.

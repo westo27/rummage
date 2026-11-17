@@ -31,11 +31,9 @@ extends Resource
 @export var prone_eye_height: float = 0.16
 ## Radians of turn per pixel of mouse movement.
 @export var mouse_sensitivity: float = 0.0004
-## Props this light or lighter are "clutter": the player walks through them,
-## kicking them aside, instead of being blocked. Heavier props block the player.
+## Props this light or lighter are "clutter": the player walks through them
+## and leaves them where they are. Heavier props are fixed furniture.
 @export var player_push_max_mass: float = 3.0
-## Clutter is kicked ahead at this multiple of the player's walking speed.
-@export var player_kick_factor: float = 1.3
 
 @export_group("Beam")
 ## How far the beam can reach to grab something, in metres.

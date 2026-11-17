@@ -49,18 +49,23 @@ func _run() -> void:
 
 	# --- Spot the bed creatures, then go through the wardrobe ---
 	# (check_furniture covers both in detail; here they're part of a full game.)
+	# A found creature may flee back under the bed and hide again, so count the
+	# ones seen out of hiding at any point rather than where they end up.
 	Input.action_press("prone")
+	var bed: Array[Creature] = []
 	for i in 4:
-		var c := _main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature
+		bed.append(_main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature)
+	var found: Array[Creature] = []
+	for c in bed:
 		_player.global_position = Vector3(c.global_position.x, 0.05, -0.2)
 		await _wait(0.6)
 		_aim_at(c.global_position)
 		await _wait(0.3)
+		for each in bed:
+			if each.state != Creature.State.HIDDEN and not found.has(each):
+				found.append(each)
 	Input.action_release("prone")
-	var bed_hidden: int = 0
-	for i in 4:
-		if (_main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:
-			bed_hidden += 1
+	var bed_hidden: int = bed.size() - found.size()
 	_check("crouching and looking under the bed finds its creatures", bed_hidden == 0, "%d still hidden" % bed_hidden)
 
 	# --- Catch everything else: win screen, timer stops ---

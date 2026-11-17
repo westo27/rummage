@@ -34,17 +34,15 @@ var _start_transform: Transform3D
 ## Standing and crouched capsules, for checking there's headroom to get up.
 var _stand_query := PhysicsShapeQueryParameters3D.new()
 var _crouch_query := PhysicsShapeQueryParameters3D.new()
-## A capsule a little fatter than the player's own, used to find clutter we're
-## walking into. Built once and reused every tick.
-var _kick_query := PhysicsShapeQueryParameters3D.new()
+## A capsule a little fatter than our own, for finding movable props we're
+## touching (the hinged doors), and the ones held still because we are.
+var _touch_query := PhysicsShapeQueryParameters3D.new()
+var _braced: Array[Prop] = []
 
 
 func _init() -> void:
-	var capsule := CapsuleShape3D.new()
-	capsule.radius = 0.5
-	capsule.height = STAND_HEIGHT
-	_kick_query.shape = capsule
-	_kick_query.collision_mask = 16  # the "clutter" layer
+	_touch_query.shape = CapsuleShape3D.new()
+	_touch_query.collision_mask = 4  # the "props" layer
 	var standing := CapsuleShape3D.new()
 	standing.radius = 0.34  # a hair thinner, so touching a wall isn't "blocked"
 	standing.height = STAND_HEIGHT
@@ -64,6 +62,7 @@ func _ready() -> void:
 	_stand_query.exclude = [get_rid()]
 	_crouch_query.collision_mask = collision_mask
 	_crouch_query.exclude = [get_rid()]
+	_touch_query.exclude = [get_rid()]
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_place_camera(head.global_position)
 
@@ -123,7 +122,7 @@ func _physics_process(delta: float) -> void:
 	velocity.z = direction.z * speed
 
 	move_and_slide()
-	_kick_clutter()
+	_brace_what_we_touch()
 
 	if global_position.y < Game.tune.fall_reset_y:
 		_reset_to_start()
@@ -170,33 +169,25 @@ func _has_room(query: PhysicsShapeQueryParameters3D, height: float) -> bool:
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
-## Light props ("clutter", see prop.gd) don't block the player's movement, so
-## instead we look for any we're walking into and fling them ahead, a bit
-## faster than we're moving, so we wade through the mess instead of snagging.
-func _kick_clutter() -> void:
-	var walk := Vector3(velocity.x, 0.0, velocity.z)
-	if walk.length() < 0.5:
-		return
-	var walk_dir: Vector3 = walk.normalized()
-	var kick_speed: float = walk.length() * Game.tune.player_kick_factor
-
-	_kick_query.transform = global_transform.translated_local(Vector3(0.0, STAND_HEIGHT * 0.5, 0.0))
-	var hits: Array[Dictionary] = get_world_3d().direct_space_state.intersect_shape(_kick_query, 16)
-	for hit in hits:
+## Only the beam moves things. A CharacterBody3D shoves any rigid body it
+## walks into as if it weighed nothing, so a movable prop we touch (a hinged
+## door) is frozen until we step away. Light clutter we walk straight through,
+## and furniture is frozen already.
+func _brace_what_we_touch() -> void:
+	var body := _body_shape.shape as CapsuleShape3D
+	var touch := _touch_query.shape as CapsuleShape3D
+	touch.radius = body.radius + 0.08
+	touch.height = body.height + 0.16
+	_touch_query.transform = _body_shape.global_transform
+	var touching: Array[Prop] = []
+	for hit in get_world_3d().direct_space_state.intersect_shape(_touch_query, 8):
 		var prop := hit.collider as Prop
-		if prop == null or prop.is_held:
-			continue
-		var away: Vector3 = prop.global_position - global_position
-		away.y = 0.0
-		if away.dot(walk_dir) <= 0.0:
-			continue  # it's behind us; leave it
-		var push_dir: Vector3 = (away.normalized() + walk_dir).normalized()
-		# Only ever speed it up along the push, never slow down something
-		# already flying away, and only give the little upward hop once.
-		var current: float = prop.linear_velocity.dot(push_dir)
-		if current < kick_speed:
-			prop.linear_velocity += push_dir * (kick_speed - current) + Vector3.UP * 1.0
-			prop.sleeping = false
+		if prop != null and prop.brace(true):
+			touching.append(prop)
+	for prop in _braced:
+		if is_instance_valid(prop) and not touching.has(prop):
+			prop.brace(false)
+	_braced = touching
 
 
 func _reset_to_start() -> void:

@@ -36,8 +36,8 @@ enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 ## Hiding inside a closed toy or bag: it rides along out of sight and pops out
 ## of the top when the thing is tipped over or shaken hard.
 @export var inside: NodePath
-## Hiding under the rug, as a lump in the cloth. Treading on it, lifting the
-## rug or something landing on it sends it bolting.
+## Hiding under the rug, as a lump in the cloth. Lifting the rug or something
+## landing on it sends it bolting.
 @export var under_rug: bool = false
 ## Which way the face looks while hidden (degrees about up). 180 turns it to
 ## the back, so one in a bowl of plain marbles doesn't give itself away.
@@ -120,8 +120,6 @@ const SHAKE_SPEED: float = 2.5
 ## cloth meets, well bigger than the marble so the coarse cloth reads as a bump.
 const LAYER_LUMP: int = 64
 const LUMP_RADIUS: float = 0.1
-## Treading this close (m, flat) to a rug lump squashes it out.
-const TREAD_DISTANCE: float = 0.35
 ## A free nook counts as this much (m) nearer than a spot behind a prop.
 const NOOK_BONUS: float = 1.0
 ## A box tipped further than this from upright (degrees) lets its creature out.
@@ -473,18 +471,14 @@ func _leave_container(up: Vector3) -> void:
 	_escape_left = 0.4
 
 
-## Under the rug: the rug lifted, the cloth gone from over it, or a foot on it.
+## Under the rug: the rug lifted, or the cloth gone from over it.
 func _rug_disturbed() -> bool:
 	if not is_instance_valid(_rug):
 		return true
 	var grip := _rug.get("grip") as Prop
 	if grip != null and grip.is_held:
 		return true
-	if not _rug.call("covers", global_position):
-		return true
-	var player := _player() as CharacterBody3D
-	return player != null and player.is_on_floor() and \
-		_flat_distance(player.global_position, global_position) < TREAD_DISTANCE
+	return not _rug.call("covers", global_position)
 
 
 ## Brings the cloth down again as it bolts.

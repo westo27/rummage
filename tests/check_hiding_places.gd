@@ -81,15 +81,17 @@ func _run() -> void:
 	await _wait(0.2)
 	_check("shaking the bag hard lets it out", in_bag.state == Creature.State.FLEEING, "state=%d" % in_bag.state)
 
-	# --- Treading on the rug lump ---
+	# --- The rug lump: treading on it does nothing, lifting the rug flushes it ---
 	var under_rug: Creature = _creatures.get_node("UnderRug")
-	_player.global_position = lump_at + Vector3(0.8, 0.0, 0.0)
-	await _wait(0.3)
-	_check("walking near the lump doesn't find it", under_rug.state == Creature.State.HIDDEN, "")
 	_player.global_position = Vector3(lump_at.x + 0.2, 0.05, lump_at.z)
 	await _wait(0.3)
-	_check("treading on the lump sends it bolting", under_rug.state == Creature.State.FLEEING, "state=%d" % under_rug.state)
+	_check("treading on the lump leaves it hidden", under_rug.state == Creature.State.HIDDEN, "state=%d" % under_rug.state)
 	_park_player()
+	var grip: Prop = rug.get("grip")
+	grip.is_held = true
+	await _wait(0.2)
+	grip.is_held = false
+	_check("lifting the rug sends it bolting", under_rug.state == Creature.State.FLEEING, "state=%d" % under_rug.state)
 	await _wait(0.8)
 	_check("the rug falls flat again", _cloth_height(rug, lump_at) < 0.06, "%.3f m" % _cloth_height(rug, lump_at))
 

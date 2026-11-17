@@ -23,8 +23,8 @@ const LEAF_THICK: float = 0.05
 const STILE: float = 0.1
 ## The bottom half: its gap above the floor and below the top half, how far
 ## it swings into the playroom (nearly flat against the wall), its weight
-## (over 3 kg, so it blocks you like furniture rather than being kicked
-## aside) and its hinges' stiffness, which stops it flapping.
+## (over 3 kg, so it blocks you like furniture rather than being walked
+## through) and its hinges' stiffness, which stops it flapping.
 const BOTTOM_GAP: float = 0.02
 const SWING: float = deg_to_rad(165.0)
 const BOTTOM_MASS: float = 3.5

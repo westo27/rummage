@@ -153,9 +153,30 @@ func _make_aura() -> MeshInstance3D:
 	return aura
 
 
+## Held still by the player leaning on it (player.gd), so their body can't
+## shove it about. Only the beam moves things.
+var is_braced: bool = false
+
+
+## Freezes this while the player touches it, or lets it go again. Returns
+## whether it's now braced: never while held, while it still passes through
+## the player after a throw, or when it's frozen for some other reason.
+func brace(on: bool) -> bool:
+	if on and not is_braced:
+		if freeze or is_held or _ignored_body != null:
+			return false
+		freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
+		freeze = true
+	elif not on and is_braced:
+		freeze = false
+	is_braced = on
+	return on
+
+
 ## Called by the beam when it picks this object up.
 func start_hold(holder: PhysicsBody3D) -> void:
 	is_held = true
+	is_braced = false
 	freeze = false
 	axis_lock_angular_x = false
 	axis_lock_angular_z = false
@@ -310,8 +331,8 @@ func _fix_if_furniture() -> void:
 	freeze = true
 
 
-## Light props go on the "clutter" layer, which the player's movement ignores
-## (player.gd kicks them aside instead). Without this, a 1 kg book on its edge
+## Light props go on the "clutter" layer, which the player's movement ignores:
+## you walk through them and they stay put (only the beam moves things). Without this, a 1 kg book on its edge
 ## stops the player dead, because a CharacterBody3D treats every rigid body as
 ## an immovable wall. Heavier props stay on "props" and block the player.
 ##

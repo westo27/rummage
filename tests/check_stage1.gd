@@ -58,9 +58,11 @@ func _run() -> void:
 	walked = player.global_position.x - start_x
 	_check("runs at about 7.5 m/s", absf(walked - 3.75) < 0.3, "moved %.2f m in 0.5 s" % walked)
 
+	# Getting down or up takes crouch_time per step (stand, crouch, flat).
+	var step: float = Game.tune.crouch_time + 0.1
 	player.global_position = Vector3(-4.6, 0.05, 0.0)
 	Input.action_press("crouch")
-	await _wait(0.4)
+	await _wait(step)
 	var head: Node3D = player.get_node("Head")
 	_check("crouching lowers the head part way", absf(head.position.y - 0.6) < 0.05, "head y=%.2f" % head.position.y)
 	start_x = player.global_position.x
@@ -68,23 +70,27 @@ func _run() -> void:
 	await _wait(0.5)
 	Input.action_release("move_forward")
 	walked = player.global_position.x - start_x
-	_check("crouch-walks at about 2.5 m/s", absf(walked - 1.25) < 0.2, "moved %.2f m in 0.5 s" % walked)
+	var expected_walk: float = Game.tune.crouch_speed * 0.5
+	_check("crouch-walks at crouch_speed", absf(walked - expected_walk) < 0.1,
+		"moved %.2f m in 0.5 s, expected %.2f" % [walked, expected_walk])
 	Input.action_release("crouch")
-	await _wait(0.4)
+	await _wait(step)
 	_check("letting go stands back up", head.position.y > 1.1, "head y=%.2f" % head.position.y)
 
 	player.global_position = Vector3(-4.6, 0.05, 0.0)
 	Input.action_press("prone")
-	await _wait(0.4)
+	await _wait(step * 2.0)
 	_check("lying flat puts the eyes at the floor", head.position.y < 0.2, "head y=%.2f" % head.position.y)
 	start_x = player.global_position.x
 	Input.action_press("move_forward")
 	await _wait(0.5)
 	Input.action_release("move_forward")
 	walked = player.global_position.x - start_x
-	_check("crawls at about 1.4 m/s", absf(walked - 0.7) < 0.2, "moved %.2f m in 0.5 s" % walked)
+	expected_walk = Game.tune.prone_speed * 0.5
+	_check("crawls at prone_speed", absf(walked - expected_walk) < 0.1,
+		"moved %.2f m in 0.5 s, expected %.2f" % [walked, expected_walk])
 	Input.action_release("prone")
-	await _wait(0.4)
+	await _wait(step * 2.0)
 	_check("letting go stands back up", head.position.y > 1.1, "head y=%.2f" % head.position.y)
 
 	player.global_position = Vector3(-2.6, 0.05, 1.5)
@@ -106,8 +112,15 @@ func _run() -> void:
 	_check("the stable door's shut bottom half stops you", player.global_position.x < 0.0,
 		"x=%.2f" % player.global_position.x)
 	Input.action_release("crouch")
-	var stable_door: Node = get_tree().current_scene.get_node("House/StableDoor")
+	# It swings into the playroom, and leaning on it holds it still, so step
+	# back out of its way before it opens, then walk on.
+	Input.action_release("move_forward")
+	player.global_position = Vector3(-1.5, 0.05, 0.0)
+	await _wait(0.2)
+	var stable_door: Node = main.get_node("House/StableDoor")
 	stable_door.swing_open()
+	await _wait(1.0)
+	Input.action_press("move_forward")
 	await _wait(1.5)
 	_check("open, its bolted top half still stops you standing", player.global_position.x < 0.0,
 		"x=%.2f" % player.global_position.x)

@@ -157,7 +157,8 @@ func _run() -> void:
 	await _wait(1.0)
 	_check("standing, the bolted top half stops you", _player.global_position.x < 0.0, "x=%.2f" % _player.global_position.x)
 	Input.action_press("crouch")
-	await _wait(1.5)
+	# Down, then about 1.4 m at crouch speed to clear the doorway.
+	await _wait(Game.tune.crouch_time + 1.4 / Game.tune.crouch_speed)
 	Input.action_release("move_forward")
 	Input.action_release("crouch")
 	_check("crouched, you get through", _player.global_position.x > 0.8, "x=%.2f" % _player.global_position.x)

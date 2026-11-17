@@ -131,8 +131,14 @@ func open_angle() -> float:
 
 ## Flings the bottom half open. For tests.
 func swing_open() -> void:
-	bottom_half.sleeping = false
-	bottom_half.angular_velocity = Vector3.DOWN * 16.0
+	# Shut, it rests on its hinge's limit, which soaks up most of one fling,
+	# so keep flinging for a few physics ticks until it's clear.
+	for i in 10:
+		bottom_half.sleeping = false
+		bottom_half.angular_velocity = Vector3.DOWN * 16.0
+		await get_tree().physics_frame
+		if open_angle() > deg_to_rad(20.0):
+			return
 
 
 ## One half of the door, centred on `leaf`: a frame of stiles (uprights) and

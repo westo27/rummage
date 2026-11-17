@@ -33,8 +33,11 @@ func _run() -> void:
 	var creature: Creature = _main.get_node("Landing/LessonCreature")
 	_check("the lesson creature starts hidden", creature.state == Creature.State.HIDDEN, "%s" % creature.state)
 	for prop: Prop in _main.get_node("Landing").get_children().filter(func(n: Node) -> bool: return n is Prop):
-		_check("%s rests on the landing floor" % prop.name,
-			prop.global_position.y > 0.0 and prop.global_position.y < 0.5 and prop.global_position.z > 2.65, "%s" % prop.global_position)
+		# Not through the floor, and still inside the landing (pictures hang
+		# on its walls, the piggy bank sits on the chest).
+		var at: Vector3 = prop.global_position
+		_check("%s stays in the landing" % prop.name,
+			at.y > 0.0 and at.y < 2.0 and at.z > 2.65 and at.z < 5.85 and at.x > -4.4 and at.x < -0.8, "%s" % at)
 
 	# The shut door holds you in.
 	_player.global_position = Vector3(-2.6, 0.05, 3.2)
@@ -56,12 +59,25 @@ func _run() -> void:
 	_check("the teddy is grabbed", _beam.held == box, "held=%s" % _beam.held)
 	await _wait(0.6)
 	_check("hint moves on to throwing", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.THROW], "'%s'" % _hud.hint_text())
+	# Just letting go also moves on.
+	_release("grab")
+	await _wait(0.6)
+	_check("dropping it moves on to ping", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.PING], "'%s'" % _hud.hint_text())
+
+	# Back to the throw hint, to check the throw path too.
+	_tutorial.step = Tutorial.Step.THROW
+	await _wait(0.5)
+	_aim_at(box.global_position)
+	await _wait(0.1)
+	_press("grab")
+	await _wait(0.5)
+	_check("the teddy is grabbed again", _beam.held == box, "held=%s" % _beam.held)
 	_press("throw")
 	await _wait(0.1)
 	_release("throw")
 	_release("grab")
 	await _wait(0.6)
-	_check("hint moves on to ping", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.PING], "'%s'" % _hud.hint_text())
+	_check("throwing it moves on to ping", _tutorial.step == Tutorial.Step.PING and _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.PING], "'%s'" % _hud.hint_text())
 
 	_press("ping")
 	await _wait(0.1)

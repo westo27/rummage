@@ -10,7 +10,8 @@ extends Node
 ## finding anything, a reminder that you can ping.
 ##
 ## Doing things early just skips ahead: lift the bin first and you go straight
-## to "catch it".
+## to "catch it". Dropping what you hold instead of throwing it also moves past
+## the throw hint.
 
 enum Step { GRAB, THROW, PING, FIND, CATCH, DONE }
 
@@ -80,6 +81,8 @@ var _ping_hint_done: bool = false
 func _ready() -> void:
 	_beam.grabbed.connect(func(_prop: Prop) -> void: _reach(Step.THROW))
 	_beam.thrown.connect(func(_prop: Prop) -> void: _reach(Step.PING))
+	# Letting go is fine too: the throw hint has been seen, so move on.
+	_beam.dropped.connect(func(_prop: Prop) -> void: _reach(Step.PING))
 	_ping.pinged.connect(func() -> void: _reach(Step.FIND))
 	_ping.pinged.connect(_on_pinged_in_house)
 	_creature.captured.connect(func(_c: Creature) -> void: _finish())

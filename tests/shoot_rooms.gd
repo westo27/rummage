@@ -7,6 +7,11 @@ const OUT: String = "user://shots"
 
 # name, where the player stands, what they look at
 const VIEWS: Array = [
+	["room_landing", Vector3(-2.6, 0.05, 5.4), Vector3(-2.6, 0.6, 2.4)],
+	["room_landing_west", Vector3(-1.2, 0.05, 3.6), Vector3(-4.4, 0.8, 4.8)],
+	["room_landing_east", Vector3(-3.9, 0.05, 3.2), Vector3(-0.8, 0.8, 4.6)],
+	["room_landing_back", Vector3(-2.6, 0.05, 3.0), Vector3(-2.6, 0.5, 5.8)],
+	["room_landing_spawn", Vector3(-2.6, 0.05, 5.3), Vector3(-2.6, 1.0, 2.4)],
 	["room_start", Vector3(-2.6, 0.05, 1.5), Vector3(-2.6, 1.0, -2.2)],
 	["room_playroom_ne", Vector3(-0.6, 0.05, -1.6), Vector3(-4.5, 0.4, 1.4)],
 	["room_playroom_sw", Vector3(-4.3, 0.05, 0.6), Vector3(-0.5, 0.5, -1.2)],

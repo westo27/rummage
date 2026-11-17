@@ -37,6 +37,13 @@ func _ready() -> void:
 		if node != null:
 			house.remove_child(node)
 			node.free()
+	# The camera sits on the rug, and the marble hiding under it (out of shot)
+	# twitches the cloth with every tell, which bobs the whole rug in the
+	# foreground. Left out, the rug lies still.
+	for node in house.find_children("*", "CharacterBody3D", true, false):
+		if node.get("under_rug") == true:
+			node.get_parent().remove_child(node)
+			node.free()
 	# Without its script the root is a plain Node3D, so none of the game flow
 	# (counting catches, the timer, restart) runs.
 	house.set_script(null)

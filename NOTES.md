@@ -333,6 +333,15 @@ each room (needs a window).
   `Prop._knocked()` is the hook); a tin **robot**; a **hero** and a
   **monster** figure squaring up by the toy car. `tests/shoot_toys.tscn`
   shoots them shut and open.
+- Desk: the **pencil pot** is hollow, its three pencils (`pencil.gd`, one
+  scene painted per copy) and ruler are props of their own, resting at the
+  lean physics settled them to, so a knock sends them flying. The **globe** is
+  a stand plus a ball on a tilted HingeJoint3D axle (`desk_globe.gd`); grab
+  the ball and the stand holds still (`Prop.keep_still_while_parts_held`),
+  so it spins, and keeps turning a while. Grab the stand to carry it.
+- The **wardrobe** has a rail with eight hangers of clothes
+  (`wardrobe_*.tscn`), each on a hinge at its hook so it swings; they hang
+  either side, leaving the box-room doorway clear.
 
 ## The room's look: cosy, up past bedtime
 

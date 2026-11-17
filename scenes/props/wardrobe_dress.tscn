@@ -1,0 +1,116 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_hanger"]
+albedo_color = Color(0.85, 0.62, 0.38, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_cloth"]
+albedo_color = Color(0.75, 0.45, 0.85, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_trim"]
+albedo_color = Color(0.98, 0.95, 0.85, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wire"]
+albedo_color = Color(0.8, 0.8, 0.84, 1)
+
+[sub_resource type="TorusMesh" id="TorusMesh_1"]
+inner_radius = 0.013
+outer_radius = 0.017
+rings = 24
+ring_segments = 10
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2"]
+top_radius = 0.002
+bottom_radius = 0.002
+height = 0.025
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+top_radius = 0.006
+bottom_radius = 0.006
+height = 0.17
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4"]
+top_radius = 0.006
+bottom_radius = 0.006
+height = 0.17
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(0.22, 0.16, 0.025)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6"]
+top_radius = 0.16
+bottom_radius = 0.27
+height = 0.3
+radial_segments = 4
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(0.23, 0.03, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+size = Vector3(0.04, 0.08, 0.026)
+
+[sub_resource type="BoxMesh" id="BoxMesh_9"]
+size = Vector3(0.04, 0.08, 0.026)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_10"]
+size = Vector3(0.32, 0.45, 0.04)
+
+[node name="WardrobeDress" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.3
+script = ExtResource("1_prop")
+hold_radius = 0.3
+impact_material = 2
+tint_variation = 0.5
+
+[node name="Hook" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, 0)
+material_override = SubResource("Mat_wire")
+mesh = SubResource("TorusMesh_1")
+
+[node name="HookStem" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.027, 0)
+material_override = SubResource("Mat_wire")
+mesh = SubResource("CylinderMesh_2")
+
+[node name="ArmL" type="MeshInstance3D" parent="."]
+transform = Transform3D(-0.3746, -0.9272, 0, 0.9272, -0.3746, 0, 0, 0, 1, -0.078, -0.07, 0)
+material_override = SubResource("Mat_hanger")
+mesh = SubResource("CylinderMesh_3")
+
+[node name="ArmR" type="MeshInstance3D" parent="."]
+transform = Transform3D(-0.3746, 0.9272, 0, -0.9272, -0.3746, 0, 0, 0, 1, 0.078, -0.07, 0)
+material_override = SubResource("Mat_hanger")
+mesh = SubResource("CylinderMesh_4")
+
+[node name="Bodice" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.17, 0)
+material_override = SubResource("Mat_cloth")
+mesh = SubResource("BoxMesh_5")
+
+[node name="Skirt" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.0707, 0, 0.0707, 0, -0.4, 0)
+material_override = SubResource("Mat_cloth")
+mesh = SubResource("CylinderMesh_6")
+
+[node name="Sash" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.255, 0)
+material_override = SubResource("Mat_trim")
+mesh = SubResource("BoxMesh_7")
+
+[node name="StrapL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, -0.09, 0)
+material_override = SubResource("Mat_cloth")
+mesh = SubResource("BoxMesh_8")
+
+[node name="StrapR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08, -0.09, 0)
+material_override = SubResource("Mat_cloth")
+mesh = SubResource("BoxMesh_9")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.33, 0)
+shape = SubResource("BoxShape3D_10")

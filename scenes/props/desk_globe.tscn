@@ -1,122 +1,249 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/desk_globe.gd" id="1_globe"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
-
-[sub_resource type="StandardMaterial3D" id="Mat_sea"]
-albedo_color = Color(0.25, 0.5, 0.85, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_land"]
-albedo_color = Color(0.45, 0.72, 0.35, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_stand"]
 albedo_color = Color(0.3, 0.2, 0.14, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_brass"]
-albedo_color = Color(0.85, 0.7, 0.35, 1)
+albedo_color = Color(0.88, 0.72, 0.36, 1)
 
-[sub_resource type="CylinderMesh" id="Mesh_Base"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
 top_radius = 0.055
 bottom_radius = 0.065
 height = 0.02
 
-[sub_resource type="CylinderShape3D" id="Shape_Base"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_2"]
 radius = 0.065
 height = 0.02
 
-[sub_resource type="CylinderMesh" id="Mesh_Stem"]
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
 top_radius = 0.01
-bottom_radius = 0.012
-height = 0.05
+bottom_radius = 0.013
+height = 0.04
 
-[sub_resource type="CylinderShape3D" id="Shape_Stem"]
-radius = 0.012
-height = 0.05
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_4"]
+radius = 0.013
+height = 0.04
 
-[sub_resource type="SphereMesh" id="Mesh_Globe"]
+[sub_resource type="TorusMesh" id="TorusMesh_5"]
+inner_radius = 0.107
+outer_radius = 0.114
+rings = 24
+ring_segments = 10
+
+[sub_resource type="SphereMesh" id="SphereMesh_6"]
+radius = 0.007
+height = 0.014
+
+[sub_resource type="SphereMesh" id="SphereMesh_7"]
+radius = 0.007
+height = 0.014
+
+[sub_resource type="StandardMaterial3D" id="Mat_sea"]
+albedo_color = Color(0.25, 0.5, 0.85, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_8"]
 radius = 0.1
 height = 0.2
 
-[sub_resource type="SphereShape3D" id="Shape_Globe"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_9"]
 radius = 0.1
 
-[sub_resource type="CylinderMesh" id="Mesh_Axle"]
-top_radius = 0.004
-bottom_radius = 0.004
-height = 0.23
+[sub_resource type="StandardMaterial3D" id="Mat_land"]
+albedo_color = Color(0.45, 0.74, 0.35, 1)
 
-[sub_resource type="SphereMesh" id="Mesh_LandA"]
-radius = 0.045
+[sub_resource type="StandardMaterial3D" id="Mat_sand"]
+albedo_color = Color(0.92, 0.8, 0.5, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_10"]
+radius = 0.042
+height = 0.084
+
+[sub_resource type="SphereMesh" id="SphereMesh_11"]
+radius = 0.022
+height = 0.044
+
+[sub_resource type="SphereMesh" id="SphereMesh_12"]
+radius = 0.036
+height = 0.072
+
+[sub_resource type="SphereMesh" id="SphereMesh_13"]
+radius = 0.03
 height = 0.06
 
-[sub_resource type="SphereMesh" id="Mesh_LandB"]
+[sub_resource type="SphereMesh" id="SphereMesh_14"]
 radius = 0.04
+height = 0.08
+
+[sub_resource type="SphereMesh" id="SphereMesh_15"]
+radius = 0.045
+height = 0.09
+
+[sub_resource type="SphereMesh" id="SphereMesh_16"]
+radius = 0.025
 height = 0.05
 
-[sub_resource type="SphereMesh" id="Mesh_LandC"]
+[sub_resource type="SphereMesh" id="SphereMesh_17"]
+radius = 0.03
+height = 0.06
+
+[sub_resource type="SphereMesh" id="SphereMesh_18"]
+radius = 0.02
+height = 0.04
+
+[sub_resource type="SphereMesh" id="SphereMesh_19"]
+radius = 0.02
+height = 0.04
+
+[sub_resource type="StandardMaterial3D" id="Mat_ice"]
+albedo_color = Color(0.97, 0.98, 1, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_20"]
 radius = 0.035
-height = 0.05
+height = 0.07
 
-[sub_resource type="SphereMesh" id="Mesh_LandD"]
+[sub_resource type="SphereMesh" id="SphereMesh_21"]
 radius = 0.04
-height = 0.05
+height = 0.08
+
+[sub_resource type="StandardMaterial3D" id="Mat_line"]
+albedo_color = Color(0.9, 0.3, 0.25, 1)
+
+[sub_resource type="TorusMesh" id="TorusMesh_22"]
+inner_radius = 0.0998
+outer_radius = 0.1016
+rings = 24
+ring_segments = 10
 
 [node name="DeskGlobe" type="RigidBody3D"]
 collision_layer = 4
 collision_mask = 7
-mass = 1
+mass = 0.7
 continuous_cd = true
-script = ExtResource("1_prop")
+script = ExtResource("1_globe")
 hold_radius = 0.13
 impact_material = 4
 
 [node name="Base" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
 material_override = SubResource("Mat_stand")
-mesh = SubResource("Mesh_Base")
+mesh = SubResource("CylinderMesh_1")
 
 [node name="BaseShape" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
-shape = SubResource("Shape_Base")
+shape = SubResource("CylinderShape3D_2")
 
 [node name="Stem" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.115, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12, 0)
 material_override = SubResource("Mat_stand")
-mesh = SubResource("Mesh_Stem")
+mesh = SubResource("CylinderMesh_3")
 
 [node name="StemShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.115, 0)
-shape = SubResource("Shape_Stem")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.12, 0)
+shape = SubResource("CylinderShape3D_4")
 
-[node name="Globe" type="MeshInstance3D" parent="."]
+[node name="Meridian" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9178, 0, 0.3971, 0.3971, 0, -0.9178, 0, 1, 0, 0, 0, 0)
+material_override = SubResource("Mat_brass")
+mesh = SubResource("TorusMesh_5")
+
+[node name="PinN" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0437, 0.101, 0)
+material_override = SubResource("Mat_brass")
+mesh = SubResource("SphereMesh_6")
+
+[node name="PinS" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0437, -0.101, 0)
+material_override = SubResource("Mat_brass")
+mesh = SubResource("SphereMesh_7")
+
+[node name="Ball" type="RigidBody3D" parent="."]
+transform = Transform3D(0.9178, -0.3971, 0, 0.3971, 0.9178, 0, 0, 0, 1, 0, 0, 0)
+collision_layer = 4
+collision_mask = 7
+mass = 0.3
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.13
+impact_material = 4
+
+[node name="Sea" type="MeshInstance3D" parent="Ball"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 material_override = SubResource("Mat_sea")
-mesh = SubResource("Mesh_Globe")
+mesh = SubResource("SphereMesh_8")
 
-[node name="GlobeShape" type="CollisionShape3D" parent="."]
+[node name="Shape" type="CollisionShape3D" parent="Ball"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-shape = SubResource("Shape_Globe")
+shape = SubResource("SphereShape3D_9")
 
-[node name="Axle" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.9205, -0.3907, 0, 0.3907, 0.9205, 0, 0, 0, 1, 0, 0, 0)
-material_override = SubResource("Mat_brass")
-mesh = SubResource("Mesh_Axle")
-
-[node name="LandA" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, 0.045, 0.045)
+[node name="Land1" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(1.2885, -0.0872, 0.0385, 0.1596, 0.5019, -0.5357, 0.0651, 0.4943, 0.5507, -0.0089, 0.0514, 0.0506)
 material_override = SubResource("Mat_land")
-mesh = SubResource("Mesh_LandA")
+mesh = SubResource("SphereMesh_10")
 
-[node name="LandB" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, -0.02, 0.07)
+[node name="Land2" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(0.6043, -0.0289, 0.8123, 0.5171, 0.089, -0.8973, -0.0862, 0.3308, 0.3124, -0.008, 0.0246, 0.0914)
 material_override = SubResource("Mat_land")
-mesh = SubResource("Mesh_LandB")
+mesh = SubResource("SphereMesh_11")
 
-[node name="LandC" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, 0.06, -0.06)
+[node name="Land3" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(0.5703, 0.2717, 0.6356, 0.5368, -0.1456, -0.8685, -0.1632, 0.4705, -0.6357, 0.0397, -0.0213, 0.0688)
 material_override = SubResource("Mat_land")
-mesh = SubResource("Mesh_LandC")
+mesh = SubResource("SphereMesh_12")
 
-[node name="LandD" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.05, -0.055)
+[node name="Land4" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(-0.4686, 0.3651, 0.5063, 0.0941, 0.4504, -0.4566, -1.3159, -0.0978, -0.213, 0.0527, 0.065, -0.0141)
 material_override = SubResource("Mat_land")
-mesh = SubResource("Mesh_LandD")
+mesh = SubResource("SphereMesh_13")
+
+[node name="Land5" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(-0.2719, 0.5183, -0.1718, 0.5213, 0.0483, -0.9235, -0.6138, -0.1886, -0.7083, 0.0752, 0.007, -0.0274)
+material_override = SubResource("Mat_land")
+mesh = SubResource("SphereMesh_14")
+
+[node name="Land6" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(-1.5939, 0, -0.0545, 0.08, 0.9437, -0.3571, 0.1142, -0.6608, -0.51, 0, 0.0415, -0.0291)
+material_override = SubResource("Mat_land")
+mesh = SubResource("SphereMesh_15")
+
+[node name="Land7" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(-0.6641, 0.0393, -0.7309, 0.7142, 0.1057, -0.558, 0.2211, -0.2231, -0.3931, 0.0151, 0.0407, -0.0859)
+material_override = SubResource("Mat_land")
+mesh = SubResource("SphereMesh_16")
+
+[node name="Land8" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(-0.904, -0.2768, -0.1231, 0.6082, -0.1826, -0.6261, 0.5029, -0.2768, 0.536, -0.0574, -0.0378, -0.0574)
+material_override = SubResource("Mat_land")
+mesh = SubResource("SphereMesh_17")
+
+[node name="Land9" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(0.5898, 0.1329, -0.4589, 0.3059, 0.0684, 0.8885, 0.7473, -0.1329, -0.0015, 0.0654, 0.0337, -0.0654)
+material_override = SubResource("Mat_sand")
+mesh = SubResource("SphereMesh_18")
+
+[node name="Land10" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(-0.1955, 0.1499, 0.6325, -0.5572, -0.1231, 0.5572, 0.807, -0.0487, 0.538, 0.0738, -0.0606, -0.024)
+material_override = SubResource("Mat_land")
+mesh = SubResource("SphereMesh_19")
+
+[node name="IceN" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(1, 0, 0, 0, 0.25, 0, 0, 0, 1, 0, 0.096, 0)
+material_override = SubResource("Mat_ice")
+mesh = SubResource("SphereMesh_20")
+
+[node name="IceS" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(1, 0, 0, 0, 0.25, 0, 0, 0, 1, 0, -0.095, 0)
+material_override = SubResource("Mat_ice")
+mesh = SubResource("SphereMesh_21")
+
+[node name="Equator" type="MeshInstance3D" parent="Ball"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+material_override = SubResource("Mat_line")
+mesh = SubResource("TorusMesh_22")
+
+[node name="Axle" type="HingeJoint3D" parent="."]
+transform = Transform3D(0.9178, 0, -0.3971, 0.3971, 0, 0.9178, 0, -1, 0, 0, 0, 0)
+node_a = NodePath("..")
+node_b = NodePath("../Ball")

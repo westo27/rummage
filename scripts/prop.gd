@@ -26,6 +26,10 @@ extends RigidBody3D
 ## A moving part jointed to the room itself rather than to a piece of
 ## furniture (a door hung in a doorway). It stays movable whatever it weighs.
 @export var jointed_to_room: bool = false
+## Holds still while the beam has one of its jointed parts, however light it
+## is, so grabbing the part moves the part, not the whole thing (the globe
+## spins on its stand rather than dragging it about).
+@export var keep_still_while_parts_held: bool = false
 ## What it's made of, which picks its knock when it hits something.
 @export var impact_material: Tones.ImpactMaterial = Tones.ImpactMaterial.WOOD
 

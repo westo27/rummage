@@ -40,6 +40,8 @@
 [ext_resource type="PackedScene" path="res://scenes/props/toy_robot.tscn" id="toy_robot"]
 [ext_resource type="PackedScene" path="res://scenes/props/hero_figure.tscn" id="hero_figure"]
 [ext_resource type="PackedScene" path="res://scenes/props/monster_figure.tscn" id="monster_figure"]
+[ext_resource type="PackedScene" path="res://scenes/props/pencil.tscn" id="pencil"]
+[ext_resource type="PackedScene" path="res://scenes/props/ruler.tscn" id="ruler"]
 
 [node name="MainRoomProps" type="Node3D"]
 
@@ -569,3 +571,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.48, 0.096, -2.05)
 
 [node name="ChestBlock3" parent="." instance=ExtResource("toy_block")]
 transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, -2.3, 0.096, -1.88)
+
+[node name="PotPencil1" parent="." instance=ExtResource("pencil")]
+transform = Transform3D(0.8425, 0.5157, -0.1559, -0.5324, 0.8412, -0.0947, 0.0823, 0.1628, 0.9832, 1.0178, 0.833, 1.7563)
+paint = Color(0.88, 0.22, 0.2, 1)
+
+[node name="PotPencil2" parent="." instance=ExtResource("pencil")]
+transform = Transform3D(-0.8104, -0.4379, 0.3891, -0.201, 0.8318, 0.5175, -0.5503, 0.3412, -0.7621, 0.9857, 0.8345, 1.7602)
+paint = Color(0.25, 0.5, 0.9, 1)
+
+[node name="PotPencil3" parent="." instance=ExtResource("pencil")]
+transform = Transform3D(0.0851, -0.101, -0.9912, 0.4995, 0.8652, -0.0453, 0.8622, -0.4912, 0.1241, 0.9962, 0.8347, 1.7302)
+paint = Color(0.35, 0.75, 0.35, 1)
+
+[node name="PotRuler" parent="." instance=ExtResource("ruler")]
+transform = Transform3D(-0.8034, -0.457, -0.3816, -0.2406, 0.8355, -0.494, 0.5446, -0.3051, -0.7812, 0.9877, 0.8427, 1.7373)

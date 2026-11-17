@@ -28,6 +28,10 @@ reveal_when_spotted = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.25, 0.054, -1.8)
 hiding_box = NodePath("../../MainRoomProps/ToyBinA")
 
+[node name="InToyChest" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0.12, -1.98)
+hiding_box = NodePath("../../MainRoomProps/ToyChest")
+
 [node name="UnderCushion" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.054, 1.9)
 

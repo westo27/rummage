@@ -2,6 +2,10 @@
 
 [ext_resource type="Script" path="res://scripts/wardrobe.gd" id="1_wardrobe"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="2_prop"]
+[ext_resource type="PackedScene" path="res://scenes/props/wardrobe_shirt.tscn" id="shirt"]
+[ext_resource type="PackedScene" path="res://scenes/props/wardrobe_dress.tscn" id="dress"]
+[ext_resource type="PackedScene" path="res://scenes/props/wardrobe_jacket.tscn" id="jacket"]
+[ext_resource type="PackedScene" path="res://scenes/props/wardrobe_trousers.tscn" id="trousers"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_wood"]
 albedo_color = Color(0.7, 0.46, 0.26, 1)
@@ -11,6 +15,17 @@ albedo_color = Color(0.78, 0.53, 0.31, 1)
 
 [sub_resource type="StandardMaterial3D" id="Mat_inner"]
 albedo_color = Color(0.55, 0.36, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_rail"]
+albedo_color = Color(0.82, 0.82, 0.86, 1)
+
+[sub_resource type="CylinderMesh" id="Mesh_Rail"]
+top_radius = 0.012
+bottom_radius = 0.012
+height = 1.71
+
+[sub_resource type="BoxMesh" id="Mesh_RailBracket"]
+size = Vector3(0.05, 0.06, 0.012)
 
 [sub_resource type="BoxMesh" id="Mesh_SideA"]
 size = Vector3(0.6, 2.1, 0.03)
@@ -153,3 +168,42 @@ mesh = SubResource("Mesh_knob")
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.315, 0, 0.885)
 node_a = NodePath("..")
 node_b = NodePath("../DoorB")
+
+[node name="Rail" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.6, 0)
+material_override = SubResource("Mat_rail")
+mesh = SubResource("Mesh_Rail")
+
+[node name="RailBracketA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.615, -0.862)
+material_override = SubResource("Mat_rail")
+mesh = SubResource("Mesh_RailBracket")
+
+[node name="RailBracketB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.615, 0.862)
+material_override = SubResource("Mat_rail")
+mesh = SubResource("Mesh_RailBracket")
+
+[node name="Hanging1" parent="." instance=ExtResource("jacket")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, -0.81)
+
+[node name="Hanging2" parent="." instance=ExtResource("dress")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, -0.72)
+
+[node name="Hanging3" parent="." instance=ExtResource("shirt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, -0.635)
+
+[node name="Hanging4" parent="." instance=ExtResource("trousers")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, -0.56)
+
+[node name="Hanging5" parent="." instance=ExtResource("shirt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, 0.56)
+
+[node name="Hanging6" parent="." instance=ExtResource("jacket")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, 0.645)
+
+[node name="Hanging7" parent="." instance=ExtResource("trousers")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, 0.73)
+
+[node name="Hanging8" parent="." instance=ExtResource("dress")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.598, 0.815)

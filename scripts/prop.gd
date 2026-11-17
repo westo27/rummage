@@ -26,6 +26,10 @@ extends RigidBody3D
 ## A moving part jointed to the room itself rather than to a piece of
 ## furniture (a door hung in a doorway). It stays movable whatever it weighs.
 @export var jointed_to_room: bool = false
+## Holds still while the beam has one of its jointed parts, however light it
+## is, so grabbing the part moves the part, not the whole thing (the globe
+## spins on its stand rather than dragging it about).
+@export var keep_still_while_parts_held: bool = false
 ## What it's made of, which picks its knock when it hits something.
 @export var impact_material: Tones.ImpactMaterial = Tones.ImpactMaterial.WOOD
 
@@ -302,6 +306,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		if _gather_ticks == 0:
 			var speed: float = minf(_gather_total / mass, _gather_velocity_change)
 			Game.impacts.play(impact_material, state.transform.origin, speed, mass)
+			_knocked(speed)
 		return
 
 	if minf(jump, velocity_change) < Game.tune.impact_min_speed:
@@ -314,6 +319,12 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	_gather_total = push - _gather_baseline
 	_gather_velocity_change = velocity_change
 	_gather_ticks = GATHER_TICKS - 1
+
+
+## Called with each knock's speed (m/s) as it plays. For props that react
+## to being knocked (the jack-in-the-box); does nothing here.
+func _knocked(_speed: float) -> void:
+	pass
 
 
 func _now() -> float:

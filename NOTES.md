@@ -220,7 +220,7 @@ Three more hints, each shown by tutorial.gd once the lesson is done:
   there.
 - "Press Q to ping", once only, after 10 s with no creature found while the
   ping is ready. It goes when you ping or after 6 s. The lesson creature counts like any other
-(29 in all), so its lift arrives before the house. The timer runs from the
+(30 in all), so its lift arrives before the house. The timer runs from the
 start. A ping from the landing can reach a couple of playroom creatures
 through the wall.
 
@@ -324,6 +324,25 @@ each room (needs a window).
   stacked shoe boxes, folded jumpers and a piggy bank (chest). Their meshes
   are only partly matched by collision shapes (fine detail like wheels and
   pencils is visual only). `check_room` checks they settle where they're put.
+- Playroom toys after Elebits' kid's room (built from primitives, not its
+  models): a **toy chest** (`toy_chest.gd`, 12 kg furniture) on the north
+  wall, its 1.6 kg lid on a hinge along the back (drops shut short of
+  upright, rests open past it), three blocks and a hiding creature inside
+  (it's a LiddedBox; lifting the front edge lets it out) and the teddy on top; a
+  **jack-in-the-box** on the table (`jack_in_the_box.gd`: a knock of 2 m/s or
+  more flips the lid and the clown springs out, posed from code, for good;
+  `Prop._knocked()` is the hook); a tin **robot**; a **hero** and a
+  **monster** figure squaring up by the toy car. `tests/shoot_toys.tscn`
+  shoots them shut and open.
+- Desk: the **pencil pot** is hollow, its three pencils (`pencil.gd`, one
+  scene painted per copy) and ruler are props of their own, resting at the
+  lean physics settled them to, so a knock sends them flying. The **globe** is
+  a stand plus a ball on a tilted HingeJoint3D axle (`desk_globe.gd`); grab
+  the ball and the stand holds still (`Prop.keep_still_while_parts_held`),
+  so it spins, and keeps turning a while. Grab the stand to carry it.
+- The **wardrobe** has a rail with eight hangers of clothes
+  (`wardrobe_*.tscn`), each on a hinge at its hook so it swings; they hang
+  either side, leaving the box-room doorway clear.
 
 ## The room's look: cosy, up past bedtime
 

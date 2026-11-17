@@ -3,100 +3,140 @@
 [ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
 
 [sub_resource type="StandardMaterial3D" id="Mat_pot"]
+cull_mode = 2
 albedo_color = Color(0.95, 0.78, 0.3, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_red"]
-albedo_color = Color(0.88, 0.22, 0.2, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_blue"]
-albedo_color = Color(0.25, 0.5, 0.9, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_green"]
-albedo_color = Color(0.35, 0.75, 0.35, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_tip"]
-albedo_color = Color(0.9, 0.78, 0.6, 1)
-
-[sub_resource type="CylinderMesh" id="Mesh_Pot"]
-top_radius = 0.04
-bottom_radius = 0.038
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.042
+bottom_radius = 0.039
 height = 0.1
+cap_top = false
 
-[sub_resource type="CylinderShape3D" id="Shape_Pot"]
-radius = 0.04
-height = 0.1
+[sub_resource type="StandardMaterial3D" id="Mat_rim"]
+albedo_color = Color(0.9, 0.3, 0.25, 1)
 
-[sub_resource type="CylinderMesh" id="Mesh_PencilA"]
-top_radius = 0.005
-bottom_radius = 0.005
-height = 0.17
+[sub_resource type="TorusMesh" id="TorusMesh_2"]
+inner_radius = 0.04
+outer_radius = 0.046
+rings = 24
+ring_segments = 10
 
-[sub_resource type="CylinderMesh" id="Mesh_PencilB"]
-top_radius = 0.005
-bottom_radius = 0.005
-height = 0.16
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+top_radius = 0.043
+bottom_radius = 0.041
+height = 0.012
 
-[sub_resource type="CylinderMesh" id="Mesh_PencilC"]
-top_radius = 0.005
-bottom_radius = 0.005
-height = 0.15
+[sub_resource type="StandardMaterial3D" id="Mat_inside"]
+albedo_color = Color(0.6, 0.45, 0.2, 1)
 
-[sub_resource type="CylinderMesh" id="Mesh_TipA"]
-top_radius = 0
-bottom_radius = 0.005
-height = 0.018
+[sub_resource type="CylinderMesh" id="CylinderMesh_4"]
+top_radius = 0.037
+bottom_radius = 0.037
+height = 0.002
 
-[sub_resource type="BoxMesh" id="Mesh_Ruler"]
-size = Vector3(0.02, 0.18, 0.003)
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5"]
+radius = 0.042
+height = 0.01
 
-[sub_resource type="CylinderShape3D" id="Shape_Pencils"]
-radius = 0.03
-height = 0.08
+[sub_resource type="BoxShape3D" id="BoxShape3D_6"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_9"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_10"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_11"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_12"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_13"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_14"]
+size = Vector3(0.005, 0.1, 0.0293)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_15"]
+size = Vector3(0.005, 0.1, 0.0293)
 
 [node name="PencilPot" type="RigidBody3D"]
 collision_layer = 4
 collision_mask = 7
-mass = 0.3
+mass = 0.25
 continuous_cd = true
 script = ExtResource("1_prop")
 hold_radius = 0.1
-impact_material = 0
-tint_variation = 0.4
+impact_material = 4
 
 [node name="Pot" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 material_override = SubResource("Mat_pot")
-mesh = SubResource("Mesh_Pot")
+mesh = SubResource("CylinderMesh_1")
 
-[node name="PotShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-shape = SubResource("Shape_Pot")
+[node name="Rim" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+material_override = SubResource("Mat_rim")
+mesh = SubResource("TorusMesh_2")
 
-[node name="PencilA" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.9903, -0.1392, 0, 0.1392, 0.9903, 0, 0, 0, 1, -0.012, 0.05, 0.008)
-material_override = SubResource("Mat_red")
-mesh = SubResource("Mesh_PencilA")
+[node name="Band" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0)
+material_override = SubResource("Mat_rim")
+mesh = SubResource("CylinderMesh_3")
 
-[node name="PencilB" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.9848, 0.1736, 0, -0.1736, 0.9848, 0, 0, 0, 1, 0.012, 0.045, -0.006)
-material_override = SubResource("Mat_blue")
-mesh = SubResource("Mesh_PencilB")
+[node name="Inside" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.044, 0)
+material_override = SubResource("Mat_inside")
+mesh = SubResource("CylinderMesh_4")
 
-[node name="PencilC" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.9781, -0.2079, 0, 0.2079, 0.9781, 0, 0.042, 0.016)
-material_override = SubResource("Mat_green")
-mesh = SubResource("Mesh_PencilC")
+[node name="FloorShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.045, 0)
+shape = SubResource("CylinderShape3D_5")
 
-[node name="TipA" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.9903, -0.1392, 0, 0.1392, 0.9903, 0, 0, 0, 1, -0.0238, 0.1435, 0.008)
-material_override = SubResource("Mat_tip")
-mesh = SubResource("Mesh_TipA")
+[node name="WallShape1" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0395, 0, 0)
+shape = SubResource("BoxShape3D_6")
 
-[node name="Ruler" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.9903, 0.1392, 0, -0.1392, 0.9903, 0.004, 0.05, -0.022)
-material_override = SubResource("Mat_tip")
-mesh = SubResource("Mesh_Ruler")
+[node name="WallShape2" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.809, 0, 0.5878, 0, 1, 0, -0.5878, 0, 0.809, 0.032, 0, -0.0232)
+shape = SubResource("BoxShape3D_7")
 
-[node name="PencilsShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09, 0)
-shape = SubResource("Shape_Pencils")
+[node name="WallShape3" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.309, 0, 0.9511, 0, 1, 0, -0.9511, 0, 0.309, 0.0122, 0, -0.0376)
+shape = SubResource("BoxShape3D_8")
+
+[node name="WallShape4" type="CollisionShape3D" parent="."]
+transform = Transform3D(-0.309, 0, 0.9511, 0, 1, 0, -0.9511, 0, -0.309, -0.0122, 0, -0.0376)
+shape = SubResource("BoxShape3D_9")
+
+[node name="WallShape5" type="CollisionShape3D" parent="."]
+transform = Transform3D(-0.809, 0, 0.5878, 0, 1, 0, -0.5878, 0, -0.809, -0.032, 0, -0.0232)
+shape = SubResource("BoxShape3D_10")
+
+[node name="WallShape6" type="CollisionShape3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -0.0395, 0, 0)
+shape = SubResource("BoxShape3D_11")
+
+[node name="WallShape7" type="CollisionShape3D" parent="."]
+transform = Transform3D(-0.809, 0, -0.5878, 0, 1, 0, 0.5878, 0, -0.809, -0.032, 0, 0.0232)
+shape = SubResource("BoxShape3D_12")
+
+[node name="WallShape8" type="CollisionShape3D" parent="."]
+transform = Transform3D(-0.309, 0, -0.9511, 0, 1, 0, 0.9511, 0, -0.309, -0.0122, 0, 0.0376)
+shape = SubResource("BoxShape3D_13")
+
+[node name="WallShape9" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.309, 0, -0.9511, 0, 1, 0, 0.9511, 0, 0.309, 0.0122, 0, 0.0376)
+shape = SubResource("BoxShape3D_14")
+
+[node name="WallShape10" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.809, 0, -0.5878, 0, 1, 0, 0.5878, 0, 0.809, 0.032, 0, 0.0232)
+shape = SubResource("BoxShape3D_15")

@@ -13,7 +13,9 @@ extends Node
 const SMALL_THINGS: Array[String] = ["Teddy", "ToyCar", "StackingRings", "ToyDrum",
 	"ShapeSorter", "ToyDinosaur", "AlarmClock", "DeskGlobe", "PencilPot",
 	"Mug", "SlipperL", "SlipperR", "SchoolBag", "ShoeBoxLow", "ShoeBoxHigh",
-	"FoldedJumpers", "PiggyBank"]
+	"FoldedJumpers", "PiggyBank", "JackInTheBox", "ToyRobot", "HeroFigure", "MonsterFigure"]
+## Things that rest leaning (the pencils in their pot): they mustn't move.
+const LEANING_THINGS: Array[String] = ["PotPencil1", "PotPencil2", "PotPencil3", "PotRuler"]
 
 var _failures: int = 0
 var _main: Node
@@ -28,7 +30,7 @@ func _run() -> void:
 	get_tree().root.add_child(_main)
 	get_tree().current_scene = _main
 	var placed: Dictionary = {}
-	for prop_name in SMALL_THINGS:
+	for prop_name in SMALL_THINGS + LEANING_THINGS:
 		placed[prop_name] = (_main.get_node("MainRoomProps/" + prop_name) as Node3D).global_position
 	await _wait(1.0)
 
@@ -37,7 +39,7 @@ func _run() -> void:
 	for prop_name: String in placed:
 		var prop := _main.get_node("MainRoomProps/" + prop_name) as Node3D
 		var upright: float = prop.global_basis.y.normalized().dot(Vector3.UP)
-		if prop.global_position.distance_to(placed[prop_name]) > 0.03 or upright < 0.97:
+		if prop.global_position.distance_to(placed[prop_name]) > 0.03 or (upright < 0.97 and prop_name in SMALL_THINGS):
 			drifted.append("%s moved %.3f m, upright %.2f" % [prop_name,
 				prop.global_position.distance_to(placed[prop_name]), upright])
 	_check("the small household things stay where they were put", drifted.is_empty(), ", ".join(drifted))
@@ -233,6 +235,114 @@ func _run() -> void:
 		"%.3f, %.3f m out" % [chest.drawer_out(1), chest.drawer_out(2)])
 	_check("and the chest stays where it is", (chest as Node3D).global_position.distance_to(chest_at) < 0.1,
 		"moved %.3f m" % (chest as Node3D).global_position.distance_to(chest_at))
+
+	# --- The toy chest's lid lifts on its hinge and drops shut ---
+	var toy_chest: Node = _main.get_node("MainRoomProps/ToyChest")
+	var lid: Prop = toy_chest.lid
+	_check("the toy chest's lid rests shut", toy_chest.lid_angle() < 0.05, "%.2f rad" % toy_chest.lid_angle())
+	var in_chest := _main.get_node("MainRoomCreatures/InToyChest") as Creature
+	_check("a creature hides in the shut chest", in_chest.state == Creature.State.HIDDEN
+		and (toy_chest as Node3D).to_local(in_chest.global_position).y < 0.0, "state=%s" % in_chest.state)
+	var teddy := _main.get_node("MainRoomProps/Teddy") as Node3D
+	_check("the teddy sits on the lid", teddy.global_position.y > 0.6, "y=%.3f" % teddy.global_position.y)
+	teddy.global_position = Vector3(-1.5, 0.3, 0.8)  # out of the way
+	teddy.reset_physics_interpolation()
+	player.global_position = Vector3(-2.5, 0.05, -1.0)
+	player.reset_physics_interpolation()
+	var lid_edge: Vector3 = (toy_chest as Node3D).to_global(Vector3(0.0, 0.24, 0.22))
+	look = (lid_edge - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	beam._grab_armed = true
+	beam._grab(lid, lid_edge)
+	for i in 20:  # look up, lifting the lid's front edge
+		head.rotation.x += 0.025
+		await get_tree().physics_frame
+	_check("lifting the lid lets the creature out", in_chest.state != Creature.State.HIDDEN, "state=%s" % in_chest.state)
+	_check("the beam lifts the lid", toy_chest.lid_angle() > 0.4, "%.2f rad, held %s" % [toy_chest.lid_angle(), beam.held])
+	beam._grab_armed = false
+	beam._release()
+	await _wait(1.5)
+	_check("let go short of upright, it drops shut", toy_chest.lid_angle() < 0.05, "%.2f rad" % toy_chest.lid_angle())
+	for i in 20:  # flung back hard
+		lid.sleeping = false
+		lid.angular_velocity = Vector3(-14.0, 0.0, 0.0)
+		await get_tree().physics_frame
+	await _wait(1.5)
+	_check("flung past upright, it rests open", toy_chest.lid_angle() > PI / 2.0, "%.2f rad" % toy_chest.lid_angle())
+	_check("and the chest stays put", (toy_chest as Prop).freeze, "")
+
+	# --- The jack-in-the-box waits shut, and pops when it's dropped ---
+	var jack: Prop = _main.get_node("MainRoomProps/JackInTheBox")
+	_check("the jack-in-the-box starts shut", not jack.popped, "")
+	jack.global_position += Vector3(0.0, 0.6, 0.0)
+	jack.reset_physics_interpolation()
+	jack.sleeping = false
+	await _wait(2.0)
+	_check("dropped on the table, it pops", jack.popped and not (jack.get_node("JackShape") as CollisionShape3D).disabled,
+		"popped %s" % jack.popped)
+	_check("and the clown stands up out of it", (jack.get_node("Head") as Node3D).position.y > 0.12,
+		"head y=%.3f" % (jack.get_node("Head") as Node3D).position.y)
+
+	# --- The globe spins on its axle; its stand stays put ---
+	var globe: Node = _main.get_node("MainRoomProps/DeskGlobe")
+	var globe_at: Vector3 = (globe as Node3D).global_position
+	player.global_position = Vector3(1.8, 0.05, 0.6)
+	player.reset_physics_interpolation()
+	var globe_side: Vector3 = globe.ball.global_position + Vector3(0.0, 0.0, -0.09)
+	look = (globe_side - head.global_position).normalized()
+	player.rotation.y = atan2(-look.x, -look.z)
+	head.rotation.x = asin(look.y)
+	await _wait(0.1)
+	beam._grab_armed = true
+	beam._grab(globe.ball, globe_side)
+	for i in 15:  # swing the view sideways, dragging the globe round
+		player.rotation.y += 0.06
+		await get_tree().physics_frame
+	beam._grab_armed = false
+	beam._release()
+	await _wait(0.4)
+	_check("dragging the globe sets it spinning", globe.spin_speed() > 0.8, "%.2f rad/s" % globe.spin_speed())
+	await _wait(1.0)
+	_check("and it keeps turning a while", globe.spin_speed() > 0.4, "%.2f rad/s" % globe.spin_speed())
+	_check("on its tilted axle", globe.ball.global_basis.y.angle_to(Vector3.UP) > deg_to_rad(20.0), "")
+	_check("while the stand stays where it is", (globe as Node3D).global_position.distance_to(globe_at) < 0.01,
+		"moved %.3f m" % (globe as Node3D).global_position.distance_to(globe_at))
+
+	# --- Knock the pencil pot flying and the pencils go their own way ---
+	var pot := _main.get_node("MainRoomProps/PencilPot") as RigidBody3D
+	pot.sleeping = false
+	pot.linear_velocity = Vector3(-2.5, 2.0, -1.0)
+	pot.angular_velocity = Vector3(8.0, 0.0, 6.0)
+	await _wait(1.5)
+	var flew: int = 0
+	for i in 3:
+		var pencil := _main.get_node("MainRoomProps/PotPencil%d" % (i + 1)) as Node3D
+		if pencil.global_position.distance_to(pot.global_position) > 0.12:
+			flew += 1
+	_check("pencils fly out of a knocked pot", flew >= 2, "%d of 3 out" % flew)
+
+	# --- Clothes hang on the wardrobe rail, either side of the way through ---
+	var hangers: Array[Node] = wardrobe.get_children().filter(func(c: Node) -> bool: return c is Prop and c.name.begins_with("Hanging"))
+	var hanging_ok: bool = hangers.size() == 8
+	for item: Node in hangers:
+		var z: float = wardrobe.to_local((item as Node3D).global_position).z
+		hanging_ok = hanging_ok and absf(z) > 0.5 and (item as Node3D).global_basis.y.dot(Vector3.UP) > 0.95
+	_check("eight hangers hang upright, clear of the doorway", hanging_ok, "%d hangers" % hangers.size())
+	var shirt := hangers[0] as RigidBody3D
+	var hook_at: Vector3 = shirt.global_position
+	shirt.sleeping = false
+	# A shove at the hem, toward the doors (the wall is close behind).
+	shirt.apply_impulse(Vector3(-0.5, 0.0, 0.0), Vector3(0.0, -0.4, 0.0))
+	var swung: float = 0.0
+	for i in 40:
+		await get_tree().physics_frame
+		swung = maxf(swung, shirt.global_basis.y.angle_to(Vector3.UP))
+	await _wait(4.0)
+	_check("a knocked hanger swings on the rail", swung > 0.3 and shirt.global_position.distance_to(hook_at) < 0.02,
+		"swung %.2f rad, hook moved %.3f m" % [swung, shirt.global_position.distance_to(hook_at)])
+	_check("and settles back", shirt.global_basis.y.angle_to(Vector3.UP) < 0.1, "%.2f rad" % shirt.global_basis.y.angle_to(Vector3.UP))
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)

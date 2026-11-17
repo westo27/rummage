@@ -330,7 +330,7 @@ func _grab(prop: Prop, point: Vector3) -> void:
 	prop.start_hold(_player)
 	# Pulling a drawer or door: furniture heavier than you can lift stays put.
 	_planted = null
-	if prop.part_of != null and not _can_lift(prop.part_of):
+	if prop.part_of != null and (prop.part_of.keep_still_while_parts_held or not _can_lift(prop.part_of)):
 		_planted = prop.part_of
 		_planted.plant()
 	# A sleeping body ignores velocity changes, so make sure it's awake.

@@ -10,8 +10,9 @@ extends Node
 
 const SEED: int = 4
 const Drawers := preload("res://scripts/drawers.gd")
+const CreatureScene: PackedScene = preload("res://scenes/creature.tscn")
 ## Clips the script knows, in the order make_clips.sh records them.
-const CLIPS: Array[String] = ["drawers", "wardrobe", "bookcase", "picture", "bin", "chair", "bin_throw"]
+const CLIPS: Array[String] = ["drawers", "wardrobe", "bookcase", "picture", "bin", "chair", "bin_throw", "mitosis"]
 
 var _main: Node
 var _player: CharacterBody3D
@@ -56,6 +57,14 @@ var _first_frame: int = 0
 var _pool: Array[Creature] = []
 ## The ones in this clip: the view follows them once they're out.
 var _cast: Array[Creature] = []
+## How fast the player edges forward (negative: backs away).
+var _creep: float = CREEP
+## The mitosis gag: while on, every marble that's out splits in two each time
+## it bumps into something.
+var _mitosis: bool = false
+## When each marble may next split, so one bump is one split.
+var _split_ready: Dictionary = {}
+var _splits: int = 0
 var _follow_now: float = 0.0
 var _group_mid := Vector3.ZERO
 
@@ -83,7 +92,9 @@ func _physics_process(delta: float) -> void:
 	_player.rotation.y = _view.x + sway.x
 	_head.rotation.x = _view.y + sway.y
 	var ahead := Vector3(-sin(_view.x), 0.0, -cos(_view.x))
-	_player.global_position += ahead * CREEP * delta
+	_player.global_position += ahead * _creep * delta
+	if _mitosis:
+		_divide()
 
 
 func _run() -> void:
@@ -340,6 +351,77 @@ func _clip_bin_throw() -> void:
 	await _throw()
 	await _turn_to(gang_at + Vector3.UP * 0.1, 0.4)
 	await _wait(1.8)
+
+
+## For a "changed one variable" post: a single marble pops out of a drawer
+## and every bump splits it in two. You stand and back away as the room fills.
+func _clip_mitosis() -> void:
+	var chest := _main.get_node("MainRoomProps/ChestOfDrawers") as Drawers
+	var out: Vector3 = chest.global_basis.z
+	var side: Vector3 = chest.global_basis.x
+	var front: Vector3 = chest.drawers[1].global_position + out * 0.23
+	_take("InChestMiddle")
+	_crouch = 0.4
+	await _frames(20)
+	await _place(Vector3(2.75, 0.05, -0.35), front + Vector3.DOWN * 0.1)
+	_mitosis = true
+	_start()
+	await _wait(0.3)
+	var handle: Vector3 = front - side * 0.15
+	_grab(chest.drawers[1], handle)
+	await _reel(-0.5, 0.35)
+	await _wait(0.2)
+	_let_go()
+	await _wait(1.6)
+	# Standing up and backing off as it gets out of hand.
+	_creep = -0.25
+	for i in 90:
+		_crouch = lerpf(0.4, 0.0, smoothstep(0.0, 1.0, (i + 1) / 90.0))
+		await get_tree().physics_frame
+	await _turn_to(Vector3(3.0, 0.1, -1.0), 1.0)
+	_creep = -0.12
+	await _wait(4.0)
+	print("MITOSIS %d marbles, %d splits, first %s at %s, drawer out %.2f" % [_cast.size(), _splits, _cast[0].state, _cast[0].global_position, chest.drawer_out(1)])
+
+
+## Splits every marble that's out and has just bumped into something (a wall,
+## furniture or another marble; not the floor): a new one rolls off the other
+## way, and both wait a moment before they can split again.
+func _divide() -> void:
+	const CAP: int = 700
+	const GAP: float = 0.55
+	for c in _cast.duplicate():
+		if not is_instance_valid(c) or c.state == Creature.State.HIDDEN:
+			continue
+		# Kept running: one that settled down would stop bumping.
+		c.set("_state_left", 5.0)
+		if _cast.size() >= CAP or _clock < float(_split_ready.get(c, 0.0)):
+			continue
+		var bump := Vector3.ZERO
+		for i in c.get_slide_collision_count():
+			var normal: Vector3 = c.get_slide_collision(i).get_normal()
+			if normal.y < 0.5:
+				bump = normal
+		if bump == Vector3.ZERO:
+			continue
+		bump = Vector3(bump.x, 0.0, bump.z).normalized()
+		var along: Vector3 = bump.cross(Vector3.UP)
+		var twin := CreatureScene.instantiate() as Creature
+		_main.get_node("MainRoomCreatures").add_child(twin)
+		twin.global_position = c.global_position + along * 0.115 + bump * 0.02
+		twin.reset_physics_interpolation()
+		twin.call("_reveal")
+		# Off in opposite directions, both away from what they hit.
+		c.set("_flee_dir", (bump + along * 0.8).normalized())
+		twin.set("_flee_dir", (bump - along * 0.8).normalized())
+		_cast.append(twin)
+		_split_ready[c] = _clock + GAP
+		_split_ready[twin] = _clock + GAP
+		_splits += 1
+		# A squeak for each of the first few; then only now and then, or it's
+		# just noise.
+		if _splits < 24 or randf() < 0.08:
+			twin.squeak(randf_range(0.9, 1.3))
 
 
 # --- Directing ---------------------------------------------------------------

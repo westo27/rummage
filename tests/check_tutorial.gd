@@ -33,8 +33,11 @@ func _run() -> void:
 	var creature: Creature = _main.get_node("Landing/LessonCreature")
 	_check("the lesson creature starts hidden", creature.state == Creature.State.HIDDEN, "%s" % creature.state)
 	for prop: Prop in _main.get_node("Landing").get_children().filter(func(n: Node) -> bool: return n is Prop):
-		_check("%s rests on the landing floor" % prop.name,
-			prop.global_position.y > 0.0 and prop.global_position.y < 0.5 and prop.global_position.z > 2.65, "%s" % prop.global_position)
+		# Not through the floor, and still inside the landing (pictures hang
+		# on its walls, the piggy bank sits on the chest).
+		var at: Vector3 = prop.global_position
+		_check("%s stays in the landing" % prop.name,
+			at.y > 0.0 and at.y < 2.0 and at.z > 2.65 and at.z < 5.85 and at.x > -4.4 and at.x < -0.8, "%s" % at)
 
 	# The shut door holds you in.
 	_player.global_position = Vector3(-2.6, 0.05, 3.2)

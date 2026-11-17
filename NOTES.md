@@ -198,7 +198,10 @@ than the creature squeaks.
 ## The landing lesson
 
 Every run starts on the **landing** (x -4.4..-0.8, z 2.65..5.85), south of
-the playroom, behind a shut door. `scripts/tutorial.gd` shows one hint at a
+the playroom, behind a shut door. It's dressed like a real landing
+(`scenes/landing.tscn`): a chest of drawers with a piggy bank on the west
+wall, a picture on each side wall, a toy car, slippers, a school bag. The
+lesson's bin and teddy stay the obvious things in front of you. `scripts/tutorial.gd` shows one hint at a
 time in glass words just above the crosshair (`Hud.show_hint`): grab
 the box, throw it, ping, lift what squeaked, catch it. Each goes once done
 (via `Beam.grabbed`/`thrown`, `Ping.pinged`, the creature's state and

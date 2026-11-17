@@ -69,6 +69,9 @@ var _knock_ready_at: float = 0.0
 var _gather_ticks: int = 0
 var _gather_baseline: float = 0.0
 var _gather_total: float = 0.0
+var _gather_velocity_change: float = 0.0
+## Velocity at the last physics step, to measure how much a hit changed it.
+var _last_velocity := Vector3.ZERO
 
 const AURA_SHADER: Shader = preload("res://shaders/beam_aura.gdshader")
 ## How much bigger the aura blob is than the object: a share of its size,
@@ -104,7 +107,9 @@ func _ready() -> void:
 		axis_lock_angular_z = true
 	# Contacts are only reported to _integrate_forces with monitoring on.
 	contact_monitor = true
-	max_contacts_reported = 4
+	# Enough for a hollow thing (a bin, an open box: several shapes, each
+	# touching down at a few points) to report its whole landing, not part.
+	max_contacts_reported = 16
 	_knock_ready_at = _now() + QUIET_AFTER_LOAD
 	# Deferred: a piece of furniture marks its parts (part_of) in its own
 	# _ready, which runs after its children's.
@@ -268,6 +273,12 @@ func _physics_process(delta: float) -> void:
 ## mass, pushes measure how much a hit changed the object's velocity, so a
 ## book and a wardrobe are on the same scale.
 ##
+## For a body built from several shapes (a bin, an open box) Jolt's
+## per-contact pushes overlap and add up to far more than the real hit, so
+## the hit is also measured as the actual change in velocity, and the smaller
+## of the two is used. The push still matters: it tells a bump from the beam
+## swinging something through the air, which changes velocity too.
+##
 ## A hit starts when the push jumps sharply above what it was the tick
 ## before. From then, the extra push over the next GATHER_TICKS ticks is
 ## added up and played as one knock, so a bed landing leg by leg sounds as
@@ -281,15 +292,19 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		push += state.get_contact_impulse(i).length()
 	var jump: float = (push - _last_contact_push) / mass
 	_last_contact_push = push
+	var velocity_change: float = (state.linear_velocity - _last_velocity).length()
+	_last_velocity = state.linear_velocity
 
 	if _gather_ticks > 0:
 		_gather_total += maxf(push - _gather_baseline, 0.0)
+		_gather_velocity_change += velocity_change
 		_gather_ticks -= 1
 		if _gather_ticks == 0:
-			Game.impacts.play(impact_material, state.transform.origin, _gather_total / mass, mass)
+			var speed: float = minf(_gather_total / mass, _gather_velocity_change)
+			Game.impacts.play(impact_material, state.transform.origin, speed, mass)
 		return
 
-	if jump < Game.tune.impact_min_speed:
+	if minf(jump, velocity_change) < Game.tune.impact_min_speed:
 		return
 	var now: float = _now()
 	if now < _knock_ready_at:
@@ -297,6 +312,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	_knock_ready_at = now + KNOCK_COOLDOWN
 	_gather_baseline = push - jump * mass  # what it was pushing with before
 	_gather_total = push - _gather_baseline
+	_gather_velocity_change = velocity_change
 	_gather_ticks = GATHER_TICKS - 1
 
 

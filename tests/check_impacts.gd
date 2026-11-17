@@ -20,15 +20,15 @@ func _run() -> void:
 	var cratea_fixture := (load("res://tests/fixtures/crate.tscn") as PackedScene).instantiate() as Prop
 	cratea_fixture.name = "CrateA"
 	_main.get_node("MainRoomProps").add_child(cratea_fixture)
-	cratea_fixture.global_position = Vector3(2.4, 0.3, 0.5)
+	cratea_fixture.global_position = Vector3(2.4, 0.3, 1.0)
 	await _wait(2.0)
 	_check("the room settles in silence", Game.impacts.log.is_empty(),
 		"%d knocks" % Game.impacts.log.size())
 
 	# --- A crate dropped from 2 m knocks, as wood, from where it landed ---
-	# Drops happen on the open bedroom floor.
+	# Drops happen on the open bedroom floor, off the rug (which would tilt it).
 	var crate: Prop = _main.get_node("MainRoomProps/CrateA")
-	crate.global_position = Vector3(2.8, 0.3, 0.5)
+	crate.global_position = Vector3(2.8, 0.3, 1.0)
 	crate.sleeping = false
 	await _wait(0.5)
 	var crate_knock: Dictionary = await _drop(crate, 2.0)
@@ -39,7 +39,12 @@ func _run() -> void:
 		_check("the sound comes from the crate",
 			(crate_knock.at as Vector3).distance_to(crate.global_position) < 0.6,
 			"%.2f m away" % (crate_knock.at as Vector3).distance_to(crate.global_position))
-		_check("a hard landing is near full loudness", crate_knock.db > Game.tune.impact_max_db - 4.0,
+		# From 2 m it lands at about 7.5 m/s, a full-strength hit.
+		_check("a 2 m drop reads as a hard hit", crate_knock.speed > Game.tune.impact_full_speed - 1.0
+			and crate_knock.speed < 9.0, "%.2f m/s" % crate_knock.speed)
+		# Light things top out a little below impact_max_db (impact_audio.gd's
+		# heft): a 2.5 kg crate about 4 dB below.
+		_check("a hard landing is near full loudness", crate_knock.db > Game.tune.impact_max_db - 6.0,
 			"%.1f dB at %.2f m/s" % [crate_knock.db, crate_knock.speed])
 		_check("knocks stay quieter than the squeaks", crate_knock.db < Game.tune.squeak_volume_db,
 			"%.1f dB vs squeak %.1f dB" % [crate_knock.db, Game.tune.squeak_volume_db])

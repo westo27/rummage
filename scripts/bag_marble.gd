@@ -1,7 +1,7 @@
 class_name BagMarble
 extends RigidBody2D
 ## One caught creature in the HUD's marble bag: a glass marble like the menu
-## text, with a swirl in the creature's colour, and eyes. It's a real 2D
+## text, with a swirl in the creature's colour, and its felt-tip face. It's a real 2D
 ## physics body, so it rolls, bounces and settles on the pile, which is why
 ## the eyes end up at odd angles.
 ##
@@ -19,6 +19,7 @@ signal landed(speed: float)
 const RADIUS: float = 21.0
 
 var color: Color = Color.WHITE
+var face: DoodleFace = DoodleFace.new()
 
 const GLASS_SHADER: Shader = preload("res://shaders/glass_marble.gdshader")
 
@@ -60,6 +61,8 @@ func _ready() -> void:
 	_glass.draw.connect(_draw_glass)
 	add_child(_glass)
 	_face = Node2D.new()
+	# Hand-drawn faces are big textures shrunk a lot: mipmaps keep them smooth.
+	_face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_face.draw.connect(_draw_face)
 	add_child(_face)
 
@@ -86,13 +89,10 @@ func _on_body_entered(_body: Node) -> void:
 		landed.emit(_last_speed)
 
 
-## Draws the face: eyes that turn with the ball. The glass body is drawn by
+## Draws the face, which turns with the ball. The glass body is drawn by
 ## _glass (a child with the glass_marble shader) underneath.
 func _draw_face() -> void:
-	for side: float in [-1.0, 1.0]:
-		var eye := Vector2(0.36 * side, -0.18) * RADIUS
-		_face.draw_circle(eye, RADIUS * 0.27, Color.WHITE)
-		_face.draw_circle(eye + Vector2(0.0, 0.07) * RADIUS, RADIUS * 0.13, Color(0.05, 0.05, 0.06))
+	face.draw(_face, RADIUS)
 
 
 ## The glass body: one quad over the ball, kept upright on screen so the

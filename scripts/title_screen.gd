@@ -1,6 +1,7 @@
 extends Control
 ## The title screen: the game's name and three clickable words (Play, Settings,
-## Quit) over the real bedroom at night (TitleBackdrop).
+## Quit) over the real bedroom at night (TitleBackdrop), and a small Credits
+## word in the corner.
 ##
 ## The shade that keeps the words readable is drawn by this node itself, over
 ## the 3D room (the canvas always draws over 3D) and under the menu, because a
@@ -8,7 +9,10 @@ extends Control
 
 var _panels: VBoxContainer
 var _hint: Label
-var _settings: SettingsMenu = null
+var _credits_word: MenuPanel
+var _version: Label
+## The settings or credits page while one is open.
+var _page: Control = null
 
 
 func _ready() -> void:
@@ -38,7 +42,7 @@ func _build() -> void:
 	_panels.add_theme_constant_override("separation", 10)
 	centre.add_child(_panels)
 
-	var title := UiStyle.label("Lost Marbles", UiStyle.TITLE_FONT_SIZE, UiStyle.CREAM)
+	var title := UiStyle.label("I’m Losing My\nMarbles!", UiStyle.TITLE_FONT_SIZE, UiStyle.CREAM)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_constant_override("line_spacing", 14)
 	UiStyle.set_marble_drift(title)
@@ -66,7 +70,7 @@ func _build() -> void:
 	quit.pressed.connect(_on_quit)
 	stack.add_child(quit)
 
-	_hint = UiStyle.label("WASD to move  ·  hold left mouse to grab  ·  Q to ping  ·  Esc to pause",
+	_hint = UiStyle.label("WASD to move  ·  C crouch  ·  Z lie down  ·  hold left mouse to grab  ·  Q to ping  ·  Esc to pause",
 		UiStyle.HINT_FONT_SIZE, UiStyle.CREAM_SOFT, 400)
 	_hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -76,37 +80,69 @@ func _build() -> void:
 	_hint.offset_bottom = -40.0
 	add_child(_hint)
 
+	# Small, tucked into the bottom-right corner, clear of the controls hint.
+	_credits_word = MenuPanel.make_text("Credits", 48)
+	_credits_word.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_credits_word.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_credits_word.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_credits_word.offset_right = -40.0
+	_credits_word.offset_bottom = -36.0
+	_credits_word.pressed.connect(_on_credits)
+	add_child(_credits_word)
 
+	# The version from Project Settings (release.sh stamps it), faint in the
+	# bottom-left corner so playtesters can say which build they're on.
+	_version = UiStyle.label("v" + str(ProjectSettings.get_setting("application/config/version", "")),
+		24, UiStyle.CREAM_SOFT, 400)
+	_version.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_version.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_version.offset_left = 40.0
+	_version.offset_bottom = -40.0
+	add_child(_version)
 
 func _draw() -> void:
-	if _settings != null:
-		# The settings page fills the middle, so dim the whole room behind it.
+	if _page != null:
+		# A page fills the middle, so dim the whole room behind it.
 		draw_rect(Rect2(Vector2.ZERO, size), Color(UiStyle.SHADE, 0.72))
 	else:
 		draw_texture_rect(UiStyle.title_shade(), Rect2(Vector2.ZERO, size), false)
 
 
 func _on_play() -> void:
-	# change_scene_to_file replaces the whole current scene on the next frame.
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	SceneFade.change_scene("res://scenes/main.tscn")
 
 
 func _on_settings() -> void:
-	if _settings != null:
+	_open_page(SettingsMenu.new())
+
+
+func _on_credits() -> void:
+	_open_page(CreditsPage.new())
+
+
+## Hides the title's own words and shows `page` until it emits `closed`.
+func _open_page(page: Control) -> void:
+	if _page != null:
+		page.free()
 		return
-	_panels.visible = false
-	_hint.visible = false
-	_settings = SettingsMenu.new()
-	_settings.closed.connect(_on_settings_closed)
-	add_child(_settings)
+	_set_title_visible(false)
+	_page = page
+	page.connect("closed", _on_page_closed)
+	add_child(page)
 	queue_redraw()
 
 
-func _on_settings_closed() -> void:
-	_settings = null
-	_panels.visible = true
-	_hint.visible = true
+func _on_page_closed() -> void:
+	_page = null
+	_set_title_visible(true)
 	queue_redraw()
+
+
+func _set_title_visible(on: bool) -> void:
+	_panels.visible = on
+	_hint.visible = on
+	_credits_word.visible = on
+	_version.visible = on
 
 
 func _on_quit() -> void:

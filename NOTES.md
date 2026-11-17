@@ -4,7 +4,7 @@ Godot 4.7.2, GDScript, Jolt Physics. Open the folder in Godot and press F5; it
 boots into `scenes/title.tscn` and Play loads `scenes/main.tscn`. To skip the
 menu while working, run the main scene on its own with F6.
 
-**Controls:** You play a child: 1.3 m tall, eyes at 1.15 m. WASD move, Shift run, hold C or Ctrl to crouch right down, eyes at the floor, to peer under the bed (slower; stays down under furniture until there is headroom), mouse look, Esc pauses. Hold left mouse to
+**Controls:** You play a child: 1.3 m tall, eyes at 1.15 m. WASD move, Shift run, hold C or Ctrl to crouch (eyes at 0.6 m, 2.5 m/s), hold Z to lie flat (eyes at the floor, 1.4 m/s) to peer under the bed; you only get up as far as the headroom allows, mouse look, Esc pauses. Hold left mouse to
 grab, release to drop, right mouse or F to throw, mouse wheel to move the held
 object nearer/further. Click an exposed creature to catch it. Q pings. R
 restarts at any time.
@@ -19,9 +19,10 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 ├─ House           three rooms in a row, west to east (see "The house")
 │  ├─ Walls        CSGCombiner3D: walls/ceiling, both doorways, window, cubbies
 │  ├─ FloorPlayroom, FloorBedroom, FloorBoxRoom   CSGBox3D
+│  ├─ StableDoor   scripts/stable_door.gd: playroom–bedroom door, top half bolted shut
 │  ├─ LandingDoor  the landing's door; its Door body swings open after the lesson
 │  └─ LampPlayroom, LampMain (bedroom), LampSide (box room), a ReflectionProbe each
-├─ Player          scenes/player.tscn  (scripts/player.gd: move, look, kick clutter)
+├─ Player          scenes/player.tscn  (scripts/player.gd: move, look, brace doors)
 │  ├─ CollisionShape3D  capsule
 │  └─ Head              pitch (up/down); the body itself does yaw (left/right)
 │     └─ Camera3D       top_level, placed by player.gd every frame (see "Smoothness")
@@ -29,7 +30,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 │           └─ BeamMesh the curved beam ribbon, rebuilt each frame
 ├─ Landing             scenes/landing.tscn: the lesson's box, bin, creature and clutter
 ├─ MainRoomProps        scenes/main_room_props.tscn: playroom and bedroom props
-├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (13 playroom, 8 bedroom)
+├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 24 creatures (12 playroom, 12 bedroom)
 ├─ SideRoomProps        scenes/side_room_props.tscn: the box room
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
@@ -80,13 +81,14 @@ a root node and a script.
   pre-selected and the arrow keys do nothing. Esc still backs out of menus.
 - **The marble bag** (`scripts/marble_bag.gd`, `scripts/bag_marble.gd`) sits
   in the HUD's bottom-right corner. Each catch drops a ball in that
-  creature's colour, with eyes, into a clear bag where it rolls and
+  creature's colour, wearing its face, into a clear bag where it rolls and
   piles up. It's a SubViewport with its own 2D physics world, so the balls
   can't touch the 3D game. One function, `_outline()`, gives the bag's shape
   for both drawing and the walls the balls hit, so the two always match.
   The balls are glass marbles like the menu text
   (`shaders/glass_marble.gdshader`: smoky glass, white edge light, a swirl in
-  the creature's colour, bubbles), with the eyes drawn plain on top. The bag
+  the creature's colour, bubbles), with its felt-tip face drawn plain on top
+  (`DoodleFace.draw`). The bag
   is clear film: faint fill, fine white edges, reflections and creases, a
   gathered neck. No bow, no tag. Balls clack like glass marbles when they land and knock together
   (`Tones.clack`: a bright crack with a very short two-pitch glass ring,
@@ -101,8 +103,8 @@ a root node and a script.
   loosens while balls go in, and the bag squashes a little when each lands.
   To make the bag fuller or emptier at the end, change `BagMarble.RADIUS`
   (21): all 25 currently fill a little over half of it.
-- **No number on screen for catches**: the marbles in the bag are the
-  counter. The bag still keeps the count for tests (`Hud.caught_text()`).
+- **Catch count** sits in glass text just above the bag ("14 of 25";
+  Coiny's "/" leans backwards, hence "of"). Hidden on the win screen.
 - **On winning, the bag moves onto the win screen** beside your time.
   `reparent()` carries its whole subtree, physics world included, so any
   balls still queued keep dropping in there.
@@ -114,6 +116,8 @@ a root node and a script.
   a dark shade (`UiStyle.title_shade`); the whole room dims under Settings.
   `tests/shoot_title.tscn` shoots four points along the drift.
 - **The mouse pointer** is the normal system arrow (the custom hand was removed).
+- `scripts/credits_page.gd`: credits and licences (Godot, Jolt, Coiny), opened
+  from a small Credits word in the title's bottom-right corner.
 - `scripts/settings_menu.gd` is the settings page, shared by the title screen
   and the pause menu, in three sections: Controls, Sound and Graphics. Each
   setting is a −/+ stepper rather than a slider, so
@@ -194,14 +198,29 @@ than the creature squeaks.
 ## The landing lesson
 
 Every run starts on the **landing** (x -4.4..-0.8, z 2.65..5.85), south of
-the playroom, behind a shut door. `scripts/tutorial.gd` shows one hint at a
+the playroom, behind a shut door. It's dressed like a real landing
+(`scenes/landing.tscn`): a chest of drawers with a piggy bank on the west
+wall, a picture on each side wall, a toy car, slippers, a school bag. The
+teddy is in front of you; the lesson creature's bin is in the corner behind
+you, by the school bag, so the ping is what points you to it. Dropping what
+you hold moves past the throw hint just as a throw does (`Beam.dropped`). `scripts/tutorial.gd` shows one hint at a
 time in glass words just above the crosshair (`Hud.show_hint`): grab
 the box, throw it, ping, lift what squeaked, catch it. Each goes once done
 (via `Beam.grabbed`/`thrown`, `Ping.pinged`, the creature's state and
 `captured`); doing a later thing early skips ahead. The catch swings the
 door (an AnimatableBody3D, origin at the hinge) 100° into the playroom and
-the last hint fades after 4 s. The lesson creature counts like any other
-(26 in all), so its lift arrives before the house. The timer runs from the
+the last hint fades after 4 s. Once you're in the
+playroom and clear of its swing the door shuts for good (`shut_door`), and
+any creature left on the landing is put back just inside the playroom.
+
+Three more hints, each shown by tutorial.gd once the lesson is done:
+- "Hold C to crouch" within 1.8 m of the bedroom doorway, until you've been
+  through it.
+- "Hold Z to lie on your tummy" within 2 m of the bed, until you've lain flat
+  there.
+- "Press Q to ping", once only, after 10 s with no creature found while the
+  ping is ready. It goes when you ping or after 6 s. The lesson creature counts like any other
+(30 in all), so its lift arrives before the house. The timer runs from the
 start. A ping from the landing can reach a couple of playroom creatures
 through the wall.
 
@@ -282,15 +301,21 @@ as a real room). Ceilings stay 3 m. Plan: `tests/shoot_rooms.tscn` renders
 each room (needs a window).
 - **Playroom** (x -5.1..-0.1, 5 × 4.5 m), through the landing door: a beanbag in the north-west
   corner, a toy bin, a school bag by the north wall, the bookcase on the west
-  wall, a beanbag, the play table on the rug over the trapdoor, two bins. Planks.
-- **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a doorway at z=0: the bed
+  wall, a beanbag, the play table, two bins. Planks.
+- **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a stable door at z=0
+  (`scripts/stable_door.gd`, House/StableDoor: the glazed top half is bolted
+  shut from 1.1 m up; the bottom half starts shut, a 3.5 kg Prop on a
+  HingeJoint3D that the beam pulls up to 165° toward you into the playroom,
+  so you open it and crouch: standing is 1.3 m, crouched 0.95 m): the bed
   under the window, bedside table, chest of drawers, the wardrobe in front
   of the box-room door, a desk and chair, a laundry bin. Teal carpet.
 - **Box room** (x 5.3..8.3, 3 × 2.8 m), reached through the wardrobe.
 - The "main room" layout files hold the playroom and bedroom together; the
   "side room" ones are the box room.
 - New props: `desk.tscn` (10 kg), `chair.tscn` (3 kg), `chest_of_drawers.tscn`
-  (20 kg, three sliding drawers), `beanbag.tscn` (2 kg).
+  (20 kg, three sliding drawers), `beanbag.tscn` (2 kg; its slumped
+  shape, panels and seat dent are built in `scripts/beanbag_mesh.gd`, with a
+  convex hull of it for collision).
 - Small household things, all clutter (0.15–1.8 kg, liftable from the start).
   Playroom: teddy bear, toy car, stacking rings (table), toy drum, floor
   cushion, shape sorter, toy dinosaur. Bedroom: alarm clock (bedside table),
@@ -299,6 +324,25 @@ each room (needs a window).
   stacked shoe boxes, folded jumpers and a piggy bank (chest). Their meshes
   are only partly matched by collision shapes (fine detail like wheels and
   pencils is visual only). `check_room` checks they settle where they're put.
+- Playroom toys after Elebits' kid's room (built from primitives, not its
+  models): a **toy chest** (`toy_chest.gd`, 12 kg furniture) on the north
+  wall, its 1.6 kg lid on a hinge along the back (drops shut short of
+  upright, rests open past it), three blocks and a hiding creature inside
+  (it's a LiddedBox; lifting the front edge lets it out) and the teddy on top; a
+  **jack-in-the-box** on the table (`jack_in_the_box.gd`: a knock of 2 m/s or
+  more flips the lid and the clown springs out, posed from code, for good;
+  `Prop._knocked()` is the hook); a tin **robot**; a **hero** and a
+  **monster** figure squaring up by the toy car. `tests/shoot_toys.tscn`
+  shoots them shut and open.
+- Desk: the **pencil pot** is hollow, its three pencils (`pencil.gd`, one
+  scene painted per copy) and ruler are props of their own, resting at the
+  lean physics settled them to, so a knock sends them flying. The **globe** is
+  a stand plus a ball on a tilted HingeJoint3D axle (`desk_globe.gd`); grab
+  the ball and the stand holds still (`Prop.keep_still_while_parts_held`),
+  so it spins, and keeps turning a while. Grab the stand to carry it.
+- The **wardrobe** has a rail with eight hangers of clothes
+  (`wardrobe_*.tscn`), each on a hinge at its hook so it swings; they hang
+  either side, leaving the box-room doorway clear.
 
 ## The room's look: cosy, up past bedtime
 
@@ -322,6 +366,16 @@ child up past your bedtime". So it's night.
   with three 2 kg drawers; pull one with the beam and the others stay shut.
   Shoved hard, the 20 kg chest tips forward a little and its bottom drawer
   can catch on the floor.
+- **Lidded boxes** (`scripts/lidded_box.gd`): the shoe boxes and shape sorter
+  are hollow, with a loose lid (its own light Prop, with a skirt that sits
+  outside the walls). Lift it off with the beam, drop it back on. A creature
+  with `hiding_box` set sits inside, rides along, and pops out once the lid
+  leaves a gap 1.2× the marble's width (`opening_gap`). Tipped with the lid
+  still on, it stays shut in. One hides in the lower
+  shoe box (the other one is stacked on it) and one in the shape sorter.
+  The plastic bins are lidded boxes too, standing upright with a yellow
+  handle on the lid; the six creatures that used to sit under upturned bins
+  (including the lesson one) now hide inside them.
 - **Parts can't lift their furniture.** Drawers and wardrobe doors know their
   furniture (`Prop.part_of`). While the beam holds one and the furniture is
   over the lift limit, the furniture is frozen in place (`Prop.plant()`), so
@@ -464,15 +518,18 @@ Named in Project Settings > Layer Names > 3D Physics. A layer's bit value is
 | 2 player | 2 | the player capsule | |
 | 3 props | 4 | furniture (over 3 kg, fixed) and the wardrobe doors | block the player |
 | 4 creatures | 8 | creature bodies; exposed creatures' PickZone areas | marks it catchable (the beam aims with a lock-on cone) |
-| 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and kicks them |
-| 6 rug | 32 | the rug | meets only the floor; the beam can aim at it |
+| 5 clutter | 16 | props of 3 kg or less: books, balls, pillows, bins, small boxes, the bedside lamp, toy blocks | the player walks through them and leaves them be |
+| 6 rug | 32 | the rug | meets only the floor and lumps; the beam can aim at it |
+| 7 lumps | 64 | hidden creatures' stand-in balls | only clutter and the rug meet them, so a cushion or the rug rests on a hidden marble |
 
 `prop.gd` picks props or clutter by mass when it loads, overriding the layer
 saved in the `.tscn`. Two bodies collide if *either* one's mask includes the
 other's layer.
 
 - **Player** (mask world + props): blocked by walls and heavy props, never by
-  clutter or creatures.
+  clutter or creatures. **Only the beam moves things:** the player walks
+  through clutter and leaves it be, and a hinged door they touch is frozen
+  (`Prop.brace`) until they step away, since a CharacterBody3D would shove it.
 - **Creatures** (mask world + props + creatures + clutter, set in creature.gd).
 - **Held objects** pass through the player through collision exceptions (prop.gd),
   which are removed once the object is clear of the player after you let go.
@@ -507,13 +564,15 @@ The headless checks live in `tests/`, one scene each. Run one with:
 | check_stage3 | hiding, tells, reveal by lifting, knocking or pulling books, fleeing, cowering, catching, aim priority |
 | check_stage4 | ping range and cooldown, spotting the bed creatures, side room, win, timer, marble bag (one ball per catch, none escape), restart |
 | check_furniture | furniture is fixed and the beam ignores it; drawers, doors, bins and the chair still grab; crouching and looking finds the bed creatures; you walk through the wardrobe into the box room |
-| check_floor_clutter | the player wades through clutter and is blocked by furniture |
+| check_boxes | lidded boxes: lids sit on, the beam lifts one off without taking the box, the creature inside pops out and gets clear; a jostled lid or a tipped shut box keeps its creature in until the lid falls away |
+| check_floor_clutter | the player walks through clutter without moving it, is blocked by furniture, and can't push the stable door |
 | check_smoothness | even movement per frame at 157 fps |
 | check_bump | a creature rolling into another collides and clacks, once |
+| check_hiding_places | new hiders stay put; bowl marbles settle; cushion, pillow and rug sit up on their marbles; tip the drum or shake the bag and they tumble out; treading on the rug lump does nothing; lifting the rug, knocking the bowl, lifting pillow or cushion reveal; fleeing creatures dive under the bed or rug and hide again |
 | check_hiding | uncovered creatures cower somewhere the player can't see from where they stand |
 | check_menus | title panels; settings sections, steppers and saving; Graphics > Lighting levels, clamping and applying live from the pause menu; Pixel filter toggle and size; pause/resume, restart, quit to title |
 | check_grab_point | a crate lifted by its middle stays level, by a corner hangs tilted; the beam ends at the grab point |
-| check_tutorial | you start on the landing behind a door that holds you in; hints follow grab, throw, ping, find, catch; the catch opens the door and you can walk through |
+| check_tutorial | you start on the landing behind a door that holds you in; hints follow grab, throw, ping, find, catch; the catch opens the door and you can walk through; the door shuts behind you and clears the landing of creatures; crouch hint at the low doorway, lie-flat hint by the bed, ping reminder once |
 | check_catch | sucked into the hand and stretched; the beam shows in its colour, reaches it and goes after; sparkles and slurp; one ball in the bag; sparkles clean up |
 | check_beam_look | the beam's glow, filament, contact glow and lights come on with it, take its colour, sit at the grab point, go red and agitated when straining, and all go when it does |
 | check_room | a ball thrown hard at the window stays in the room; wooden props are matte; the bedside lamp stands on its table; the drawer rests shut and can be grabbed, and yanking it leaves the fixed table put |
@@ -528,7 +587,7 @@ They're scenes, not `--script` runs, so that the `Game` autoload loads first.
 The tests prove the systems do what they're meant to in a simulation. They can't
 tell whether any of it is fun or readable. Not verified:
 
-- **Feel:** whether holding, throwing, kicking clutter, the gate pacing and the
+- **Feel:** whether holding, throwing, the gate pacing and the
   hunt are enjoyable. Nothing has been checked by eye.
 - **Sound:** headless runs use a dummy audio driver. I only know a squeak
   *started*, not whether it's audible, pleasant, or easy to locate in 3D.
@@ -569,11 +628,10 @@ subtractions in main.tscn): one hides a creature (BehindPicture, moved from
 under a bin, so the count is unchanged), the other two toy blocks. A hidden
 creature has no gravity, so it waits in the hole until revealed.
 
-## The rug and the trapdoor
+## The rug
 
 The rug is cloth: a 1.8 m square `SoftBody3D` (`rug.tscn`, `scripts/rug.gd`)
-under the table, and both sit over a closed trapdoor (House/Trapdoor in
-main.tscn, meshes only; it doesn't open yet).
+in front of the bed, under the slippers. (The playroom trapdoor is gone.)
 - The beam only holds Props, so the rug has an invisible Prop, its Grip
   (`scripts/rug_grip.gd`). Aiming at the cloth offers the grip; just before
   the grab (`Prop.prepare_grab`) it jumps to that spot and pins the cloth
@@ -581,11 +639,13 @@ main.tscn, meshes only; it doesn't open yet).
   grip each tick (`soft_body_move_point`: Jolt ignores pin attachments).
 - It can't be lifted while anything of 5 kg or more stands on it
   (`PIN_DOWN_MASS`): the crosshair says "SOMETHING'S ON IT" and the beam
-  strains (`Prop.why_stuck`). Move the table off first.
+  strains (`Prop.why_stuck`). Nothing that heavy sits on it now.
 - A flat rug is level with the floor, so the beam takes the rug when a
   rug-only ray hits within 5 cm of where the floor was hit.
 - The rug's own physics layer (6) meets only the floor, so things on it stay
   put and a lifted rug passes through furniture.
+- It casts no shadow: lying flat, it shadowed itself into shimmering blotches
+  under the soft lamp shadows (worst on the low title camera).
 
 ## How creatures move
 
@@ -609,24 +669,39 @@ out over its front once it's out `DRAWER_REVEAL_OUT` (0.2 m), heading
 straight out for 0.6 s before steering away from you. Knocks don't reveal
 them.
 
-## The creatures' eyes
+## The creatures' faces
 
-The creatures are cheeky and playful, and all of it is in the eyes
-(`scripts/creature_eyes.gd`, on Visual/Eyes). The body is a glass marble
-matching its marble in the bag (`shaders/creature_marble.gdshader`: smoky
-glass, swirl in its colour seen through the ball, bubbles, edge light), and
-the eyes are painted flat on it by the same shader, which creature_eyes.gd
-feeds each tick: blink, widen, squint, where the pupils look (up to 42° off
-straight ahead), happy arcs, glint. `tests/shoot_creature.tscn` renders a
-close-up row of moods.
-- Always: blinks every 2-5 s; catchlights on the pupils; the whites glow
-  faintly so they read as white at night.
+The creatures are cheeky and playful, and all of it is in the face. The
+body is a glass marble matching its marble in the bag
+(`shaders/creature_marble.gdshader`: smoky glass, swirl in its colour seen
+through the ball, bubbles, edge light). The face is drawn on in felt-tip, as
+if by the child who owns them: wobbly blue-black ink, pencil-scribbled pink
+cheeks, and lines that "boil" (redrawn 6 times a second). Each creature picks
+its own face at spawn (`scripts/doodle_face.gd`: dot, ring or lashed eyes;
+smile, grin or wonky mouth; a little lopsided), shared with its bag marble.
+The shader draws it and `scripts/creature_eyes.gd` (on Visual/Eyes) feeds it
+each tick: blink, widen (bigger eyes, an "o" mouth), squint, where the pupils
+look, happy arcs and grin, glint. Turned to look at you, it tips its face 70%
+of the way up to your eyes (`FACE_TIP`), since you always look down on it.
+`tests/shoot_faces.tscn` renders a sheet of random faces in every mood;
+`tests/shoot_face_variants.tscn` the 20 named built-in faces;
+`tests/shoot_creature.tscn` a row in the room.
+
+**Face painter** (`tools/face_painter.tscn`, F6): draw faces by hand as four
+parts (eye, happy eye, mouth, startled mouth) with a felt-tip pen (one solid colour, soft edge) and a white pen; leave the happy eye or startled mouth blank and they are made from the eye (its top edge as a "^" arch) and the mouth (an "o" to match), in the painter and when the game loads the face; closed loops in the eye fill white automatically. A live marble preview
+runs through the moods. Save writes `res://faces/<name>.png` (the four
+parts side by side). When that folder has any faces, creatures wear those
+(at random) instead of the built-in doodles; the shader places the parts,
+mirrors the eye for the right, squashes it to blink and squint, grows it
+when startled and wobbles the lines as the ink boils.
+`tests/shoot_face_painter.tscn` checks it end to end; `tests/shoot_drawn_faces.tscn` shows every drawn face in three moods; `tools/import_face_sheet.tscn` turns a sheet of drawn doodle faces (`art/face_sheet.png`) into faces: each face's ink split into left eye, right eye and mouth, the whole face scaled to fit the ball, each part in a snug box where it was drawn, extras beside the eyes (brows, tears, hearts, "!") on a still sixth cell that doesn't change with the mood (saved as `<name>.json`: a face's own layout; without one, the painter's), with its own right eye so lopsided faces stay lopsided (an optional fifth cell). Drawn faces aren't made lopsided at random. Made happy eyes are 1.7x the eye's width and drawn in a 1.6x box (`HAPPY_GROW`, `HAPPY_BOX`). Faces 29 and 36 are skipped (tears touch the eyes). Press shots use only `DoodleFace.PRESS_FACES` (chosen faces 1, 6, 7, 8, 26, 34), posed in their normal mood on the covers. Older faces from the painter are kept in `art/old_faces/`. Export: include `faces/*.json`. `tools/face_batch.tscn` draws a starter set of simple line faces through the painter (skipping names already there).
+- Always: blinks every 2-5 s.
 - Hidden: every 3-8 s it peeks at you for a second; its giveaway (and a
-  ping) makes the eyes glint, bright enough for bloom.
+  ping) makes the glass round its eyes flash, bright enough for bloom.
 - Found: wide eyes for 0.35 s, then a cheeky squint as it bolts.
 - Running and cowering: it keeps its eyes on you, and winks now and then
   while it waits.
-- Caught: happy ^ ^ arcs as it's pulled into the beam.
+- Caught: happy ^ ^ arcs and a big grin as it's pulled into the beam.
 Timings are constants at the top of creature_eyes.gd and creature.gd.
 
 A cover lifted by the beam (an upturned crate) used to be able to scoop its
@@ -644,6 +719,35 @@ count as cover but a bin or bag does. The spot is re-aimed every tick while
 it runs, so if you move, it heads for the new far side. The constants are at
 the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
 
+**Nooks** (`HideNook` markers under main.tscn's HideNooks: three under the
+bed, three under the rug's free corners) compete with those spots, counted
+`NOOK_BONUS` (1 m) nearer. A creature that reaches one hides properly again:
+under the bed it's found by crouching and looking, under the rug it's a lump.
+One creature per nook.
+
+## Organic hiding places
+
+Seven of the plainer "behind a prop" spots were swapped for these:
+- **Inside a toy** (`inside` on the creature: InToyDrum, InSideBag). It rides
+  inside, collisionless and out of sight; its tells shake the toy. Tip the toy
+  past `TIP_UP` or move it faster than `SHAKE_SPEED` (throw or shake) and it tumbles out of the top.
+- **Lumps** (UnderCushion, UnderPillow, UnderRug with `under_rug`). Every
+  hidden creature leaves an invisible ball on the lumps layer that clutter
+  and the rug rest on, so the cushion and pillow sit up on it and the rug
+  drapes over it. The cushion and pillow start propped at an angle, as they
+  settle. Lift them as usual.
+- **Under the rug** the lump is 0.1 m (`LUMP_RADIUS`), well bigger than the
+  ball, so the coarse cloth shows a bump; the ball itself is hidden, as it
+  would poke through. The lump rises from under the floor so the cloth ends
+  up on top, and the rug is woken while it moves (`rug.wake()`: a resting
+  soft body sleeps through it otherwise). A rug lump bolts when the rug is
+  lifted or something lands on it (treading on it does nothing); its tell is a twitch.
+- **A bowl of marbles** on the bedroom desk (`marble_bowl.tscn`, nine `glass_marble.tscn`: the
+  creatures' glass in grey with `face_shown` off). InMarbleBowl sits among them
+  facing the wall (`hidden_yaw` 180); its peeks and glows give it away. Knock
+  the bowl or a marble and it bolts, passing through the bowl's sides.
+  Escaping creatures now pass through every small cover for a second.
+
 ## Known quirks (deliberate or tolerated)
 
 - A cowering creature doesn't move again when you walk round to see it, so
@@ -656,8 +760,6 @@ the top of `creature.gd` (`HIDE_SEARCH_RADIUS`, `HIDE_GAP`).
 - You can only catch a creature you can see: its middle or its top must be
   in clear view past walls and furniture. One cowering behind a bin or a
   wardrobe door can't be caught through it, and the click grabs the bin.
-- The player pushes clutter like a snowplough: anything dead ahead gets shoved
-  until it reaches a wall.
 - Creatures under the bed ignore jolts and things flying past (you find them
   by looking), but a book slid *under* the bed can still startle them.
 - If a creature falls out of the world it reappears in the playroom–bedroom doorway.

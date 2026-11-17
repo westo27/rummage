@@ -89,7 +89,8 @@ var _front: Node2D
 ## 0 = gathered shut, 1 = loosened. Eased toward its target every frame.
 var _open: float = 0.0
 var _open_hold_left: float = 0.0
-var _queue: Array[Color] = []
+## Balls waiting to drop: [colour, face] each.
+var _queue: Array[Array] = []
 var _next_drop_in: float = 0.0
 var _squash: Tween
 
@@ -154,9 +155,9 @@ func _ready() -> void:
 	_build_walls()
 
 
-## Queues a ball of this colour to drop into the bag.
-func drop(color: Color) -> void:
-	_queue.append(color)
+## Queues a ball of this colour and face to drop into the bag.
+func drop(color: Color, face: DoodleFace) -> void:
+	_queue.append([color, face])
 
 
 ## Remembers the catch count.
@@ -189,7 +190,8 @@ func _process(delta: float) -> void:
 		# Loosen the neck first; the ball drops once it's mostly open.
 		_open_hold_left = OPEN_HOLD
 		if _next_drop_in <= 0.0 and _open > 0.6:
-			_spawn_marble(_queue.pop_front())
+			var next: Array = _queue.pop_front()
+			_spawn_marble(next[0], next[1])
 			_next_drop_in = DROP_INTERVAL
 	_open_hold_left -= delta
 	var target: float = 1.0 if _open_hold_left > 0.0 else 0.0
@@ -200,9 +202,10 @@ func _process(delta: float) -> void:
 		_front.queue_redraw()
 
 
-func _spawn_marble(color: Color) -> void:
+func _spawn_marble(color: Color, face: DoodleFace) -> void:
 	var marble := BagMarble.new()
 	marble.color = color
+	marble.face = face
 	# Just above the opening, a little off-centre, so the pile isn't a tower.
 	marble.position = Vector2(CENTRE_X + randf_range(-14.0, 14.0), NECK_Y - FRILL_HEIGHT - 50.0)
 	marble.linear_velocity = Vector2(randf_range(-40.0, 40.0), 160.0)

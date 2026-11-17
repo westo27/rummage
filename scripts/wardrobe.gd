@@ -8,7 +8,8 @@ extends Prop
 ## Jolt hinge solid, so it isn't used here.)
 ##
 ## It has no back: it stands in front of the box-room doorway, so opening the
-## doors and walking in takes you through to the box room.
+## doors and walking in takes you through to the box room. The clothes on
+## its rail hang either side, parted over the doorway.
 
 ## How far each door can swing open.
 const DOOR_SWING: float = deg_to_rad(110.0)
@@ -16,6 +17,8 @@ const DOOR_SWING: float = deg_to_rad(110.0)
 const HINGE_DAMP: float = 3.0
 ## Which way round each hinge opens the door outward. Found by trying it.
 const OPEN_SIGN := {"DoorA": -1.0, "DoorB": 1.0}
+## How quickly the clothes on the rail stop swinging.
+const HANGER_DAMP: float = 1.0
 
 
 func _ready() -> void:
@@ -29,6 +32,23 @@ func _ready() -> void:
 		hinge.set_flag(HingeJoint3D.FLAG_USE_LIMIT, true)
 		hinge.set_param(HingeJoint3D.PARAM_LIMIT_LOWER, minf(0.0, sign * DOOR_SWING))
 		hinge.set_param(HingeJoint3D.PARAM_LIMIT_UPPER, maxf(0.0, sign * DOOR_SWING))
+	for child in get_children():
+		if child is Prop and child.name.begins_with("Hanging"):
+			_hang(child as Prop)
+
+
+## Hangs a hanger of clothes on the rail: a hinge at its hook, turning about
+## the rail (our Z), so it swings when knocked.
+func _hang(item: Prop) -> void:
+	var hook: Vector3 = item.position
+	_detach_part(item)
+	item.angular_damp = HANGER_DAMP
+	var hinge := HingeJoint3D.new()
+	hinge.name = String(item.name) + "Hook"
+	hinge.position = hook
+	add_child(hinge)
+	hinge.node_a = hinge.get_path_to(self)
+	hinge.node_b = hinge.get_path_to(item)
 
 
 ## How far a door is open, in radians (0 = shut).

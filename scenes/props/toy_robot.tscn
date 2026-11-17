@@ -1,0 +1,498 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_tin"]
+albedo_color = Color(0.3, 0.55, 0.9, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_steel"]
+albedo_color = Color(0.78, 0.8, 0.84, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_dark"]
+albedo_color = Color(0.2, 0.22, 0.3, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_red"]
+albedo_color = Color(0.92, 0.25, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_yellow"]
+albedo_color = Color(1, 0.82, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.046, 0.026, 0.078)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(0.034, 0.06, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_3"]
+size = Vector3(0.037, 0.006, 0.041)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+size = Vector3(0.037, 0.006, 0.041)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5"]
+size = Vector3(0.046, 0.026, 0.078)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+size = Vector3(0.034, 0.06, 0.038)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(0.037, 0.006, 0.041)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+size = Vector3(0.037, 0.006, 0.041)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_9"]
+size = Vector3(0.11, 0.086, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_10"]
+size = Vector3(0.096, 0.02, 0.056)
+
+[sub_resource type="BoxMesh" id="BoxMesh_11"]
+size = Vector3(0.11, 0.1, 0.074)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_12"]
+size = Vector3(0.11, 0.12, 0.074)
+
+[sub_resource type="BoxMesh" id="BoxMesh_13"]
+size = Vector3(0.078, 0.062, 0.004)
+
+[sub_resource type="StandardMaterial3D" id="Mat_dialface"]
+albedo_color = Color(0.97, 0.96, 0.9, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_14"]
+top_radius = 0.015
+bottom_radius = 0.015
+height = 0.004
+
+[sub_resource type="BoxMesh" id="BoxMesh_15"]
+size = Vector3(0.002, 0.012, 0.003)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_16"]
+top_radius = 0.006
+bottom_radius = 0.006
+height = 0.006
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_17"]
+top_radius = 0.006
+bottom_radius = 0.006
+height = 0.006
+
+[sub_resource type="BoxMesh" id="BoxMesh_18"]
+size = Vector3(0.05, 0.003, 0.003)
+
+[sub_resource type="BoxMesh" id="BoxMesh_19"]
+size = Vector3(0.05, 0.003, 0.003)
+
+[sub_resource type="BoxMesh" id="BoxMesh_20"]
+size = Vector3(0.05, 0.003, 0.003)
+
+[sub_resource type="SphereMesh" id="SphereMesh_21"]
+radius = 0.0035
+height = 0.007
+
+[sub_resource type="SphereMesh" id="SphereMesh_22"]
+radius = 0.0035
+height = 0.007
+
+[sub_resource type="SphereMesh" id="SphereMesh_23"]
+radius = 0.0035
+height = 0.007
+
+[sub_resource type="SphereMesh" id="SphereMesh_24"]
+radius = 0.0035
+height = 0.007
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_25"]
+top_radius = 0.015
+bottom_radius = 0.018
+height = 0.016
+
+[sub_resource type="BoxMesh" id="BoxMesh_26"]
+size = Vector3(0.086, 0.064, 0.07)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_27"]
+size = Vector3(0.086, 0.07, 0.07)
+
+[sub_resource type="BoxMesh" id="BoxMesh_28"]
+size = Vector3(0.07, 0.03, 0.004)
+
+[sub_resource type="StandardMaterial3D" id="Mat_eyes"]
+albedo_color = Color(1, 0.9, 0.45, 1)
+emission_enabled = true
+emission = Color(1, 0.8, 0.3, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_29"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.004
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_30"]
+top_radius = 0.014
+bottom_radius = 0.014
+height = 0.012
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_31"]
+top_radius = 0.005
+bottom_radius = 0.005
+height = 0.008
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_32"]
+top_radius = 0.009
+bottom_radius = 0.009
+height = 0.004
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_33"]
+top_radius = 0.014
+bottom_radius = 0.014
+height = 0.012
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_34"]
+top_radius = 0.005
+bottom_radius = 0.005
+height = 0.008
+
+[sub_resource type="BoxMesh" id="BoxMesh_35"]
+size = Vector3(0.004, 0.012, 0.004)
+
+[sub_resource type="BoxMesh" id="BoxMesh_36"]
+size = Vector3(0.004, 0.012, 0.004)
+
+[sub_resource type="BoxMesh" id="BoxMesh_37"]
+size = Vector3(0.004, 0.012, 0.004)
+
+[sub_resource type="BoxMesh" id="BoxMesh_38"]
+size = Vector3(0.004, 0.012, 0.004)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_39"]
+top_radius = 0.008
+bottom_radius = 0.01
+height = 0.008
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_40"]
+top_radius = 0.0025
+bottom_radius = 0.0025
+height = 0.04
+
+[sub_resource type="SphereMesh" id="SphereMesh_41"]
+radius = 0.009
+height = 0.018
+
+[sub_resource type="SphereMesh" id="SphereMesh_42"]
+radius = 0.017
+height = 0.034
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_43"]
+top_radius = 0.011
+bottom_radius = 0.011
+height = 0.045
+
+[sub_resource type="SphereMesh" id="SphereMesh_44"]
+radius = 0.012
+height = 0.024
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_45"]
+top_radius = 0.011
+bottom_radius = 0.012
+height = 0.045
+
+[sub_resource type="BoxMesh" id="BoxMesh_46"]
+size = Vector3(0.004, 0.012, 0.018)
+
+[sub_resource type="BoxMesh" id="BoxMesh_47"]
+size = Vector3(0.004, 0.012, 0.018)
+
+[sub_resource type="SphereMesh" id="SphereMesh_48"]
+radius = 0.017
+height = 0.034
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_49"]
+top_radius = 0.011
+bottom_radius = 0.011
+height = 0.045
+
+[sub_resource type="SphereMesh" id="SphereMesh_50"]
+radius = 0.012
+height = 0.024
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_51"]
+top_radius = 0.011
+bottom_radius = 0.012
+height = 0.045
+
+[sub_resource type="BoxMesh" id="BoxMesh_52"]
+size = Vector3(0.004, 0.012, 0.018)
+
+[sub_resource type="BoxMesh" id="BoxMesh_53"]
+size = Vector3(0.004, 0.012, 0.018)
+
+[node name="ToyRobot" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.5
+continuous_cd = true
+script = ExtResource("1_prop")
+hold_radius = 0.2
+impact_material = 4
+
+[node name="FootL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, -0.137, 0.008)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_1")
+
+[node name="LegL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, -0.094, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_2")
+
+[node name="LegBandL1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, -0.108, 0)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_3")
+
+[node name="LegBandL2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.03, -0.082, 0)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_4")
+
+[node name="FootR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03, -0.137, 0.008)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_5")
+
+[node name="LegR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03, -0.094, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_6")
+
+[node name="LegBandR1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03, -0.108, 0)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_7")
+
+[node name="LegBandR2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03, -0.082, 0)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_8")
+
+[node name="LegsShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.107, 0.006)
+shape = SubResource("BoxShape3D_9")
+
+[node name="Hips" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.055, 0)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_10")
+
+[node name="Torso" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 0)
+material_override = SubResource("Mat_tin")
+mesh = SubResource("BoxMesh_11")
+
+[node name="TorsoShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.005, 0)
+shape = SubResource("BoxShape3D_12")
+
+[node name="ChestPlate" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.008, 0.039)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_13")
+
+[node name="Dial" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.016, 0.016, 0.042)
+material_override = SubResource("Mat_dialface")
+mesh = SubResource("CylinderMesh_14")
+
+[node name="Needle" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, -0.013, 0.02, 0.045)
+material_override = SubResource("Mat_red")
+mesh = SubResource("BoxMesh_15")
+
+[node name="ButtonRed" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.021, 0.026, 0.042)
+material_override = SubResource("Mat_red")
+mesh = SubResource("CylinderMesh_16")
+
+[node name="ButtonYellow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.021, 0.008, 0.042)
+material_override = SubResource("Mat_yellow")
+mesh = SubResource("CylinderMesh_17")
+
+[node name="Vent1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.008, 0.041)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_18")
+
+[node name="Vent2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.014, 0.041)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_19")
+
+[node name="Vent3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.041)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_20")
+
+[node name="Rivet1L" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.045, -0.035, 0.038)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("SphereMesh_21")
+
+[node name="Rivet1R" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.045, -0.035, 0.038)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("SphereMesh_22")
+
+[node name="Rivet2L" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.045, 0.047, 0.038)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("SphereMesh_23")
+
+[node name="Rivet2R" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.045, 0.047, 0.038)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("SphereMesh_24")
+
+[node name="Neck" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.063, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("CylinderMesh_25")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.102, 0)
+material_override = SubResource("Mat_tin")
+mesh = SubResource("BoxMesh_26")
+
+[node name="HeadShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+shape = SubResource("BoxShape3D_27")
+
+[node name="Visor" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0.037)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("BoxMesh_28")
+
+[node name="EyeL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.018, 0.11, 0.04)
+material_override = SubResource("Mat_eyes")
+mesh = SubResource("CylinderMesh_29")
+
+[node name="EarL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.048, 0.102, 0)
+material_override = SubResource("Mat_red")
+mesh = SubResource("CylinderMesh_30")
+
+[node name="BoltL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -0.057, 0.102, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("CylinderMesh_31")
+
+[node name="EyeR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.018, 0.11, 0.04)
+material_override = SubResource("Mat_eyes")
+mesh = SubResource("CylinderMesh_32")
+
+[node name="EarR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.048, 0.102, 0)
+material_override = SubResource("Mat_red")
+mesh = SubResource("CylinderMesh_33")
+
+[node name="BoltR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0.057, 0.102, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("CylinderMesh_34")
+
+[node name="Mouth1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0.083, 0.037)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_35")
+
+[node name="Mouth2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.005, 0.083, 0.037)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_36")
+
+[node name="Mouth3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.005, 0.083, 0.037)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_37")
+
+[node name="Mouth4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0.083, 0.037)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_38")
+
+[node name="AntennaBase" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.138, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("CylinderMesh_39")
+
+[node name="Antenna" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("CylinderMesh_40")
+
+[node name="AntennaBall" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.182, 0)
+material_override = SubResource("Mat_red")
+mesh = SubResource("SphereMesh_41")
+
+[node name="ShoulderL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.067, 0.04, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("SphereMesh_42")
+
+[node name="UpperArmL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.067, 0.015, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("CylinderMesh_43")
+
+[node name="ElbowL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.067, -0.008, 0)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("SphereMesh_44")
+
+[node name="ForearmL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5736, -0.8192, 0, 0.8192, 0.5736, -0.067, 0.0058, 0.0197)
+material_override = SubResource("Mat_tin")
+mesh = SubResource("CylinderMesh_45")
+
+[node name="ClawL1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.8192, 0.5736, 0, -0.5736, 0.8192, -0.074, 0.0241, 0.0459)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_46")
+
+[node name="ClawL2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.8192, 0.5736, 0, -0.5736, 0.8192, -0.06, 0.0241, 0.0459)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_47")
+
+[node name="ShoulderR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.067, 0.04, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("SphereMesh_48")
+
+[node name="UpperArmR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.067, 0.015, 0)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("CylinderMesh_49")
+
+[node name="ElbowR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.067, -0.008, 0)
+material_override = SubResource("Mat_dark")
+mesh = SubResource("SphereMesh_50")
+
+[node name="ForearmR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.067, -0.008, 0.024)
+material_override = SubResource("Mat_tin")
+mesh = SubResource("CylinderMesh_51")
+
+[node name="ClawR1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, -0.008, 0.056)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_52")
+
+[node name="ClawR2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.074, -0.008, 0.056)
+material_override = SubResource("Mat_steel")
+mesh = SubResource("BoxMesh_53")

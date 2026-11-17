@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-build",
+      "runtimeExecutable": "C:/Program Files (x86)/Python313-32/python.exe",
+      "runtimeArgs": ["-I", "-m", "http.server", "8060", "--directory", "build/web"],
+      "port": 8060
+    }
+  ]
+}

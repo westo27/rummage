@@ -5,6 +5,8 @@ shader_type spatial;
 #include "res://shaders/pixel_art.gdshaderinc"
 
 uniform int art = 0;
+// Bigger canvases get more texels under the pixel filter (set by picture.gd).
+uniform float texel_scale = 1.0;
 
 float circle(vec2 p, vec2 c, float r) {
 	float soft = pixel_art() ? 0.0001 : 0.01;
@@ -13,7 +15,7 @@ float circle(vec2 p, vec2 c, float r) {
 
 void fragment() {
 	// As pixel art each canvas is a small square grid, pixel_texels across.
-	vec2 p = pixel_snap(vec2(UV.x, 1.0 - UV.y), 1.0);  // y up
+	vec2 p = pixel_snap(vec2(UV.x, 1.0 - UV.y), texel_scale);  // y up
 	vec3 col;
 	if (art == 0) {
 		col = mix(vec3(0.62, 0.84, 1.0), vec3(0.85, 0.94, 1.0), p.y);

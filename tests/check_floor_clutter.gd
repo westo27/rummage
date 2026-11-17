@@ -1,6 +1,6 @@
 extends Node
 ## Walks the player into typical post-chaos floor clutter and reports whether
-## they get past it. Not part of the game.
+## they get past it, leaving it where it lay (only the beam moves things). Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_floor_clutter.tscn
 
 var _failures: int = 0
@@ -36,9 +36,33 @@ func _run() -> void:
 	]
 	for c: Array in cases:
 		await _try_case(c[0], c[1], c[2], c[3])
+	await _try_door()
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
+
+
+
+## The stable door's bottom half, swung ajar, then walked into from the
+## bedroom: it blocks the player and doesn't budge.
+func _try_door() -> void:
+	var door: RigidBody3D = _main.get_node("House/StableDoor").get("bottom_half")
+	door.angular_velocity = Vector3(0.0, 2.0, 0.0)
+	await _wait(1.0)
+	var at: Vector3 = door.global_position
+	_player.global_position = Vector3(at.x + 1.2, 0.05, at.z)
+	_player.rotation.y = PI / 2.0  # facing -x
+	_player.velocity = Vector3.ZERO
+	await _wait(0.1)
+	var shut_basis: Basis = door.global_basis
+	Input.action_press("move_forward")
+	await _wait(1.2)
+	Input.action_release("move_forward")
+	var turned: float = rad_to_deg(shut_basis.z.angle_to(door.global_basis.z))
+	var ok: bool = turned < 1.0
+	if not ok:
+		_failures += 1
+	print("%s  door ajar          turned %.1f deg as the player walked into it" % ["PASS" if ok else "FAIL", turned])
 
 
 ## Player walks north (−Z) along x=-2 (the playroom, emptied) from z=1.9 for 2 s; obstacle sits at z=0.4.
@@ -68,13 +92,13 @@ func _try_case(label: String, scene: PackedScene, basis: Basis, must_pass: bool)
 	Input.action_release("move_forward")
 	var z: float = _player.global_position.z
 	var got_past: bool = z < -0.2
-	var kicked: float = spawned[0].global_position.distance_to(settled_at)
-	# Clutter must be both passable and visibly kicked (not ghosted through).
-	var ok: bool = (got_past and kicked > 0.3) if must_pass else not got_past
+	var moved: float = spawned[0].global_position.distance_to(settled_at)
+	# Clutter is walked through; nothing, clutter or furniture, is pushed.
+	var ok: bool = (got_past if must_pass else not got_past) and moved < 0.03
 	if not ok:
 		_failures += 1
 	print("%s  %-18s player z=%.2f (obstacle at 1.5) %s, obstacle moved %.2f m" % [
-		"PASS" if ok else "FAIL", label, z, "got past" if got_past else "BLOCKED", kicked])
+		"PASS" if ok else "FAIL", label, z, "got past" if got_past else "BLOCKED", moved])
 	for p in spawned:
 		p.queue_free()
 	await _wait(0.2)

@@ -32,6 +32,12 @@ size = Vector3(1.4, 0.07, 0.94)
 [sub_resource type="BoxMesh" id="Mesh_drape"]
 size = Vector3(1.4, 0.2, 0.02)
 
+[sub_resource type="BoxShape3D" id="Shape_duvet"]
+size = Vector3(1.4, 0.07, 0.94)
+
+[sub_resource type="BoxShape3D" id="Shape_drape"]
+size = Vector3(1.4, 0.2, 0.02)
+
 [sub_resource type="BoxMesh" id="Mesh_head"]
 size = Vector3(0.06, 0.78, 0.96)
 
@@ -74,6 +80,14 @@ mesh = SubResource("Mesh_duvet")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 0.17, 0.48)
 material_override = SubResource("Mat_duvet")
 mesh = SubResource("Mesh_drape")
+
+[node name="DuvetShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 0.235, 0)
+shape = SubResource("Shape_duvet")
+
+[node name="DrapeShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 0.17, 0.48)
+shape = SubResource("Shape_drape")
 
 [node name="BaseShape" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)

@@ -1,251 +1,184 @@
 extends Node
-## Renders the itch.io page screenshots, staged in the real house: eyes under
-## the bed, the beam holding the teddy, the wardrobe open, the rug pulled up,
-## two wide room shots and a catch with the bag. Needs a real window (no
-## --headless). PNGs go to user://shots/itch_*.png.
+## Renders the itch.io page screenshots: five staged moments of play with the
+## HUD showing. Needs a real window (no --headless).
 ## Run: Godot --path . --resolution 1920x1080 res://tests/shoot_itch.tscn
+## (add `-- pixel` for the pixel-filter set, saved as itch_*_pixel.png)
 
 const OUT: String = "user://shots"
-const SIZE := Vector2i(1920, 1080)
+const SEED: int = 2
+const Drawers := preload("res://scripts/drawers.gd")
+## Shot 3: where the under-bed marbles sit, and the eye lying flat facing them.
+const UNDER_BED_ROW: Array[Vector3] = [
+	Vector3(2.05, 0.056, -1.75), Vector3(2.4, 0.056, -1.55),
+	Vector3(2.75, 0.056, -1.8), Vector3(3.1, 0.056, -1.6),
+]
+const PRONE_EYE := Vector3(2.6, 0.05, -0.55)
+const PRONE_TARGET := Vector3(2.6, 0.08, -1.7)
+## Shot 4: frames after the drawer marble starts its pop.
+const DRAWER_POP_FRAMES: int = 20
 
 var _main: Node
 var _player: CharacterBody3D
 var _head: Node3D
-var _cam: Camera3D
 var _beam: Beam
-var _hud: Hud
-## Creatures held still for a shot: Creature -> {mood, wink, glint}. Their own
-## physics (and AI) is off, so this script drives their eyes each frame.
-var _posed: Dictionary = {}
+## Hidden creatures that stare at you for the shot (normally they only
+## glance now and then).
+var _peekers: Array[Creature] = []
+## Holds the player at this crouch (0 stand, 0.5 crouched); < 0 leaves it be.
+var _crouch: float = -1.0
+## Added to each file name ("_pixel" for the pixel-filter set).
+var _suffix: String = ""
 
 
 func _ready() -> void:
 	_run.call_deferred()
 
 
-func _process(delta: float) -> void:
-	for creature: Creature in _posed:
-		if not is_instance_valid(creature):
-			continue
-		var pose: Dictionary = _posed[creature]
-		var eyes := creature.get_node("Visual/Eyes") as CreatureEyes
-		eyes.mood = pose.mood
-		eyes._blink_left = 0.0
-		eyes._next_blink = 99.0
-		if pose.wink:
-			# Held at the shut-most point of a wink, as in shoot_cover.
-			eyes._wink_eye = 1
-			eyes._wink_left = CreatureEyes.WINK_SECONDS * 0.5
-		if pose.glint:
-			eyes._white_glow = CreatureEyes.GLINT_ENERGY
-		# Turn the face (-Z of its Visual) to the camera, level.
-		var visual := creature.get_node("Visual") as Node3D
-		var to_cam: Vector3 = _cam.global_position - visual.global_position
-		to_cam.y = 0.0
-		visual.global_basis = Basis.looking_at(to_cam.normalized(), Vector3.UP)
-		eyes.look_target = _cam.global_position
-		eyes.step(delta)
+func _process(_delta: float) -> void:
+	for c in _peekers:
+		c._peek_left = 1.0
+		c._peek_next = 1.0
+	if _crouch >= 0.0:
+		_player.set("crouch", _crouch)
 
 
 func _run() -> void:
+	# Press images show the chosen faces, at full resolution unless asked for
+	# the pixel look (`-- pixel`: filter at its finest, dithered).
+	DoodleFace.only = DoodleFace.PRESS_FACES
+	# The game opens fullscreen, which would save at the screen's size.
+	get_window().mode = Window.MODE_WINDOWED
+	get_window().size = Vector2i(1920, 1080)
+	var pixel: bool = "pixel" in OS.get_cmdline_user_args()
+	_suffix = "_pixel" if pixel else ""
+	var settings := Game.settings
+	var saved: Array = [settings.pixel_filter, settings.pixel_strength, settings.pixel_dither]
+	settings.pixel_filter = pixel
+	settings.pixel_strength = 1
+	settings.pixel_dither = true
+	settings.apply_pixel_filter()
 	DirAccess.make_dir_recursive_absolute(OUT)
+	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(_main)
 	get_tree().current_scene = _main
 	_player = _main.get_node("Player") as CharacterBody3D
 	_head = _player.get_node("Head") as Node3D
-	_cam = _head.get_node("Camera3D") as Camera3D
-	_beam = _cam.get_node("Beam") as Beam
-	_hud = _main.get_node("HUD") as Hud
-	_player.set_process_unhandled_input(false)  # the real mouse can't swing the view
-	# Skip the lesson and keep the HUD out of the pictures.
-	(_main.get_node("Tutorial") as Tutorial).step = Tutorial.Step.DONE
-	_hud.hide_hint()
-	_hud.visible = false
+	_beam = _main.get_node("Player/Head/Camera3D/Beam") as Beam
+	_player.set_process_unhandled_input(false)
+	# No lesson prompts over the shots.
+	_main.get_node("Tutorial").queue_free()
+
+	# A game partway through: some marbles in the bag.
+	var hud := _main.get_node("HUD") as Hud
+	for i in 9:
+		hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()], DoodleFace.random())
+	hud.set_caught(9, 25)
+	hud.set_time(204.0)
+	await get_tree().create_timer(4.0).timeout
+	hud.hide_hint()
+	await get_tree().create_timer(1.0).timeout
+
+	# 1. The bedroom by lamplight.
+	await _stand(Vector3(4.2, 0.05, 1.3), Vector3(1.0, 0.7, -1.8))
+	_shoot("itch_1_bedroom")
+
+	# 2. The beam lifting the school bag in the playroom.
+	var bag := _main.get_node("MainRoomProps/PlayroomBag") as Prop
+	var at: Vector3 = bag.global_position
+	await _stand(at + Vector3(-1.1, 0.0, 1.6), at + Vector3(0.0, 0.3, 0.0))
+	_beam._grab_armed = true
+	_beam._grab(bag, bag.global_position + Vector3(0.0, 0.1, 0.0))
+	_look(at + Vector3(0.0, 0.9, 0.0))
+	await get_tree().create_timer(0.9).timeout
+	_shoot("itch_2_beam")
+	if _beam.held != null:
+		_beam._release()
+	_beam._grab_armed = false
+	await get_tree().create_timer(0.8).timeout
+
+	# 3. Lying flat by the bed: the marbles hiding under it peer back at you.
+	var under_bed: Array[Creature] = []
+	for c in _main.get_node("MainRoomCreatures").get_children():
+		if c is Creature and c.name.begins_with("UnderBed"):
+			under_bed.append(c as Creature)
+	for i in under_bed.size():
+		var c: Creature = under_bed[i]
+		c.reveal_when_spotted = false
+		c.global_position = UNDER_BED_ROW[i]
+		c.reset_physics_interpolation()
+	_peekers = under_bed
+	var startle: float = Game.tune.startle_distance
+	Game.tune.startle_distance = 0.0
+	# Get right down first: aiming mid-crouch would tilt the view at the carpet.
+	Input.action_press("prone")
+	await _frames(60)
+	await _stand(PRONE_EYE, PRONE_TARGET, 40)
+	# Hidden ones keep whatever way they were facing; turn the faces to us.
+	var cam := get_viewport().get_camera_3d()
+	for c in under_bed:
+		var visual := c.get_node("Visual") as Node3D
+		visual.basis = Basis()
+		visual.look_at(cam.global_position, Vector3.UP)
+		visual.basis = visual.basis * Basis(Vector3.UP, randf_range(-0.25, 0.25)) \
+			* Basis(Vector3.BACK, randf_range(-0.3, 0.3))
+		c.reset_physics_interpolation()
+	await _frames(4)
+	_shoot("itch_3_under_bed")
+	_peekers = []
+	Input.action_release("prone")
+	Game.tune.startle_distance = startle
 	await _frames(30)
 
-	# Wide shots first, before the others move things about.
-	await _wide("itch_bedroom", Vector3(0.6, 0.05, 1.6), Vector3(3.4, 0.9, -1.9))
-	await _wide("itch_playroom", Vector3(-0.6, 0.05, 1.7), Vector3(-4.0, 0.6, -1.4))
-	await _under_bed()
-	await _beam_teddy()
-	await _catch()
-	await _wardrobe()
-	await _rug()  # last: it moves the table
+	# 4. Pulling open a drawer: the marble hiding in it pops out.
+	var chest := _main.get_node("MainRoomProps/ChestOfDrawers") as Drawers
+	var drawer: Prop = chest.drawers[0]
+	var out_dir: Vector3 = chest.global_basis.z
+	var front: Vector3 = drawer.global_position + out_dir * 0.23
+	_crouch = 0.5
+	await _frames(20)
+	await _stand(front + out_dir * 1.35 + Vector3(0.0, 0.0, 0.55), front + Vector3(0.0, 0.08, 0.0))
+	# Held off-centre, so the beam's glow isn't right on the marble.
+	var handle: Vector3 = front - chest.global_basis.x * 0.28
+	_beam._grab_armed = true
+	_beam._grab(drawer, handle)
+	while chest.drawer_out(0) < Creature.DRAWER_REVEAL_OUT:
+		_beam._hold_distance -= 0.01
+		await get_tree().physics_frame
+	await _frames(DRAWER_POP_FRAMES)
+	_shoot("itch_4_drawer")
+	_beam._release()
+	_beam._grab_armed = false
+	_crouch = -1.0
+	await get_tree().create_timer(1.0).timeout
 
+	# 5. The playroom by lamplight.
+	await _stand(Vector3(-0.6, 0.05, -1.6), Vector3(-4.5, 0.4, 1.4))
+	_shoot("itch_5_playroom")
+
+	settings.pixel_filter = saved[0]
+	settings.pixel_strength = saved[1]
+	settings.pixel_dither = saved[2]
 	print("RESULT itch shots in %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 
 
-## Lying flat by the bed, four pairs of eyes looking back; one glints.
-func _under_bed() -> void:
-	var names := ["UnderBed1", "UnderBed2", "UnderBed3", "UnderBed4"]
-	for i in names.size():
-		var mood: CreatureEyes.Mood = CreatureEyes.Mood.SQUINT if i == 2 else CreatureEyes.Mood.NORMAL
-		_pose(names[i], mood, false, i == 1)
-	Input.action_press("crouch")
-	_place(Vector3(2.55, 0.05, -0.45), Vector3(2.55, 0.1, -1.75))
-	await _frames(40)
-	_look(Vector3(2.55, 0.08, -1.75))
-	await _frames(20)
-	_shoot("itch_under_bed")
-	Input.action_release("crouch")
-	await _frames(30)
-	_unpose()
-
-
-## The beam holding the teddy up in the playroom.
-func _beam_teddy() -> void:
-	var teddy := _main.get_node("MainRoomProps/Teddy") as Prop
-	_place(Vector3(-0.7, 0.05, 1.5), teddy.global_position)
-	await _frames(3)
-	_beam._grab_armed = true
-	_beam._grab(teddy, teddy.global_position + Vector3(0.0, 0.1, 0.0))
-	_look(Vector3(-3.0, 1.2, -1.2))  # up over the table, the room behind
-	_beam._hold_distance = 1.5  # nearer, so the teddy reads
-	await get_tree().create_timer(0.9).timeout
-	_shoot("itch_beam_teddy")
-	_beam._grab_armed = false
-	_beam._release()
-	await _frames(10)
-
-
-## Both wardrobe doors swung wide; two creatures inside, one winking.
-func _wardrobe() -> void:
-	_pose("InWardrobe1", CreatureEyes.Mood.HAPPY, true, false)
-	_pose("InWardrobe2", CreatureEyes.Mood.WIDE, false, false)
-	var wardrobe := _main.get_node("MainRoomProps/Wardrobe")
-	for door_name: String in ["DoorA", "DoorB"]:
-		await _swing_open(wardrobe, door_name)
-	await get_tree().create_timer(0.6).timeout
-	_place(Vector3(1.7, 0.05, 0.7), Vector3(4.7, 0.5, 0.0))
-	await _frames(20)
-	_shoot("itch_wardrobe")
-	_unpose()
-
-
-## Spins a door outward until it's near fully open. The hinge's limit stops
-## the wrong way, so if one way doesn't move it, the other does.
-func _swing_open(wardrobe: Node, door_name: String) -> void:
-	var door := wardrobe.get_node(door_name) as RigidBody3D
-	var spin: float = 3.0
-	for i in 180:
-		if wardrobe.door_angle(door_name) > deg_to_rad(100.0):
-			break
-		if i == 15 and wardrobe.door_angle(door_name) < 0.05:
-			spin = -spin
-		door.sleeping = false
-		door.angular_velocity = Vector3(0.0, spin, 0.0)
-		await get_tree().physics_frame
-	door.angular_velocity = Vector3.ZERO
-
-
-## The table moved off and the rug dragged half back, lifted, the trapdoor showing.
-func _rug() -> void:
-	var table := _main.get_node("MainRoomProps/Table") as RigidBody3D
-	# Slide the table (and what's on it) west, off the rug, and let it settle.
-	for prop: Node in _main.get_node("MainRoomProps").get_children():
-		if prop is RigidBody3D and prop != table and _over(prop as Node3D, table):
-			(prop as Node3D).global_position.x -= 1.4
-			(prop as RigidBody3D).reset_physics_interpolation()
-	table.global_position.x -= 1.4
-	table.reset_physics_interpolation()
-	table.sleeping = false
-	await get_tree().create_timer(2.5).timeout
-	var rug: Node = _main.get_node("MainRoomProps/Rug")
-	var edge := Vector3(-1.6, 0.006, -0.05)
-	_place(Vector3(0.1, 0.05, -0.05), edge)
-	await _frames(6)
-	_beam._grab_armed = true
-	_beam._grab(rug.grip, edge)
-	for i in 45:  # back off, dragging it off the trapdoor
-		_player.global_position.x += 0.03
-		await get_tree().physics_frame
-	_beam._grab_armed = false
-	_beam._release()
-	await get_tree().create_timer(1.5).timeout
-	# From inside the playroom, lift the rug's near edge, the trapdoor beside it.
-	var lift_at: Vector3 = rug.centre() + Vector3(-0.75, 0.0, 0.3)
-	_place(Vector3(-0.9, 0.05, 1.7), lift_at)
-	await _frames(6)
-	_beam._grab_armed = true
-	_beam._grab(rug.grip, lift_at)
-	_look(lift_at + Vector3(0.0, 0.55, 0.0))
-	await get_tree().create_timer(0.7).timeout
-	_look(Vector3(-2.1, 0.3, -0.3))
-	await get_tree().create_timer(0.12).timeout
-	_shoot("itch_rug")
-	_beam._grab_armed = false
-	_beam._release()
-	await get_tree().create_timer(1.0).timeout
-
-
-## Whether `prop` sits on top of `table` (within its top, above it).
-func _over(prop: Node3D, table: Node3D) -> bool:
-	var d: Vector3 = prop.global_position - table.global_position
-	return absf(d.x) < 0.7 and absf(d.z) < 0.5 and d.y > 0.2
-
-
-func _wide(shot_name: String, at: Vector3, target: Vector3) -> void:
-	_place(at, target)
-	await _frames(20)
-	_shoot(shot_name)
-
-
-## A creature caught in front of the camera, sparkling, with the bag filling.
-func _catch() -> void:
-	_hud.visible = true
-	_hud.hide_hint()
-	for i in 14:
-		_hud.add_to_bag(Creature.BODY_COLORS[i % Creature.BODY_COLORS.size()])
-	_hud.set_caught(14, 25)
-	_place(Vector3(3.0, 0.05, 1.5), Vector3(2.7, 0.5, -1.2))
-	await get_tree().create_timer(4.0).timeout  # the bag's pile settles
-	var creature := _main.get_node("MainRoomCreatures/BehindBeanbag") as Creature
-	creature.global_position = Vector3(2.9, 0.1, 0.1)
-	creature.reset_physics_interpolation()
-	await _frames(3)
-	_beam._capture(creature)
-	await get_tree().create_timer(0.12).timeout
-	_shoot("itch_catch")
-	_hud.visible = false
-	await get_tree().create_timer(1.0).timeout
-
-
-## Holds a creature still with the given look (it won't flee when uncovered).
-func _pose(creature_name: String, mood: CreatureEyes.Mood, wink: bool, glint: bool) -> void:
-	var creature := _main.get_node("MainRoomCreatures/" + creature_name) as Creature
-	creature.set_physics_process(false)
-	_posed[creature] = {"mood": mood, "wink": wink, "glint": glint}
-
-
-## Lets posed creatures go back to normal (they're hidden again, out of the way).
-func _unpose() -> void:
-	for creature: Creature in _posed:
-		if is_instance_valid(creature):
-			creature.set_physics_process(true)
-	_posed.clear()
-
-
-func _place(at: Vector3, target: Vector3) -> void:
-	_player.global_position = at
+func _stand(eye: Vector3, target: Vector3, settle: int = 25) -> void:
+	_player.global_position = eye
 	_player.reset_physics_interpolation()
+	await _frames(5)
 	_look(target)
+	await _frames(settle)
+
+
+func _shoot(shot_name: String) -> void:
+	get_viewport().get_texture().get_image().save_png("%s/%s%s.png" % [OUT, shot_name, _suffix])
 
 
 func _look(target: Vector3) -> void:
 	var dir: Vector3 = (target - _head.global_position).normalized()
 	_player.rotation.y = atan2(-dir.x, -dir.z)
 	_head.rotation.x = asin(dir.y)
-
-
-func _shoot(shot_name: String) -> void:
-	# macOS stops drawing a covered-up window, which would save a stale frame.
-	RenderingServer.force_draw(false)
-	var image: Image = get_viewport().get_texture().get_image()
-	if image.get_size() != SIZE:
-		image.resize(SIZE.x, SIZE.y, Image.INTERPOLATE_LANCZOS)
-	image.save_png("%s/%s.png" % [OUT, shot_name])
 
 
 func _frames(count: int) -> void:

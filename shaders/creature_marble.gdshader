@@ -1,10 +1,13 @@
 // A creature as a glass marble, matching its marble in the HUD bag
 // (glass_marble.gdshader): smoky glass with a little of its colour, a swirl
 // in its colour, a pale thin ribbon, a few bubbles, white light round the
-// edge and a highlight at the top left. The eyes are painted flat on the
-// ball here too, driven by CreatureEyes through the eye_* uniforms.
+// edge and a highlight at the top left.
 // It's opaque: the "inside" is faked by sampling the swirl partway along
 // the view ray through the ball, so it shifts with the angle like real glass.
+// The face is drawn on in felt-tip, as if by the child who owns the marbles:
+// rough wobbly ink, loops that don't quite close, its own mix of eyes and
+// mouth on every marble, and lines that "boil" (redrawn a few times a second,
+// like hand-drawn animation). CreatureEyes drives it through the eye_* uniforms.
 shader_type spatial;
 
 uniform vec4 tint : source_color = vec4(0.45, 0.95, 0.4, 1.0);
@@ -13,22 +16,49 @@ uniform float seed = 0.0;
 // How brightly the glass glows on its own, so it reads in the dark room.
 uniform float glow = 0.5;
 
-// Per eye (x left, y right): size, height (0 shut .. 1 open), pupil size.
+// Which face this marble has (picked by Creature from DoodleFace, shared
+// with its bag marble): the kind of eyes and mouth (see doodle_eye and
+// doodle_mouth), extras as bits (see doodle_extras), and how lopsided it's
+// drawn, -1..1.
+uniform int face_eyes = 0;
+uniform int face_mouth = 0;
+uniform int face_extras = 0;
+uniform float face_lop = 0.0;
+// A face drawn by hand in the face painter (tools/face_painter.tscn): four
+// square cells side by side, ink in the alpha: eye, happy eye, mouth,
+// startled mouth. Used in place of the built-in doodles when face_drawn.
+uniform bool face_drawn = false;
+// Off for a plain marble with no face (the bowl of marbles).
+uniform bool face_shown = true;
+// Where the drawn eye's ink sits in its square (0..1): left edge, right
+// edge, middle height. A blink is a line across that; a squint squashes the
+// eye about its middle.
+uniform vec3 face_eye_span = vec3(0.15, 0.85, 0.5);
+// How many cells the drawn face has: 4, or 5 when it has a right eye of its
+// own (cell 4, not mirrored, for lopsided faces), with that eye's span.
+uniform int face_cells = 4;
+uniform vec3 face_right_span = vec3(0.15, 0.85, 0.5);
+// Where each drawn part goes, as seen from the front (x to your right, y up,
+// in units of the face): its box's middle and half its size. The eye on your
+// left, the eye on your right, the mouth. A face from a sheet has its own,
+// fitted to how it was drawn; these are the painter's.
+uniform vec3 face_box_eye = vec3(-0.3, 0.08, 0.28);
+uniform vec3 face_box_eye2 = vec3(0.3, 0.08, 0.28);
+uniform vec3 face_box_mouth = vec3(0.0, -0.22, 0.3);
+// Extras that stay still whatever the mood (cell 5, when there is one).
+uniform vec3 face_box_extra = vec3(0.0, 0.0, 0.5);
+uniform sampler2D face_tex : source_color, filter_linear_mipmap, repeat_disable;
+// Per eye (x left, y right): size, height (0 shut .. 1 open), pupil size
+// (under 1 when wide-eyed).
 uniform vec2 eye_size = vec2(1.0);
 uniform vec2 eye_height = vec2(1.0);
 uniform vec2 pupil_size = vec2(1.0);
-// Where each pupil looks, -1..1 across the white (xy left eye, zw right).
+// Where each pupil looks, -1..1 (xy left eye, zw right).
 uniform vec4 pupil_offset = vec4(0.0);
 // 1 shows the happy ^ ^ arcs in place of the eyes.
 uniform float happy = 0.0;
-// How brightly the whites glow (they glint from hiding).
+// How brightly the highlights in the pupils shine (they glint from hiding).
 uniform float white_glow = 0.35;
-
-// The face as seen head-on, as on the bag's marble: eye centres and radii
-// in units of the ball's radius.
-const vec2 EYE_CENTRE = vec2(0.36, 0.18);
-const float EYE_RADIUS = 0.3;
-const float PUPIL_RADIUS = 0.15;
 
 varying vec3 obj_pos;
 varying vec3 obj_cam;
@@ -60,37 +90,288 @@ void vertex() {
 	obj_cam = (inverse(MODEL_MATRIX) * vec4(CAMERA_POSITION_WORLD, 1.0)).xyz;
 }
 
-// Shades one eye; f is the point on the face, c its centre. Returns
-// (colour, how much eye covers here) and adds its glow to `emit`.
-vec4 eye(vec2 f, vec2 c, float size, float height, float psize, vec2 look, inout vec3 emit) {
-	float aa = fwidth(f.x) * 1.5;
-	vec2 d = (f - c) / vec2(size, size * max(height, 0.02));
-	float white = 1.0 - smoothstep(EYE_RADIUS - aa, EYE_RADIUS, length(d));
-	vec2 pc = look * (EYE_RADIUS - PUPIL_RADIUS * psize) + vec2(0.0, -0.07 * psize);
-	float pr = PUPIL_RADIUS * psize;
-	float pupil = (1.0 - smoothstep(pr - aa, pr, length(d - pc))) * step(0.01, psize);
-	float spark = 1.0 - smoothstep(pr * 0.22 - aa, pr * 0.22, length(d - pc - vec2(-0.35, 0.35) * pr));
-	spark *= pupil;
-	vec3 col = mix(vec3(1.0), vec3(0.02), pupil);
-	col = mix(col, vec3(1.0), spark);
-	emit += white * ((1.0 - pupil) * white_glow + spark) * vec3(1.0);
-	return vec4(col, white);
+// Smooth 1D noise, -1..1.
+float wobble(float x) {
+	float i = floor(x);
+	float t = fract(x);
+	t = t * t * (3.0 - 2.0 * t);
+	return mix(hash(i), hash(i + 1.0), t) * 2.0 - 1.0;
 }
 
-// The "^" of a happy, squeezed-shut eye.
-float arc(vec2 f, vec2 c) {
-	float aa = fwidth(f.x) * 1.5;
-	vec2 d = (f - c - vec2(0.0, -0.04)) / vec2(1.0, 0.8);
-	float r = 0.19;
+// A hand-drawn ink line along a wobbly circle: radius r, thickness w.
+// `from`..`to` limits it to an arc (radians, 0 = right, anticlockwise). A
+// full loop is drawn like a pen stroke: it starts at a fixed point, drifts
+// slightly outward as it goes round, and carries on a little past its start,
+// so the two ends overlap rather than meeting.
+float ink_ring(vec2 f, vec2 c, float r, float w, float s, float from, float to) {
+	float aa = fwidth(f.x) * 1.2;
+	vec2 d = f - c;
 	float ang = atan(d.y, d.x);
-	float on_arc = step(0.35, ang) * step(ang, 2.79);
-	float line = 1.0 - smoothstep(0.06 - aa, 0.06, abs(length(d) - r));
-	// Round ends.
-	vec2 e1 = vec2(cos(0.35), sin(0.35)) * r * vec2(1.0, 1.0);
-	vec2 e2 = vec2(cos(2.79), sin(2.79)) * r;
-	float ends = max(1.0 - smoothstep(0.06 - aa, 0.06, length(d - e1)),
-		1.0 - smoothstep(0.06 - aa, 0.06, length(d - e2)));
-	return max(line * on_arc, ends);
+	float k = ang * 1.3 + s * 17.0;
+	float rr = r * (1.0 + 0.06 * wobble(k) + 0.015 * wobble(k * 2.3));
+	// Felt-tip pressure: thicker in places.
+	float ww = w * (0.8 + 0.4 * (wobble(k * 1.7 + 5.0) * 0.5 + 0.5));
+	float dist = length(d);
+	if (to - from < 6.2) {
+		float span = step(from, ang) * step(ang, to);
+		return (1.0 - smoothstep(ww - aa, ww, abs(dist - rr))) * span;
+	}
+	// Where the pen started: fixed per marble and eye, so it doesn't jump
+	// about as the ink boils.
+	float start = hash(seed * 13.0 + c.x * 7.0 + c.y * 3.0) * 6.283;
+	float a0 = mod(ang - start, 6.283);
+	float line = 0.0;
+	for (int i = 0; i < 2; i++) {
+		float t = a0 + float(i) * 6.283;  // first time round, then the overlap
+		if (t <= 6.283 + 0.7) {
+			float rt = rr * (1.0 + 0.07 * (t / 6.283 - 0.5));
+			line = max(line, 1.0 - smoothstep(ww - aa, ww, abs(dist - rt)));
+		}
+	}
+	return line;
+}
+
+// A filled wobbly blob: an inked-in dot.
+float ink_dot(vec2 f, vec2 c, vec2 r, float s) {
+	float aa = fwidth(f.x) * 1.2;
+	vec2 d = (f - c) / r;
+	float ang = atan(d.y, d.x);
+	float edge = 1.0 + 0.09 * wobble(ang * 1.5 + s * 13.0);
+	return 1.0 - smoothstep(edge - aa / r.x, edge, length(d));
+}
+
+// A short straight ink stroke from a to b.
+float ink_stroke(vec2 f, vec2 a, vec2 b, float w) {
+	float aa = fwidth(f.x) * 1.2;
+	vec2 pa = f - a;
+	vec2 ba = b - a;
+	float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+	return 1.0 - smoothstep(w - aa, w, length(pa - ba * h));
+}
+
+// One doodled eye; `side` is -1 for the left, 1 for the right. Kinds:
+// 0 inked dot, 1 ring with a dot pupil, 2 ring and dot with lashes, 3 tall
+// bean, 4 googly (big ring, small droopy pupil), 5 sleepy (half-lidded),
+// 6 star, 7 heart, 8 spiral, 9 winking (the right eye a "^").
+// `open` squashes it shut (blink, squint); `wide` draws it bigger. Returns
+// (ink, the eye's area, which flashes when it glints).
+vec2 doodle_eye(vec2 f, vec2 c, float size, float open, float wide, vec2 look, int kind, float side, float s) {
+	float h = max(open, 0.05);
+	vec2 g = vec2(f.x, c.y + (f.y - c.y) / h);  // squash toward the eye's middle line
+	float r = 0.18 * size * (1.0 + wide * 0.3);
+	float w = 0.036;
+	float aa = fwidth(f.x) * 1.2;
+	if (open < 0.3) {
+		// Shut: just a line.
+		return vec2(ink_stroke(f, c - vec2(r, 0.0), c + vec2(r, 0.0), w), 0.0);
+	}
+	if (kind == 9 && side > 0.0) {
+		return vec2(ink_ring(f, c - vec2(0.0, 0.07), 0.16, w, s, 0.35, 2.79), 0.0);
+	}
+	float pupil_r = r * mix(0.55, 0.38, wide);
+	vec2 pc = c + look * r * 0.45 + vec2(0.0, -r * 0.1);
+	vec2 d = (g - c) / r;
+	float ink = 0.0;
+	vec2 dot_r = vec2(pupil_r);
+	if (kind == 0) {
+		dot_r = vec2(r * 0.62, r * 0.78);
+		ink = ink_dot(g, pc, dot_r, s);
+	} else if (kind == 3) {
+		dot_r = vec2(r * 0.5, r * 1.05);
+		ink = ink_dot(g, pc, dot_r, s);
+	} else if (kind == 4) {
+		// The pupil rattles round the bottom of a big ring.
+		pc = c + look * r * 0.7 + vec2(0.0, -r * 0.6);
+		dot_r = vec2(r * 0.36);
+		ink = max(ink_ring(g, c, r * 1.25, w, s, -4.0, 4.0), ink_dot(g, pc, dot_r, s + 3.0));
+	} else if (kind == 5) {
+		// A heavy lid across the middle, the pupil peeping under it.
+		pc = c + vec2(look.x * r * 0.4, -r * 0.42);
+		dot_r = vec2(r * 0.42);
+		float pupil = ink_dot(g, pc, dot_r, s + 3.0) * step(g.y, c.y + r * 0.05);
+		ink = max(max(ink_ring(g, c, r, w, s, -3.14, 0.1), ink_stroke(g, c + vec2(-r * 1.05, r * 0.05), c + vec2(r * 1.05, r * 0.05), w)), pupil);
+	} else if (kind == 6) {
+		float ang = atan(d.y, d.x);
+		float k = pow(0.5 + 0.5 * cos(5.0 * (ang - 1.5708)), 2.5);
+		float edge = mix(0.48, 1.12, k);
+		ink = 1.0 - smoothstep(edge - aa / r, edge, length(d));
+		pc = c;
+		dot_r = vec2(r * 0.4);
+	} else if (kind == 7) {
+		vec2 q = d * 1.25 + vec2(0.0, 0.25);
+		float hh = pow(q.x * q.x + q.y * q.y - 1.0, 3.0) - q.x * q.x * q.y * q.y * q.y;
+		ink = 1.0 - smoothstep(-0.02, 0.02, hh);
+		pc = c + vec2(0.0, r * 0.1);
+		dot_r = vec2(r * 0.45);
+	} else if (kind == 8) {
+		vec2 e = d / 1.3;
+		float rr = length(e);
+		float a = atan(e.y, e.x) / 6.283;
+		float dist = abs(fract(rr * 1.6 - a + 0.5) - 0.5) / 1.6 * 1.3;
+		float lw = w * 0.75 / r;
+		ink = (1.0 - smoothstep(lw - aa / r, lw, dist)) * step(rr, 1.0);
+	} else {
+		ink = max(ink_ring(g, c, r, w, s, -4.0, 4.0), ink_dot(g, pc, dot_r, s + 3.0));
+		if (kind == 2) {
+			for (int i = 0; i < 3; i++) {
+				float a = 1.15 + float(i) * 0.42;
+				vec2 dir = vec2(cos(a), sin(a));
+				dir.x *= -side;  // lashes flick outward on both sides
+				ink = max(ink, ink_stroke(g, c + dir * r, c + dir * r * 1.55, w * 0.8));
+			}
+		}
+	}
+	float area = 1.0 - smoothstep(0.8, 1.25, length(d));
+	return vec2(ink, area);
+}
+
+// The doodled mouth. Kinds: 0 smile, 1 open grin, 2 wonky smile with a
+// dimple, 3 cat "w", 4 tongue out, 5 buck teeth, 6 nervous zigzag,
+// 7 kissy "3", 8 toothy grin. Startled is always a little "o"; happy, a big
+// grin (toothy stays toothy).
+float doodle_mouth(vec2 f, int kind, float wide, float happy_amount, float s) {
+	vec2 c = vec2(0.0, -0.17);
+	float w = 0.028;
+	if (wide > 0.5) {
+		return ink_ring(f, c - vec2(0.0, 0.03), 0.045, w, s, -4.0, 4.0);
+	}
+	if (kind == 1 || kind == 8 || happy_amount > 0.5) {
+		// Flat top and a round bottom, like a "D" on its side.
+		float m = max(ink_stroke(f, c + vec2(-0.12, 0.0), c + vec2(0.12, 0.0), w), ink_ring(f, c, 0.12, w, s, -3.14, 0.0));
+		if (kind == 8) {
+			m = max(m, ink_stroke(f, c + vec2(-0.1, -0.05), c + vec2(0.1, -0.05), w * 0.7));
+			for (int i = 0; i < 3; i++) {
+				float x = -0.05 + float(i) * 0.05;
+				m = max(m, ink_stroke(f, c + vec2(x, 0.0), c + vec2(x, -0.05), w * 0.7));
+			}
+		}
+		return m;
+	}
+	if (kind == 2) {
+		float line = ink_ring(f, c + vec2(0.0, 0.16), 0.2, w, s, -2.0, -1.15);
+		return max(line, ink_stroke(f, c + vec2(0.085, -0.035), c + vec2(0.105, -0.005), w * 0.8));
+	}
+	if (kind == 3) {
+		return max(ink_ring(f, c + vec2(-0.045, 0.02), 0.045, w, s, -3.14, 0.0),
+			ink_ring(f, c + vec2(0.045, 0.02), 0.045, w, s + 1.0, -3.14, 0.0));
+	}
+	if (kind == 4) {
+		float smile = ink_ring(f, c + vec2(0.0, 0.07), 0.1, w, s, -2.6, -0.55);
+		return max(smile, ink_ring(f, c + vec2(0.03, -0.035), 0.05, w * 0.9, s + 2.0, -3.14, 0.0));
+	}
+	if (kind == 5) {
+		float smile = ink_ring(f, c + vec2(0.0, 0.07), 0.1, w, s, -2.6, -0.55);
+		vec2 t = c + vec2(0.0, -0.03);
+		float teeth = max(max(ink_stroke(f, t + vec2(-0.055, 0.0), t + vec2(-0.055, -0.065), w * 0.8),
+			ink_stroke(f, t, t + vec2(0.0, -0.065), w * 0.8)),
+			max(ink_stroke(f, t + vec2(0.055, 0.0), t + vec2(0.055, -0.065), w * 0.8),
+			ink_stroke(f, t + vec2(-0.055, -0.065), t + vec2(0.055, -0.065), w * 0.8)));
+		return max(smile, teeth);
+	}
+	if (kind == 6) {
+		float z = 0.0;
+		for (int i = 0; i < 4; i++) {
+			float x0 = -0.1 + float(i) * 0.05;
+			float y0 = mod(float(i), 2.0) < 0.5 ? 0.0 : -0.03;
+			z = max(z, ink_stroke(f, c + vec2(x0, y0 - 0.02), c + vec2(x0 + 0.05, -0.03 - y0 - 0.02), w));
+		}
+		return z;
+	}
+	if (kind == 7) {
+		return max(ink_ring(f, c + vec2(-0.02, 0.02), 0.045, w, s, -1.8, 1.8),
+			ink_ring(f, c + vec2(-0.02, -0.065), 0.045, w, s + 1.0, -1.8, 1.8));
+	}
+	return ink_ring(f, c + vec2(0.0, 0.07), 0.1, w, s, -2.6, -0.55);
+}
+
+// The extras some faces have (bits of face_extras): 1 brows, 2 nose,
+// 4 freckles, 8 moustache, 16 glasses, 32 a
+// tuft of hair. Returns the ink.
+float doodle_extras(vec2 f, int extras, vec2 lc, vec2 rc, float s) {
+	float w = 0.034;
+	float ink = 0.0;
+	if ((extras & 1) != 0) {
+		ink = max(ink, max(ink_ring(f, lc - vec2(0.0, 0.05), 0.38, w, s, 1.27, 1.88),
+			ink_ring(f, rc - vec2(0.0, 0.05), 0.38, w, s + 1.0, 1.26, 1.87)));
+	}
+	if ((extras & 2) != 0) {
+		ink = max(ink, ink_ring(f, vec2(0.0, -0.05), 0.03, w * 0.85, s, -3.0, -0.14));
+	}
+	if ((extras & 4) != 0) {
+		for (int i = 0; i < 3; i++) {
+			vec2 o = vec2(-0.04 + float(i) * 0.04, mod(float(i), 2.0) * -0.03);
+			ink = max(ink, ink_dot(f, vec2(-0.46, -0.15) + o, vec2(0.013), s + float(i)));
+			ink = max(ink, ink_dot(f, vec2(0.46, -0.15) + o, vec2(0.013), s + float(i) + 5.0));
+		}
+	}
+	if ((extras & 8) != 0) {
+		ink = max(ink, max(ink_dot(f, vec2(-0.075, -0.105), vec2(0.085, 0.035), s),
+			ink_dot(f, vec2(0.075, -0.105), vec2(0.085, 0.035), s + 2.0)));
+		ink = max(ink, max(ink_ring(f, vec2(-0.165, -0.07), 0.045, w * 0.9, s, -3.14, -0.6),
+			ink_ring(f, vec2(0.165, -0.07), 0.045, w * 0.9, s + 1.0, -2.54, 0.0)));
+	}
+	if ((extras & 16) != 0) {
+		float gr = 0.26;
+		ink = max(ink, max(ink_ring(f, lc, gr, w, s, -4.0, 4.0), ink_ring(f, rc, gr, w, s + 1.0, -4.0, 4.0)));
+		ink = max(ink, ink_stroke(f, lc + vec2(gr, 0.02), rc - vec2(gr, -0.02), w));
+	}
+	if ((extras & 32) != 0) {
+		ink = max(ink, max(ink_stroke(f, vec2(-0.05, 0.4), vec2(-0.09, 0.5), w),
+			max(ink_stroke(f, vec2(0.0, 0.41), vec2(0.0, 0.53), w), ink_stroke(f, vec2(0.05, 0.4), vec2(0.09, 0.5), w))));
+	}
+	return ink;
+}
+
+// One cell of the hand-drawn face, placed in a box centred `c` with
+// half-size `box` (mirrored for the right eye), its lines nudged a little
+// each boil. Returns its colour and how much it covers (ink and the whites).
+vec4 drawn_part(vec2 f, vec2 c, vec2 box, int cell, bool mirror, float s) {
+	vec2 uv = (f - c) / box * 0.5 + 0.5;
+	// Seen from the front, the ball's +x is on your left: flipped so the
+	// drawing reads as drawn.
+	uv = 1.0 - uv;
+	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
+		return vec4(0.0);
+	}
+	if (mirror) {
+		uv.x = 1.0 - uv.x;
+	}
+	uv += vec2(wobble(uv.y * 6.0 + s * 5.0), wobble(uv.x * 6.0 + s * 5.0 + 3.0)) * 0.006;
+	uv = clamp(uv, 0.004, 0.996);
+	vec4 t = texture(face_tex, vec2((float(cell) + uv.x) / float(face_cells), uv.y));
+	// Crisp edges, even where a drawing was scaled up from a small one.
+	t.a = smoothstep(0.2, 0.6, t.a);
+	return t;
+}
+
+// Whichever of two drawn parts covers more here: they don't overlap.
+vec4 drawn_either(vec4 a, vec4 b) {
+	return a.a >= b.a ? a : b;
+}
+
+// The hand-drawn face's eye: its drawing squashed as it blinks or squints,
+// grown when wide-eyed, nudged toward where it looks. A blink is a line.
+// Returns its colour and cover; `area` gets the eye's area, which flashes
+// when it glints.
+vec4 drawn_eye(vec2 f, vec2 c, float half_size, float open, float wide, vec2 look, int cell, vec3 span, bool mirror, float s, inout float area) {
+	// A little bigger when startled: not so much the lines get heavy.
+	float box = half_size * (1.0 + wide * 0.12);
+	area = max(area, 1.0 - smoothstep(0.7, 1.1, length((f - c) / box)));
+	// A small glance, so the eyes don't drift off from the rest of the face.
+	vec2 at = c + look * 0.015;
+	// The eye's own middle, which stays put as it squashes.
+	float mid = (0.5 - span.z) * 2.0 * box;
+	if (open < 0.3) {
+		// Across the drawn eye (its x runs the other way to the ball's,
+		// unless mirrored).
+		float across = mirror ? 1.0 : -1.0;
+		vec2 a = vec2(at.x + across * (span.x - 0.5) * 2.0 * box, at.y + mid);
+		vec2 b = vec2(at.x + across * (span.y - 0.5) * 2.0 * box, at.y + mid);
+		return vec4(vec3(0.03, 0.02, 0.09), ink_stroke(f, a, b, 0.036));
+	}
+	float h = min(open, 1.2);
+	at.y += mid * (1.0 - h);
+	return drawn_part(f, at, vec2(box, box * h), cell, mirror, s);
 }
 
 void fragment() {
@@ -132,21 +413,77 @@ void fragment() {
 	col = mix(col, vec3(1.0), glint * 0.9);
 	emit += vec3(1.0) * glint * 0.25;
 
-	// The face, painted flat on the front of the ball. Paint isn't glossy,
-	// so the pupils stay black whatever the glass reflects.
+	// The face, on the front of the ball. Ink isn't glossy, so it stays dark
+	// whatever the glass reflects.
 	float paint = 0.0;
-	if (p.z < 0.0) {
-		vec2 f = vec2(p.x, p.y);
-		vec3 eye_emit = vec3(0.0);
-		vec4 l = eye(f, vec2(-EYE_CENTRE.x, EYE_CENTRE.y), eye_size.x, eye_height.x, pupil_size.x, pupil_offset.xy, eye_emit);
-		vec4 r = eye(f, EYE_CENTRE, eye_size.y, eye_height.y, pupil_size.y, pupil_offset.zw, eye_emit);
-		float cover = max(l.a, r.a) * (1.0 - happy);
-		col = mix(col, l.rgb * l.a + r.rgb * r.a, cover);
-		emit = mix(emit, eye_emit, cover);
-		float arcs = max(arc(f, vec2(-EYE_CENTRE.x, EYE_CENTRE.y)), arc(f, EYE_CENTRE)) * happy;
-		col = mix(col, vec3(0.02), arcs);
-		emit = mix(emit, vec3(0.0), arcs);
-		paint = max(cover, arcs);
+	if (face_shown && p.z < 0.0) {
+		// Redrawn a little differently six times a second: the ink boils.
+		float s = seed * 31.0 + floor(TIME * 6.0) * 0.37;
+		vec2 f = vec2(p.x, p.y) / 1.45;
+		float lop = face_lop * 0.2;
+		vec2 wide = clamp((1.0 - pupil_size) / 0.4, 0.0, 1.0);
+		vec2 lc = vec2(-0.3, 0.08 + lop * 0.1);
+		vec2 rc = vec2(0.3, 0.08 - lop * 0.1);
+		vec2 le;
+		vec2 re;
+		float arcs;
+		float m;
+		float extras = 0.0;
+		float startled = max(wide.x, wide.y) * (1.0 - happy);
+		vec4 drawn = vec4(0.0);
+		if (face_drawn) {
+			float area = 0.0;
+			bool own_right = face_cells > 4;
+			// Seen from the front, the ball's +x is on your left.
+			vec2 c1 = vec2(-face_box_eye.x, face_box_eye.y);
+			vec2 c2 = vec2(-face_box_eye2.x, face_box_eye2.y);
+			vec2 cm = vec2(-face_box_mouth.x, face_box_mouth.y);
+			// Drawn faces are drawn as meant: no lopsided sizes.
+			vec4 l = drawn_eye(f, c1, face_box_eye.z * mix(1.0, eye_size.y, 0.4), eye_height.y, wide.y, pupil_offset.zw, 0, face_eye_span, false, s, area);
+			vec4 r = drawn_eye(f, c2, face_box_eye2.z * mix(1.0, eye_size.x, 0.4), eye_height.x, wide.x, pupil_offset.xy,
+				own_right ? 4 : 0, own_right ? face_right_span : face_eye_span, !own_right, s + 1.0, area);
+			vec4 eyes_drawn = drawn_either(l, r);
+			// Happy eyes get a bigger box (DoodleFace.HAPPY_BOX), so the arch reads.
+			vec4 happy_drawn = drawn_either(drawn_part(f, c1, vec2(face_box_eye.z * 1.6), 1, false, s),
+				drawn_part(f, c2, vec2(face_box_eye2.z * 1.6), 1, true, s + 1.0));
+			drawn = happy > 0.5 ? happy_drawn : eyes_drawn;
+			drawn = drawn_either(drawn, drawn_part(f, cm, vec2(face_box_mouth.z), startled > 0.5 ? 3 : 2, false, s + 2.0));
+			if (face_cells > 5) {
+				vec2 ce = vec2(-face_box_extra.x, face_box_extra.y);
+				drawn = drawn_either(drawn, drawn_part(f, ce, vec2(face_box_extra.z), 5, false, s + 3.0));
+			}
+			le = vec2(0.0, area);
+			re = vec2(0.0);
+			arcs = 0.0;
+			m = 0.0;
+		} else {
+			le = doodle_eye(f, lc, eye_size.x * (1.0 + lop), eye_height.x, wide.x, pupil_offset.xy, face_eyes, -1.0, s);
+			re = doodle_eye(f, rc, eye_size.y * (1.0 - lop), eye_height.y, wide.y, pupil_offset.zw, face_eyes, 1.0, s + 1.0);
+			arcs = max(ink_ring(f, lc - vec2(0.0, 0.07), 0.16, 0.036, s, 0.35, 2.79),
+				ink_ring(f, rc - vec2(0.0, 0.07), 0.16, 0.036, s + 1.0, 0.35, 2.79)) * happy;
+			// Drawn 1.3x size and a little lower, to sit with the big eyes.
+			vec2 fm = vec2(0.0, -0.17) + (f - vec2(0.0, -0.21)) / 1.3;
+			m = doodle_mouth(fm, face_mouth, startled, happy, s + 2.0);
+			extras = doodle_extras(f, face_extras, lc, rc, s + 3.0);
+		}
+		float eyes = max(le.x, re.x) * (1.0 - happy);
+		float flash = max(le.y, re.y) * (1.0 - happy);
+		// Felt-tip on glass: dark blue-black.
+		float line = max(max(max(eyes, arcs), m), extras);
+		col = mix(col, vec3(0.03, 0.02, 0.09), line);
+		emit = mix(emit, vec3(0.0), line * 0.9);
+		if (face_drawn) {
+			// The drawing's own colours: ink, and whites that glow faintly so
+			// they still read as white at night.
+			float whiteness = dot(drawn.rgb, vec3(0.333));
+			col = mix(col, drawn.rgb, drawn.a);
+			emit = mix(emit, drawn.rgb * whiteness * white_glow, drawn.a);
+			line = drawn.a;
+		}
+		// A glint (white_glow above its resting level) lights the glass round
+		// the eyes, enough for the bloom: two eyes shining from hiding.
+		emit += vec3(1.0) * flash * (1.0 - line) * max(white_glow - 0.35, 0.0) * 2.0;
+		paint = line;
 	}
 
 	ALBEDO = col;

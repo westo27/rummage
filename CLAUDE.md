@@ -23,17 +23,19 @@ section rather than the whole file.
 ## Tests (headless scenes in tests/)
 Run: `godot --headless --path . res://tests/<name>.tscn`, grep `FAIL|RESULT|SCRIPT ERROR`.
 Run only the suites the change touches; the full set once before committing.
+For Tom to watch, run `tools/run_tests.sh [suite ...]` via run_in_terminal (game
+window plus a results console beside it; stops a suite on SCRIPT ERROR or a stall).
 - **Never run check_hiding** (slow, flaky) unless Tom asks.
 - stage1 movement/walls · stage2 beam grab/throw/arc · stage3 creatures ·
   stage4 gates/win/bag · floor_clutter · smoothness · menus (settings, pause;
   writes then restores the real settings file) · grab_point · impacts ·
-  catch · furniture · beam_look · beam_sound · room · lamp · tutorial
+  catch · furniture · beam_look · beam_sound · room · lamp · tutorial · boxes · hiding_places
 - In tests, wait two `process_frame`s before reading anything drawn per frame.
 
 ## Visual checks (need a real window, not --headless)
-- `tests/shoot_cover.tscn` (itch cover, 1260x1000 → press/), `tests/shoot_itch.tscn` (itch screenshots, run at 1920x1080 → `itch_*.png`), `tests/shoot.tscn` (all screens), `tests/shoot_lamp.tscn` (lamp), `tests/shoot_title.tscn` (title backdrop),
+- `tests/shoot_cover.tscn` (itch cover, 1260x1000 → press/), `tests/shoot_banner.tscn` (itch theme banner + seamless marble background tile, 1920x1080 → press/), `tests/shoot_itch.tscn` (5 itch screenshots, 1920x1080 → press/), `tests/shoot_gif.tscn` (itch GIF frames: `--resolution 1280x720 --fixed-fps 15`, then `tools/make_gif.py`), `tools/make_clips.sh [clip ...]` (social clips: `tests/record_clip.tscn` in movie mode, wide + tall MP4s with sound → press/clips/, needs ffmpeg; `SHAPES=wide` for one shape), `tests/shoot.tscn` (all screens), `tests/shoot_lamp.tscn` (lamp), `tests/shoot_hiding.tscn` (bowl of marbles and rug lump), `tests/shoot_toys.tscn` (toy chest, jack-in-the-box, robot, figures, desk, wardrobe clothes; shut and open), `tests/shoot_faces.tscn` (sheet of creature faces, 1500x1260), `tests/shoot_face_painter.tscn` (face painter check, 1400x800), `tests/shoot_drawn_faces.tscn` (every drawn face in 3 moods, 1800x1100; `-- doodle` for one set), `tests/shoot_title.tscn` (title backdrop),
   `tests/shoot_rooms.tscn` (each room) and `tests/shoot_pixel.tscn` (pixel filter), PNGs
-  in `%APPDATA%/Godot/app_userdata/Lost Marbles/shots`.
+  in `%APPDATA%/Godot/app_userdata/I'm Losing My Marbles!/shots`.
 - Render at `--resolution 960x540` and look only when the look is the point.
 - `tests/bench_gpu.tscn` measures GPU cost per graphics setting.
 - `tests/check_marble_text.tscn` (needs a window): swirl text stays steady.

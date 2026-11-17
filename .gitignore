@@ -1,3 +1,10 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Exported builds
+/build/
+override.cfg
+
+# Social clips: large, and remade by tools/make_clips.sh
+press/clips/

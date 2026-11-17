@@ -18,20 +18,22 @@ extends Resource
 @export var fall_reset_y: float = -5.0
 
 @export_group("Player")
-@export var walk_speed: float = 3.2
+@export var walk_speed: float = 3.5
 @export var run_speed: float = 7.5
-## Hold C or Ctrl. Running has no effect while crouched.
-@export var crouch_speed: float = 1.4
-## Head height (eyes above the feet) standing and crouched, metres.
+## Hold C or Ctrl to crouch, Z to lie flat. Running has no effect while down.
+@export var crouch_speed: float = 0.5
+@export var prone_speed: float = 0.35
+## Seconds to go down or up one step (standing <-> crouched <-> flat).
+@export var crouch_time: float = 0.35
+## Head height (eyes above the feet) standing, crouched and lying flat, metres.
 @export var stand_eye_height: float = 1.15
-@export var crouch_eye_height: float = 0.16
+@export var crouch_eye_height: float = 0.6
+@export var prone_eye_height: float = 0.16
 ## Radians of turn per pixel of mouse movement.
 @export var mouse_sensitivity: float = 0.0004
-## Props this light or lighter are "clutter": the player walks through them,
-## kicking them aside, instead of being blocked. Heavier props block the player.
+## Props this light or lighter are "clutter": the player walks through them
+## and leaves them where they are. Heavier props are fixed furniture.
 @export var player_push_max_mass: float = 3.0
-## Clutter is kicked ahead at this multiple of the player's walking speed.
-@export var player_kick_factor: float = 1.3
 
 @export_group("Beam")
 ## How far the beam can reach to grab something, in metres.

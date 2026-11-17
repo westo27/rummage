@@ -107,7 +107,7 @@ func _run() -> void:
 	_omega = 6.0
 	await _ticks(0.45, follow)
 	# Crouch for a look under it.
-	_press("crouch")
+	_press("prone")
 	await _ticks(1.5, follow)
 
 	# Try to lift the bed: too heavy.

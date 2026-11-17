@@ -6,12 +6,15 @@
 
 [node name="InSideBinNE" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.75, 0.054, -0.85)
+hiding_box = NodePath("../../SideRoomProps/SideBinNE")
 
 [node name="BehindSideBeanbag" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.42, 0.054, 1.3)
 
 [node name="UnderSideBinSE" parent="." instance=ExtResource("creature")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.85, 0.054, 0.95)
+hiding_box = NodePath("../../SideRoomProps/SideBinSE")
 
-[node name="BehindSideBag" parent="." instance=ExtResource("creature")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.22, 0.054, 0)
+[node name="InSideBag" parent="." instance=ExtResource("creature")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.03, 0.15, 0)
+inside = NodePath("../../SideRoomProps/SideBag")

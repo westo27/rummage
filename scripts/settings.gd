@@ -46,12 +46,12 @@ var invert_look: bool = false
 ## Medium by default, so the game runs well on most machines out of the box.
 var lighting: Lighting = Lighting.MEDIUM
 ## Graphics > Pixel filter: the chunky low-resolution look (see pixel_filter.gd).
-## On by default; strength is how big the pixels are.
-var pixel_filter: bool = false
-var pixel_strength: int = 3
+## On by default at the finest size; strength is how big the pixels are.
+var pixel_filter: bool = true
+var pixel_strength: int = 1
 ## Graphics > Dither: limits the pixel filter's colours to a few shades with a
-## checkered dither between them. Off by default.
-var pixel_dither: bool = false
+## checkered dither between them. On by default.
+var pixel_dither: bool = true
 
 var _loaded_from_disk: bool = false
 

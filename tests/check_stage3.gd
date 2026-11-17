@@ -23,12 +23,16 @@ func _run() -> void:
 	_beam.lift_limit = 10.0
 	_props = _main.get_node("MainRoomProps")
 	_creatures = _main.get_node("MainRoomCreatures")
+	# These checks follow plain fleeing and cowering; diving into nooks has its
+	# own test (check_hiding_places).
+	for nook in get_tree().get_nodes_in_group("hide_nooks"):
+		nook.remove_from_group("hide_nooks")
 
 	# --- Setup: all hidden, nothing reveals by itself while the room settles ---
-	_check("21 creatures in the main room", _creatures.get_child_count() == 21, "%d" % _creatures.get_child_count())
+	_check("25 creatures in the main room", _creatures.get_child_count() == 25, "%d" % _creatures.get_child_count())
 	await _wait(2.0)
 	var hidden: int = _count_state(Creature.State.HIDDEN)
-	_check("all stay hidden while the room settles", hidden == 21, "%d hidden" % hidden)
+	_check("all stay hidden while the room settles", hidden == 25, "%d hidden" % hidden)
 	var catchable: int = 0
 	for c: Creature in _creatures.get_children():
 		if c._pick_zone.collision_layer != 0:
@@ -36,7 +40,8 @@ func _run() -> void:
 	_check("hidden creatures can't be aimed at", catchable == 0, "%d catchable" % catchable)
 	var no_covers: Array[String] = []
 	for c: Creature in _creatures.get_children():
-		if c._covers.is_empty() and c.drawer_furniture.is_empty():  # a drawer is its own cover
+		if c._covers.is_empty() and c.drawer_furniture.is_empty() and c.hiding_box.is_empty() \
+				and c.inside.is_empty() and not c.under_rug:  # a drawer, box, toy or rug is its own cover
 			no_covers.append(c.name)
 	_check("every hidden creature found a covering prop", no_covers.is_empty(), "missing: %s" % ", ".join(no_covers))
 
@@ -73,11 +78,16 @@ func _run() -> void:
 	# box room so it doesn't run under it and out of sight.
 	var table := _props.get_node("Table") as RigidBody3D
 	table.global_position = Vector3(6.8, 0.39, 0.0)
-	# Bin and creature move together to the bedroom floor, lined up with the
-	# doorway so the creature has a long run west into the playroom.
-	var crate: Prop = _props.get_node("ToyBinA")
-	var under: Creature = _creatures.get_node("InToyBinA")
-	crate.global_position = Vector3(2.0, 0.18, -0.3)
+	# An empty bin, lid set aside, goes upside down over a creature on the
+	# bedroom floor, lined up with the doorway so the creature has a long run
+	# west into the playroom.
+	var crate := _props.get_node("Bin09") as LiddedBox
+	var under: Creature = _creatures.get_node("UnderCushion")
+	# The bedside rug lies here now: take its marble out, so its lump doesn't
+	# prop the bin up.
+	_creatures.get_node("UnderRug").free()
+	crate.lid.global_position = Vector3(2.6, 0.02, 0.9)
+	crate.global_transform = Transform3D(Basis(Vector3.RIGHT, PI), Vector3(2.0, 0.18, -0.3))
 	under.global_position = Vector3(2.0, 0.09, -0.3)
 	under._covers = {crate: crate.global_transform}
 	_player.global_position = Vector3(3.9, 0.05, -0.3)
@@ -124,7 +134,7 @@ func _run() -> void:
 	_release("grab")
 	_check("clicking catches the creature", not is_instance_valid(under), "")
 	var hud_text: String = (_main.get_node("HUD") as Hud).caught_text()
-	_check("bag tag shows caught count", hud_text == "1 / 26", "'%s'" % hud_text)
+	_check("bag tag shows caught count", hud_text == "1 / 30", "'%s'" % hud_text)
 	_check("capture didn't grab the bin behind it", _beam.held == null, "held=%s" % _beam.held)
 
 	# --- Chaos reveals: a thrown book hitting a bag scares out the creature behind ---
@@ -190,7 +200,7 @@ func _run() -> void:
 		"state=%s" % _beam._state)
 
 	# --- Cowering: a happy bounce, not a shiver, and it rolls upright to look at you ---
-	var cower: Creature = _creatures.get_node("UnderBin03")
+	var cower: Creature = _creatures.get_node("InMarbleBowl")  # 2 m west of it is open floor
 	_player.global_position = cower.global_position + Vector3(-2.0, 0, 0)
 	_player.reset_physics_interpolation()
 	cower._visual.basis = Basis(Vector3.RIGHT, 2.0)  # as if it stopped mid-roll
@@ -205,9 +215,15 @@ func _run() -> void:
 		sideways = maxf(sideways, Vector2(cower._visual.position.x, cower._visual.position.z).length())
 	_check("a cowering creature bounces", highest - lowest > 0.02, "%.3f m" % (highest - lowest))
 	_check("and doesn't shiver sideways", sideways < 0.001, "%.4f m" % sideways)
-	_check("it settles upright", cower._visual.global_basis.y.angle_to(Vector3.UP) < 0.1, "")
-	var to_player: Vector3 = (_player.global_position - cower.global_position) * Vector3(1, 0, 1)
-	_check("facing the player", (-cower._visual.global_basis.z).angle_to(to_player) < 0.2, "")
+	# Settled: not leaning to either side, face tipped part way up to your eyes.
+	_check("it settles upright", absf(cower._visual.global_basis.x.y) < 0.1, "")
+	var to_eye: Vector3 = cower._player_eye() - cower.global_position
+	var flat := Vector3(to_eye.x, 0.0, to_eye.z)
+	var up: float = atan2(to_eye.y, flat.length()) * Creature.FACE_TIP
+	var expected: Vector3 = flat.normalized() * cos(up) + Vector3.UP * sin(up)
+	var face: Vector3 = -cower._visual.global_basis.z
+	_check("facing the player, tipped up", face.angle_to(expected) < 0.2,
+		"%.2f rad off" % face.angle_to(expected))
 
 	# --- Eyes: it blinks, winks while it waits, and is happy to be caught ---
 	var least_open: float = 1.0

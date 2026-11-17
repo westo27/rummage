@@ -7,9 +7,18 @@ const OUT: String = "user://shots"
 
 # name, where the player stands, what they look at
 const VIEWS: Array = [
+	["room_landing", Vector3(-2.6, 0.05, 5.4), Vector3(-2.6, 0.6, 2.4)],
+	["room_landing_west", Vector3(-1.2, 0.05, 3.6), Vector3(-4.4, 0.8, 4.8)],
+	["room_landing_east", Vector3(-3.9, 0.05, 3.2), Vector3(-0.8, 0.8, 4.6)],
+	["room_landing_back", Vector3(-2.6, 0.05, 3.0), Vector3(-2.6, 0.5, 5.8)],
+	["room_landing_spawn", Vector3(-2.6, 0.05, 5.3), Vector3(-2.6, 1.0, 2.4)],
 	["room_start", Vector3(-2.6, 0.05, 1.5), Vector3(-2.6, 1.0, -2.2)],
 	["room_playroom_ne", Vector3(-0.6, 0.05, -1.6), Vector3(-4.5, 0.4, 1.4)],
 	["room_playroom_sw", Vector3(-4.3, 0.05, 0.6), Vector3(-0.5, 0.5, -1.2)],
+	["room_stable_door", Vector3(-1.3, 0.05, -1.4), Vector3(0.05, 1.1, 0.1)],
+	["room_stable_door_bolt", Vector3(-0.7, 0.05, -0.7), Vector3(0.05, 1.2, 0.4)],
+	["room_stable_door_front", Vector3(-1.7, 0.05, 0.35), Vector3(0.0, 1.15, 0.0)],
+	["room_stable_door_back", Vector3(1.9, 0.05, 0.5), Vector3(0.0, 0.9, -0.5)],
 	["room_bedroom_door", Vector3(0.5, 0.05, 0.3), Vector3(4.5, 0.6, -1.0)],
 	["room_bedroom_se", Vector3(4.2, 0.05, 1.3), Vector3(1.0, 0.7, -1.8)],
 	["room_bedroom_desk", Vector3(3.5, 0.05, -0.6), Vector3(1.0, 0.6, 1.8)],
@@ -43,14 +52,14 @@ func _run() -> void:
 		var image: Image = get_viewport().get_texture().get_image()
 		image.save_png("%s/%s.png" % [OUT, view[0]])
 	# Lying flat in front of the bed, peering under it.
-	Input.action_press("crouch")
+	Input.action_press("prone")
 	player.global_position = Vector3(2.55, 0.05, 0.2)
 	player.reset_physics_interpolation()
 	await _frames(40)
 	_look(player, head, Vector3(2.55, 0.1, -1.75))
 	await _frames(20)
 	get_viewport().get_texture().get_image().save_png("%s/room_under_bed.png" % OUT)
-	Input.action_release("crouch")
+	Input.action_release("prone")
 	print("Wrote PNGs to %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 

@@ -18,6 +18,8 @@ signal lift_limit_changed(kg: float)
 ## For the landing lesson (tutorial.gd): you picked something up, or threw it.
 signal grabbed(prop: Prop)
 signal thrown(prop: Prop)
+## Let go of without a throw: the button released while holding.
+signal dropped(prop: Prop)
 
 enum AimState { IDLE, CAN_GRAB, TOO_HEAVY, HOLDING, CREATURE }
 
@@ -328,7 +330,7 @@ func _grab(prop: Prop, point: Vector3) -> void:
 	prop.start_hold(_player)
 	# Pulling a drawer or door: furniture heavier than you can lift stays put.
 	_planted = null
-	if prop.part_of != null and not _can_lift(prop.part_of):
+	if prop.part_of != null and (prop.part_of.keep_still_while_parts_held or not _can_lift(prop.part_of)):
 		_planted = prop.part_of
 		_planted.plant()
 	# A sleeping body ignores velocity changes, so make sure it's awake.
@@ -402,7 +404,9 @@ func _push_point_to_velocity(point: Vector3, wanted: Vector3) -> void:
 func _let_go() -> void:
 	held.linear_velocity *= Game.tune.release_speed_keep
 	held.angular_velocity *= Game.tune.release_speed_keep
+	var prop: Prop = held
 	_release()
+	dropped.emit(prop)
 
 
 ## Stops driving the object; it keeps whatever velocity it has.
@@ -433,10 +437,16 @@ func _min_hold_distance(prop: Prop) -> float:
 
 
 ## Where the beam leaves the hand: below and right of the eye, but never
-## under the floor when you're lying flat.
+## under the floor when you're lying flat. Then it's pulled in towards the
+## eye rather than lifted straight up, so it stays in the same direction on
+## screen (off the bottom edge) instead of popping up mid-view.
 func beam_origin() -> Vector3:
+	const FLOOR_CLEARANCE: float = 0.06
+	var eye: Vector3 = _camera.global_position
 	var origin: Vector3 = _camera.to_global(BEAM_ORIGIN_LOCAL)
-	origin.y = maxf(origin.y, 0.06)
+	if origin.y < FLOOR_CLEARANCE and eye.y > origin.y:
+		var k: float = clampf((eye.y - FLOOR_CLEARANCE) / (eye.y - origin.y), 0.2, 1.0)
+		origin = eye + (origin - eye) * k
 	return origin
 
 

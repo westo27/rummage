@@ -1,0 +1,90 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/pencil.gd" id="1_pencil"]
+[ext_resource type="Script" path="res://scripts/prop.gd" id="1_prop"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_paint"]
+albedo_color = Color(0.88, 0.22, 0.2, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.0045
+bottom_radius = 0.0045
+height = 0.12
+radial_segments = 6
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
+albedo_color = Color(0.95, 0.82, 0.62, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2"]
+top_radius = 0.0015
+bottom_radius = 0.0045
+height = 0.018
+radial_segments = 6
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="Mat_lead"]
+albedo_color = Color(0.15, 0.15, 0.17, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+top_radius = 0
+bottom_radius = 0.0015
+height = 0.005
+
+[sub_resource type="StandardMaterial3D" id="Mat_ferrule"]
+albedo_color = Color(0.82, 0.83, 0.86, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_4"]
+top_radius = 0.0047
+bottom_radius = 0.0047
+height = 0.01
+
+[sub_resource type="StandardMaterial3D" id="Mat_eraser"]
+albedo_color = Color(0.98, 0.6, 0.65, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_5"]
+top_radius = 0.0044
+bottom_radius = 0.0044
+height = 0.009
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6"]
+radius = 0.0048
+height = 0.16
+
+[node name="Pencil" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.02
+continuous_cd = true
+script = ExtResource("1_pencil")
+hold_radius = 0.1
+impact_material = 1
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.005, 0)
+material_override = SubResource("Mat_paint")
+mesh = SubResource("CylinderMesh_1")
+
+[node name="Wood" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.064, 0)
+material_override = SubResource("Mat_wood")
+mesh = SubResource("CylinderMesh_2")
+
+[node name="Lead" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0755, 0)
+material_override = SubResource("Mat_lead")
+mesh = SubResource("CylinderMesh_3")
+
+[node name="Ferrule" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.07, 0)
+material_override = SubResource("Mat_ferrule")
+mesh = SubResource("CylinderMesh_4")
+
+[node name="Eraser" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0795, 0)
+material_override = SubResource("Mat_eraser")
+mesh = SubResource("CylinderMesh_5")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("CapsuleShape3D_6")

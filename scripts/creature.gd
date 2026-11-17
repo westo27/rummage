@@ -23,6 +23,9 @@ enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 ## pulled, and pops out once it's open far enough. Nothing else reveals it.
 @export var drawer_furniture: NodePath
 @export var drawer_index: int = 0
+## Hiding in a lidded box (a LiddedBox): it sits on the floor inside, rides
+## along, and pops out once the lid is off or the box is tipped on its side.
+@export var hiding_box: NodePath
 
 ## When false, only moving the covering object reveals this creature; flying
 ## objects bouncing nearby don't.
@@ -30,6 +33,15 @@ enum State { HIDDEN, FLEEING, SEEKING, COWERING, CAPTURED }
 ## Found by being seen: for hiding places nothing can be lifted off, like under
 ## the bed. Crouch down nearby and look at it, and it's found.
 @export var reveal_when_spotted: bool = false
+## Hiding inside a closed toy or bag: it rides along out of sight and pops out
+## of the top when the thing is tipped over or shaken hard.
+@export var inside: NodePath
+## Hiding under the rug, as a lump in the cloth. Lifting the rug or something
+## landing on it sends it bolting.
+@export var under_rug: bool = false
+## Which way the face looks while hidden (degrees about up). 180 turns it to
+## the back, so one in a bowl of plain marbles doesn't give itself away.
+@export_range(-180.0, 180.0) var hidden_yaw: float = 0.0
 
 const LAYER_CREATURES: int = 8
 const LAYER_CLUTTER: int = 16
@@ -76,6 +88,9 @@ const LAND_MIN_SPEED: float = 0.6
 const LAND_BOUNCE: float = 0.012
 ## How quickly a stopped creature rolls back upright to look at you (per s).
 const SETTLE_RATE: float = 6.0
+## How much of the way up to your eyes it tips its face: you look down on
+## it, so a level face would show you mostly the top of the ball.
+const FACE_TIP: float = 0.7
 ## While hidden, it now and then peeks out at you: this often, for this long.
 const PEEK_GAP_MIN: float = 3.0
 const PEEK_GAP_MAX: float = 8.0
@@ -97,6 +112,18 @@ const SPOT_DEGREES: float = 30.0
 const DRAWER_REVEAL_OUT: float = 0.2
 ## How far from the drawer's centre toward its front the creature sits (m).
 const DRAWER_FRONT_OFFSET: float = 0.09
+## Inside a toy: it falls out once the top tips below this (the up axis's
+## height; 0 is on its side), or the toy moves faster than this (m/s).
+const TIP_UP: float = 0.2
+const SHAKE_SPEED: float = 2.5
+## Under the rug: the lump is an invisible ball on its own layer that only the
+## cloth meets, well bigger than the marble so the coarse cloth reads as a bump.
+const LAYER_LUMP: int = 64
+const LUMP_RADIUS: float = 0.1
+## A free nook counts as this much (m) nearer than a spot behind a prop.
+const NOOK_BONUS: float = 1.0
+## How much wider than the marble the lid's gap must be before it gets out.
+const BOX_GAP_FIT: float = 1.2
 const BODY_COLORS: Array[Color] = [
 	Color(0.45, 0.95, 0.4), Color(1.0, 0.55, 0.75), Color(1.0, 0.85, 0.25),
 	Color(0.45, 0.8, 1.0), Color(0.85, 0.55, 1.0), Color(1.0, 0.6, 0.3),
@@ -118,6 +145,8 @@ var _base_pitch: float = 1.0
 ## Picked at random when the creature spawns. The HUD's marble bag uses it so
 ## the ball that drops in is the same colour as the creature you caught.
 var body_color: Color = Color.WHITE
+## Its felt-tip face, also picked at spawn and shared with its bag marble.
+var face: DoodleFace = DoodleFace.random()
 ## Time spent cowering, for the bounce, and a random offset so a group of
 ## them doesn't bob in step.
 var _bounce_time: float = 0.0
@@ -129,9 +158,22 @@ var _furniture: Prop = null
 var _drawer: Prop = null
 ## Where the creature sits, in the drawer's own coordinates.
 var _drawer_spot: Transform3D
+## Set when hiding in a box (see hiding_box), and where it sits in the box.
+var _box: LiddedBox = null
+var _box_spot: Transform3D
 ## Seconds left heading straight out of the drawer before it starts steering
 ## away from the player (which could mean back through the furniture).
 var _escape_left: float = 0.0
+## Set when hiding inside a toy (see `inside`), with its spot in the toy's
+## own coordinates.
+var _container: Prop = null
+var _container_spot: Transform3D
+## Set when hiding under the rug: the rug, and the lump that holds the cloth up.
+var _rug: SoftBody3D = null
+var _lump: AnimatableBody3D = null
+## A nook it's heading for while seeking, or hiding in.
+var _seek_nook: HideNook = null
+var _nook: HideNook = null
 ## Instance ids of what it touched last tick, so only a fresh bump clacks,
 ## not every tick of rolling along a wall.
 var _touching: Dictionary = {}
@@ -159,9 +201,61 @@ func _ready() -> void:
 	_apply_random_color()
 	_peek_next = randf_range(PEEK_GAP_MIN, PEEK_GAP_MAX)
 	_wink_next = randf_range(WINK_GAP_MIN, WINK_GAP_MAX)
+	_visual.basis = Basis(Vector3.UP, deg_to_rad(hidden_yaw))
 	if not drawer_furniture.is_empty():
 		# Deferred so the furniture has found its drawers (its own _ready).
 		_settle_in_drawer.call_deferred()
+	elif not hiding_box.is_empty():
+		_settle_in_box.call_deferred()
+	elif not inside.is_empty():
+		_settle_inside.call_deferred()
+	else:
+		_make_lump()  # at once, or what rests on it drops a frame first
+
+
+## Climbs into the toy: rides with it from now on, touching nothing.
+func _settle_inside() -> void:
+	_container = get_node_or_null(inside) as Prop
+	if _container == null:
+		return
+	_container_spot = _container.global_transform.affine_inverse() * global_transform
+	collision_layer = 0
+	collision_mask = 0
+
+
+## While hidden, light props and the rug can rest on the marble: a cushion
+## sits up on it, marbles pile round it, the rug drapes over it. A rigid body
+## ignores a CharacterBody3D it doesn't mask, and clutter mustn't mask
+## creatures (it would snag the runners), so a hidden one leaves a stand-in:
+## an invisible ball on a layer only clutter and the rug meet.
+func _make_lump() -> void:
+	if under_rug or (_nook != null and _nook.kind == HideNook.Kind.UNDER_RUG):
+		_rug = get_tree().get_first_node_in_group("rug") as SoftBody3D
+	_lump = AnimatableBody3D.new()
+	_lump.sync_to_physics = false  # moved by tweens in physics ticks
+	_lump.collision_layer = LAYER_LUMP
+	_lump.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	shape.shape = SphereShape3D.new()
+	# The marble's own size, so it packs among plain marbles; a little
+	# bigger under the rug, so the coarse cloth shows a bump.
+	(shape.shape as SphereShape3D).radius = LUMP_RADIUS if _rug != null else ROLL_RADIUS
+	_lump.add_child(shape)
+	# top_level: it ignores the creature's transform, so it stays put while
+	# the marble's visual hops about (and the rooms keep only creatures).
+	_lump.top_level = true
+	add_child(_lump)
+	_lump.global_position = global_position
+	if _rug != null:
+		# The cloth is too coarse to wrap the ball, so the ball would poke
+		# through it: under the rug only the lump shows (and the glow).
+		_visual.visible = false
+		# Rise up from under the floor, so the cloth ends up on top of it
+		# rather than pushed down underneath.
+		_lump.global_position = global_position + Vector3.DOWN * (LUMP_RADIUS * 2.0 + 0.01)
+		var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+		tween.tween_property(_lump, "global_position", global_position, 0.4)
+		_wake_rug_while(tween)
 
 
 ## Moves into the drawer: sitting on its floor, toward the front.
@@ -174,11 +268,25 @@ func _settle_in_drawer() -> void:
 	_drawer = _furniture.drawers[drawer_index]
 	var floor_shape := _drawer.get_node("FloorShape") as CollisionShape3D
 	var floor_top: float = floor_shape.position.y + (floor_shape.shape as BoxShape3D).size.y * 0.5
-	var radius: float = ((get_node("CollisionShape3D") as CollisionShape3D).shape as SphereShape3D).radius
-	var spot := Vector3(0.0, floor_top + radius + 0.003, DRAWER_FRONT_OFFSET)
+	var spot := Vector3(0.0, floor_top + _radius() + 0.003, DRAWER_FRONT_OFFSET)
 	_drawer_spot = Transform3D(Basis.IDENTITY, spot)
 	global_transform = _drawer.global_transform * _drawer_spot
 	reset_physics_interpolation()
+
+
+## Moves into the box: sitting in the middle of its floor.
+func _settle_in_box() -> void:
+	_box = get_node_or_null(hiding_box) as LiddedBox
+	if _box == null:
+		return
+	var spot := Vector3(0.0, _box.floor_top() + _radius() + 0.003, 0.0)
+	_box_spot = Transform3D(Basis.IDENTITY, spot)
+	global_transform = _box.global_transform * _box_spot
+	reset_physics_interpolation()
+
+
+func _radius() -> float:
+	return ((get_node("CollisionShape3D") as CollisionShape3D).shape as SphereShape3D).radius
 
 
 func _physics_process(delta: float) -> void:
@@ -231,13 +339,20 @@ func _update_hidden(delta: float) -> void:
 	if _drawer != null:
 		_update_in_drawer(delta)
 		return
+	if _box != null:
+		_update_in_box(delta)
+		return
+	if _container != null:
+		_update_inside(delta)
+		return
 	_check_left -= delta
 	if _check_left <= 0.0:
 		_check_left = CHECK_INTERVAL
 		if not _covers_recorded:
 			_record_covers(COVER_RADIUS_HIDDEN)
 			_covers_recorded = true
-		elif _is_disturbed() or (reveal_when_spotted and _is_spotted()):
+		elif _is_disturbed() or (reveal_when_spotted and _is_spotted()) or \
+				(_rug != null and _rug_disturbed()):
 			_reveal()
 			return
 
@@ -254,24 +369,51 @@ func _update_in_drawer(delta: float) -> void:
 	if _furniture.drawer_out(drawer_index) > DRAWER_REVEAL_OUT:
 		_pop_out_of_drawer()
 		return
+	_shut_in_tell(delta)
+
+
+## Rides the box, and pops out once the lid leaves a gap it fits through.
+## Tipped over with the lid still on, it stays shut in until the lid falls.
+func _update_in_box(delta: float) -> void:
+	global_transform = _box.global_transform * _box_spot
+	if _box.opening_gap() > _radius() * 2.0 * BOX_GAP_FIT:
+		_pop_out_of_box()
+		return
+	_shut_in_tell(delta)
+
+
+## Only tells that fit somewhere shut in: no hop, no shuffling a cover.
+func _shut_in_tell(delta: float) -> void:
 	_tell_left -= delta
 	if _tell_left <= 0.0:
 		_tell_left = randf_range(Game.tune.tell_interval_min, Game.tune.tell_interval_max)
-		# Only tells that fit in a drawer: no hop, no shuffling a cover.
 		squeak(1.0)
 		_eyes.glint()
 		flash()
 
 
-func _pop_out_of_drawer() -> void:
-	# Through the drawer and the furniture for a moment, so the front panel
-	# doesn't catch it on the way up and out.
-	for body: Prop in [_drawer, _furniture]:
+## Lets it pass through these for a moment, so walls and panels don't catch
+## it on the way up and out.
+func _pass_through_briefly(bodies: Array[Prop]) -> void:
+	for body in bodies:
 		add_collision_exception_with(body)
 		get_tree().create_timer(ESCAPE_SECONDS, false, true).timeout.connect(
 			func() -> void:
 				if is_instance_valid(body) and is_inside_tree():
 					remove_collision_exception_with(body))
+
+
+func _pop_out_of_box() -> void:
+	_pass_through_briefly([_box, _box.lid])
+	_box = null
+	_reveal()
+	# Up and over the wall, away from the player.
+	velocity.y = Game.tune.pop_speed * 1.4
+	_escape_left = 0.5
+
+
+func _pop_out_of_drawer() -> void:
+	_pass_through_briefly([_drawer, _furniture])
 	var out_dir: Vector3 = _flat(_drawer.global_basis.z)
 	_drawer = null
 	_reveal()
@@ -279,6 +421,92 @@ func _pop_out_of_drawer() -> void:
 	_flee_dir = out_dir
 	velocity = out_dir * Game.tune.flee_speed + Vector3.UP * Game.tune.pop_speed * 1.2
 	_escape_left = 0.6
+
+
+## Rides inside the toy, and tumbles out when it's tipped or shaken. Its tells
+## shake the toy from inside.
+func _update_inside(delta: float) -> void:
+	if not is_instance_valid(_container):
+		_leave_container(Vector3.UP)
+		return
+	global_transform = _container.global_transform * _container_spot
+	var up: Vector3 = _container.global_basis.y
+	if up.y < TIP_UP or _container.linear_velocity.length() > SHAKE_SPEED:
+		_leave_container(up)
+		return
+	_tell_left -= delta
+	if _tell_left <= 0.0:
+		_tell_left = randf_range(Game.tune.tell_interval_min, Game.tune.tell_interval_max)
+		squeak(1.0)
+		_eyes.glint()
+		if randf() < 0.5:
+			flash()
+		else:
+			_container.shudder()
+
+
+## Out of the top of the toy (`up`), wherever that points now.
+func _leave_container(up: Vector3) -> void:
+	var toy: Prop = _container if is_instance_valid(_container) else null
+	_container = null
+	collision_layer = LAYER_CREATURES
+	collision_mask = MASK_BODY
+	var out_dir: Vector3 = _flat(up)
+	if out_dir == Vector3.ZERO:
+		out_dir = _away_from_player()
+	if toy != null:
+		add_collision_exception_with(toy)
+		get_tree().create_timer(ESCAPE_SECONDS, false, true).timeout.connect(
+			func() -> void:
+				if is_instance_valid(toy) and is_inside_tree():
+					remove_collision_exception_with(toy))
+		# Start at the mouth of the toy, never below the floor.
+		var mouth: Vector3 = toy.global_position + up * toy.hold_radius * 0.5
+		mouth.y = maxf(mouth.y, ROLL_RADIUS + 0.01)
+		global_position = mouth
+		reset_physics_interpolation()
+	_reveal()
+	_flee_dir = out_dir
+	velocity = out_dir * Game.tune.flee_speed + Vector3.UP * Game.tune.pop_speed * 0.8
+	_escape_left = 0.4
+
+
+## Under the rug: the rug lifted, or the cloth gone from over it.
+func _rug_disturbed() -> bool:
+	if not is_instance_valid(_rug):
+		return true
+	var grip := _rug.get("grip") as Prop
+	if grip != null and grip.is_held:
+		return true
+	return not _rug.call("covers", global_position)
+
+
+## Brings the cloth down again as it bolts.
+func _remove_lump() -> void:
+	if is_instance_valid(_lump):
+		_lump.queue_free()
+	_lump = null
+	if is_instance_valid(_rug):
+		_rug.call("wake")  # so the cloth falls flat again
+	_rug = null
+	_visual.visible = true
+
+
+## A tell from under the rug: the lump twitches up and settles.
+func _twitch_lump() -> void:
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	var rest: Vector3 = _lump.global_position
+	tween.tween_property(_lump, "global_position", rest + Vector3.UP * 0.05, 0.1)
+	tween.tween_property(_lump, "global_position", rest, 0.15)
+	_wake_rug_while(tween)
+
+
+## Keeps the rug awake each tick while `tween` moves the lump under it.
+func _wake_rug_while(tween: Tween) -> void:
+	var rug: SoftBody3D = _rug
+	tween.parallel().tween_method(func(_t: float) -> void:
+		if is_instance_valid(rug):
+			rug.call("wake"), 0.0, 1.0, 0.4)
 
 
 func _update_fleeing(delta: float) -> void:
@@ -306,12 +534,23 @@ func _update_fleeing(delta: float) -> void:
 
 func _update_seeking(delta: float) -> void:
 	_state_left -= delta
-	if not is_instance_valid(_seek_target) or _seek_target.is_held:
-		_start_cowering()
-		return
-	# Recomputed every tick, because "behind" depends on where the player is now.
-	var to_target: Vector3 = _hide_point(_seek_target, _player_eye()) - global_position
-	to_target.y = 0.0
+	var to_target: Vector3
+	if _seek_nook != null:
+		if not _nook_usable(_seek_nook):
+			_start_cowering()
+			return
+		to_target = _seek_nook.global_position - global_position
+		to_target.y = 0.0
+		if to_target.length() < 0.12:
+			_hide_in_nook(_seek_nook)
+			return
+	else:
+		if not is_instance_valid(_seek_target) or _seek_target.is_held:
+			_start_cowering()
+			return
+		# Recomputed every tick, because "behind" depends on where the player is now.
+		to_target = _hide_point(_seek_target, _player_eye()) - global_position
+		to_target.y = 0.0
 	if to_target.length() < 0.12 or _state_left <= 0.0:
 		_start_cowering()
 		return
@@ -336,10 +575,13 @@ func _update_cowering(delta: float) -> void:
 	_visual.position.y = absf(sin(_bounce_time * BOUNCE_RATE * PI)) * BOUNCE_HEIGHT
 	var player := _player()
 	if player != null:
-		var to_player: Vector3 = _flat(player.global_position - global_position)
+		var to_eye: Vector3 = _player_eye() - global_position
+		var to_player: Vector3 = _flat(to_eye)
 		if to_player.length() > 0.01:
+			var up: float = atan2(to_eye.y, Vector2(to_eye.x, to_eye.z).length()) * FACE_TIP
+			var look: Vector3 = to_player * cos(up) + Vector3.UP * sin(up)
 			# Slerp turns smoothly from one orientation to another.
-			var facing := Basis.looking_at(to_player, Vector3.UP)
+			var facing := Basis.looking_at(look, Vector3.UP)
 			_visual.basis = _visual.basis.orthonormalized().slerp(facing, minf(SETTLE_RATE * delta, 1.0))
 	_check_left -= delta
 	if _check_left > 0.0:
@@ -360,8 +602,14 @@ func _reveal() -> void:
 	_state_left = randf_range(Game.tune.flee_time_min, Game.tune.flee_time_max)
 	_flee_dir = _away_from_player()
 	velocity = _flee_dir * Game.tune.flee_speed + Vector3.UP * Game.tune.pop_speed
+	_seek_nook = null
+	under_rug = false  # a later hiding place is its own
+	if _nook != null:
+		_nook.occupant = null
+		_nook = null
+	_remove_lump()
 	_bump_covers_out_of_the_way()
-	_slip_out_of_lifted_covers()
+	_slip_out_of_covers()
 	squeak(1.25)
 	_eyes.show_mood(CreatureEyes.Mood.WIDE, STARTLED_SECONDS, CreatureEyes.Mood.SQUINT, CHEEKY_SECONDS)
 
@@ -385,11 +633,16 @@ func _bump_covers_out_of_the_way() -> void:
 
 
 ## A cover being lifted by the beam (an upturned crate, say) would otherwise
-## scoop the creature up inside it as it pops. It passes through such covers
-## for a moment while it escapes.
-func _slip_out_of_lifted_covers() -> void:
+## scoop the creature up inside it as it pops, and a small one round it (a
+## bowl's sides, the marbles in it) would hem it in. It passes through those
+## for a moment while it escapes, but a lifted one only if it's actually under
+## it: a door swinging open beside it stays solid.
+func _slip_out_of_covers() -> void:
 	for prop: Prop in _covers:
-		if not is_instance_valid(prop) or not prop.is_held:
+		if not is_instance_valid(prop):
+			continue
+		var small: bool = prop.hold_radius <= BUMPABLE_RADIUS
+		if not (small or (prop.is_held and _is_under(prop))):
 			continue
 		add_collision_exception_with(prop)
 		# A timer that runs on physics ticks; when it's done, collide again.
@@ -399,15 +652,44 @@ func _slip_out_of_lifted_covers() -> void:
 					remove_collision_exception_with(prop))
 
 
+## Whether `prop` is right over us: a short ray straight up meets it first.
+func _is_under(prop: Prop) -> bool:
+	const REACH: float = 0.6
+	var query := PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.UP * REACH, MASK_PROPS)
+	query.exclude = [get_rid()]
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	return not hit.is_empty() and hit.collider == prop
+
+
 func _start_seeking() -> void:
 	state = State.SEEKING
 	_state_left = Game.tune.seek_time
-	_seek_target = _best_hiding_prop()
+	var prop_score: Array[float] = [INF]
+	_seek_target = _best_hiding_prop(prop_score)
+	_seek_nook = _best_nook(prop_score[0])
 	_detour_sign = 1.0 if randf() < 0.5 else -1.0
+
+
+## Hides again, properly, in a nook it reached: uncatchable until found.
+func _hide_in_nook(nook: HideNook) -> void:
+	state = State.HIDDEN
+	_set_catchable(false)
+	velocity = Vector3.ZERO
+	_visual.position = Vector3.ZERO
+	_seek_nook = null
+	_nook = nook
+	nook.occupant = self
+	reveal_when_spotted = nook.kind == HideNook.Kind.UNDER_BED
+	reveal_on_knock = nook.kind != HideNook.Kind.UNDER_BED
+	_covers_recorded = false
+	_check_left = CHECK_INTERVAL
+	_tell_left = randf_range(Game.tune.tell_interval_min, Game.tune.tell_interval_max)
+	_make_lump()
 
 
 func _start_cowering() -> void:
 	state = State.COWERING
+	_seek_nook = null
 	velocity = Vector3.ZERO
 	_record_covers(COVER_RADIUS_COWERING)
 	_check_left = CHECK_INTERVAL
@@ -459,6 +741,12 @@ func _finish_capture() -> void:
 func _give_tell() -> void:
 	squeak(1.0)
 	_eyes.glint()
+	if _rug != null:
+		if randf() < 0.5:
+			_twitch_lump()
+		else:
+			flash()
+		return
 	match randi() % 3:
 		0:
 			var cover: Prop = _nearest_cover()
@@ -616,8 +904,8 @@ func _nearest_cover() -> Prop:
 ## how far away its hiding spot is, with big penalties for spots the player can
 ## see from where they're standing, or that are close enough to the player to
 ## startle us straight away. Low things like books don't block the view, so
-## they lose to anything that does.
-func _best_hiding_prop() -> Prop:
+## they lose to anything that does. The winning score goes in `score_out[0]`.
+func _best_hiding_prop(score_out: Array[float] = [0.0]) -> Prop:
 	var eye: Vector3 = _player_eye()
 	var player := _player()
 	var best: Prop = null
@@ -647,7 +935,44 @@ func _best_hiding_prop() -> Prop:
 		if score < best_score:
 			best = prop
 			best_score = score
+	score_out[0] = best_score
 	return best
+
+
+## The nook to dive into instead, if one beats `beat` (the best prop's score,
+## scored the same way, but nooks are always out of sight and get a bonus).
+func _best_nook(beat: float) -> HideNook:
+	var player := _player()
+	var best: HideNook = null
+	var best_score: float = beat
+	for node in get_tree().get_nodes_in_group("hide_nooks"):
+		var nook := node as HideNook
+		if not _nook_usable(nook):
+			continue
+		var distance: float = global_position.distance_to(nook.global_position)
+		if distance > HIDE_SEARCH_RADIUS:
+			continue
+		var score: float = distance - NOOK_BONUS
+		if player != null and _flat_distance(nook.global_position, player.global_position) < Game.tune.startle_distance + 0.4:
+			score += 50.0
+		if score < best_score:
+			best = nook
+			best_score = score
+	return best
+
+
+## Free (or ours already), and for the rug, still under it.
+func _nook_usable(nook: HideNook) -> bool:
+	if not (nook.is_free() or nook.occupant == self):
+		return false
+	for node in get_tree().get_nodes_in_group("creatures"):
+		var other := node as Creature
+		if other != self and other._seek_nook == nook:
+			return false  # someone else is already heading there
+	if nook.kind == HideNook.Kind.UNDER_RUG:
+		var rug := get_tree().get_first_node_in_group("rug")
+		return rug != null and rug.call("covers", nook.global_position)
+	return true
 
 
 ## The spot just behind `prop` as seen from `eye`, at floor level, found by
@@ -697,13 +1022,13 @@ func _stands_on_floor(prop: Prop) -> bool:
 	return not hit.is_empty() and not (hit.collider is Prop)
 
 
-## True when the player is crouched, close by and looking right at this
-## creature, with nothing in the way but what it's hiding under (the bed's
-## frame would otherwise block the low view under it).
+## True when the player is lying flat (most of the way down), close by and
+## looking right at this creature, with nothing in the way but what it's hiding
+## under (the bed's frame would otherwise block the low view under it).
 func _is_spotted() -> bool:
 	var camera: Camera3D = get_viewport().get_camera_3d()
 	var player := _player() as CollisionObject3D
-	if camera == null or player == null or player.get("crouch") == null or player.get("crouch") < 0.5:
+	if camera == null or player == null or player.get("crouch") == null or player.get("crouch") < 0.75:
 		return false
 	var eye: Vector3 = camera.global_position
 	var to_me: Vector3 = global_position - eye
@@ -835,5 +1160,6 @@ func _apply_random_color() -> void:
 	var mat := body.material_override.duplicate() as ShaderMaterial
 	mat.set_shader_parameter("tint", color)
 	mat.set_shader_parameter("seed", randf())
+	face.apply(mat)
 	body.material_override = mat
 	_glow.light_color = color

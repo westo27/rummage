@@ -41,7 +41,10 @@ func _run() -> void:
 	# --- Everything settles where it was placed (no exploding stacks) ---
 	var start_positions: Dictionary = {}
 	for child in props.get_children():
-		if child is Prop:  # (the rug is cloth, not a Prop)
+		# (The rug is cloth, not a Prop.) Things resting on a hidden creature
+		# drop once the creatures are gone, so they're left out.
+		var on_creature: bool = child.name.begins_with("BowlMarble") or child.name in ["FloorCushion", "PillowL"]
+		if child is Prop and not on_creature:
 			start_positions[child] = child.global_position
 	await _wait(3.0)
 	var worst: float = 0.0

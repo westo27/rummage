@@ -90,7 +90,7 @@ static func _apply_prop_finish(tree: SceneTree) -> void:
 
 func _on_creature_captured(creature: Creature) -> void:
 	_caught += 1
-	_hud.add_to_bag(creature.body_color)
+	_hud.add_to_bag(creature.body_color, creature.face)
 	_beam.add_lift(Game.tune.lift_per_capture)
 	_hud.set_caught(_caught, _total_creatures)
 	if _caught >= _total_creatures:

@@ -23,9 +23,10 @@ func _run() -> void:
 	await _wait(1.0)
 
 	# --- Totals and HUD ---
-	_check("26 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 26, "")
+	_check("30 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 30, "")
 	_check("4 of them in the box room", _main.get_node("SideRoomCreatures").get_child_count() == 4, "")
-	_check("bag tag shows 0 / 26", _hud.caught_text() == "0 / 26", "'%s'" % _hud.caught_text())
+	_check("bag tag shows 0 / 30", _hud.caught_text() == "0 / 30", "'%s'" % _hud.caught_text())
+	_check("counter label shows 0 of 30", (_hud.get_node("CountLabel") as Label).text == "0 of 30", "")
 	_check("HUD hides the lift limit", not (_hud.get_node("LiftLabel") as Label).visible, "")
 	_check("timer is counting up", _label("TimerLabel") != "0:00.0", "'%s'" % _label("TimerLabel"))
 	_check("HUD shows ping ready", _label("PingLabel").begins_with("Ping ready"), "'%s'" % _label("PingLabel"))
@@ -34,7 +35,7 @@ func _run() -> void:
 	_player.global_position = Vector3(-1.2, 0.05, 0.35)  # 1.2 m from the creature under Bin01
 	await _wait(0.1)
 	var near: Creature = _main.get_node("MainRoomCreatures/UnderBin01")  # (-1.2, 1.55)
-	var far: Creature = _main.get_node("SideRoomCreatures/BehindSideBag")  # (8.2, 0), ~9 m away
+	var far: Creature = _main.get_node("SideRoomCreatures/InSideBag")  # (8.0, 0), ~9 m away
 	_press("ping")
 	await _wait(0.2)
 	_check("ping: nearby hidden creature glows", near._glow.visible, "")
@@ -48,18 +49,23 @@ func _run() -> void:
 
 	# --- Spot the bed creatures, then go through the wardrobe ---
 	# (check_furniture covers both in detail; here they're part of a full game.)
-	Input.action_press("crouch")
+	# A found creature may flee back under the bed and hide again, so count the
+	# ones seen out of hiding at any point rather than where they end up.
+	Input.action_press("prone")
+	var bed: Array[Creature] = []
 	for i in 4:
-		var c := _main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature
+		bed.append(_main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature)
+	var found: Array[Creature] = []
+	for c in bed:
 		_player.global_position = Vector3(c.global_position.x, 0.05, -0.2)
 		await _wait(0.6)
 		_aim_at(c.global_position)
 		await _wait(0.3)
-	Input.action_release("crouch")
-	var bed_hidden: int = 0
-	for i in 4:
-		if (_main.get_node("MainRoomCreatures/UnderBed%d" % (i + 1)) as Creature).state == Creature.State.HIDDEN:
-			bed_hidden += 1
+		for each in bed:
+			if each.state != Creature.State.HIDDEN and not found.has(each):
+				found.append(each)
+	Input.action_release("prone")
+	var bed_hidden: int = bed.size() - found.size()
 	_check("crouching and looking under the bed finds its creatures", bed_hidden == 0, "%d still hidden" % bed_hidden)
 
 	# --- Catch everything else: win screen, timer stops ---
@@ -80,7 +86,7 @@ func _run() -> void:
 		"%s" % [win_pills])
 	_check("the player stops grabbing the cursor after winning",
 		not _player.is_processing_input() and not _beam.is_processing_unhandled_input(), "")
-	_check("bag tag shows 26 / 26", _hud.caught_text() == "26 / 26", "'%s'" % _hud.caught_text())
+	_check("bag tag shows 30 / 30", _hud.caught_text() == "30 / 30", "'%s'" % _hud.caught_text())
 	var t1: String = _label("TimerLabel")
 	await _wait(0.5)
 	_check("timer stops after winning", _label("TimerLabel") == t1, "%s -> %s" % [t1, _label("TimerLabel")])
@@ -89,7 +95,7 @@ func _run() -> void:
 	# Batches of catches queue up and drop one at a time, so give the last of
 	# them time to fall and stop rolling.
 	await _wait(6.0)
-	_check("one ball in the bag per catch", _hud._bag.marble_count() == 26,
+	_check("one ball in the bag per catch", _hud._bag.marble_count() == 30,
 		"%d balls" % _hud._bag.marble_count())
 	_check("every ball stays inside the bag", _hud._bag.all_inside(), "")
 	_check("the bag has moved onto the win card",
@@ -101,7 +107,7 @@ func _run() -> void:
 	await _wait(0.5)
 	_main = get_tree().current_scene
 	_bind()
-	_check("R reloads a fresh game", _hud.caught_text() == "0 / 26" and not (_main.get_node("HUD/WinPanel") as Control).visible,
+	_check("R reloads a fresh game", _hud.caught_text() == "0 / 30" and not (_main.get_node("HUD/WinPanel") as Control).visible,
 		"'%s'" % _hud.caught_text())
 	_check("lift is reset after restart", is_equal_approx(_beam.lift_limit, 4.0), "%.0f" % _beam.lift_limit)
 	_check("the bag is empty after restart", _hud._bag.marble_count() == 0,

@@ -1,7 +1,7 @@
 extends Node
 ## Headless test: lidded boxes (shoe boxes, shape sorter) are hollow, their
 ## lids sit on and lift off, and a creature hidden inside pops out when the
-## lid comes off or the box tips over.
+## lid leaves a gap it fits through (tipping alone keeps it shut in).
 ## Run: Godot --headless --path . res://tests/check_boxes.tscn
 
 var _failures: int = 0
@@ -100,9 +100,21 @@ func _run() -> void:
 	await _wait(0.5)
 	_check("shoe box creature still hidden with the lid on", in_shoe.state == Creature.State.HIDDEN,
 		"state=%s" % in_shoe.state)
+	# Tip it with the lid on (the lid tipped along with it, still seated).
+	var lid_rel: Transform3D = low.global_transform.affine_inverse() * low.lid.global_transform
 	low.global_transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), low.global_position + Vector3(0, 0.1, 0))
+	low.lid.global_transform = low.global_transform * lid_rel
+	await get_tree().physics_frame
+	_check("tipped with the lid on, its creature stays in", in_shoe.state == Creature.State.HIDDEN,
+		"state=%s" % in_shoe.state)
+	# A small jostle of the lid isn't a way out either.
+	low.lid.global_position += low.global_basis.x * 0.04
+	await get_tree().physics_frame
+	_check("a jostled lid keeps it in", in_shoe.state == Creature.State.HIDDEN,
+		"state=%s" % in_shoe.state)
+	low.lid.global_position += Vector3(0.0, 0.0, -0.5)
 	await _wait(0.2)
-	_check("tipping the box lets its creature out", in_shoe.state != Creature.State.HIDDEN,
+	_check("once the lid falls away, it gets out", in_shoe.state != Creature.State.HIDDEN,
 		"state=%s" % in_shoe.state)
 
 	print("RESULT: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))

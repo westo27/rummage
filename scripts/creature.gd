@@ -122,8 +122,8 @@ const LAYER_LUMP: int = 64
 const LUMP_RADIUS: float = 0.1
 ## A free nook counts as this much (m) nearer than a spot behind a prop.
 const NOOK_BONUS: float = 1.0
-## A box tipped further than this from upright (degrees) lets its creature out.
-const BOX_TIP_DEGREES: float = 70.0
+## How much wider than the marble the lid's gap must be before it gets out.
+const BOX_GAP_FIT: float = 1.2
 const BODY_COLORS: Array[Color] = [
 	Color(0.45, 0.95, 0.4), Color(1.0, 0.55, 0.75), Color(1.0, 0.85, 0.25),
 	Color(0.45, 0.8, 1.0), Color(0.85, 0.55, 1.0), Color(1.0, 0.6, 0.3),
@@ -372,11 +372,11 @@ func _update_in_drawer(delta: float) -> void:
 	_shut_in_tell(delta)
 
 
-## Rides the box, and pops out when the lid comes off or it's tipped over.
+## Rides the box, and pops out once the lid leaves a gap it fits through.
+## Tipped over with the lid still on, it stays shut in until the lid falls.
 func _update_in_box(delta: float) -> void:
 	global_transform = _box.global_transform * _box_spot
-	var tipped: bool = _box.global_basis.y.angle_to(Vector3.UP) > deg_to_rad(BOX_TIP_DEGREES)
-	if not _box.lid_on() or tipped:
+	if _box.opening_gap() > _radius() * 2.0 * BOX_GAP_FIT:
 		_pop_out_of_box()
 		return
 	_shut_in_tell(delta)

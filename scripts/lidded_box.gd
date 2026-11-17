@@ -6,7 +6,7 @@ extends Prop
 ## with a skirt that hangs down outside them so it sits square. Nothing ties
 ## it on: the beam lifts it off, drops it back, and a tumble can throw it.
 ## A creature can hide inside (Creature.hiding_box) and pops out once the
-## lid is off.
+## lid leaves a gap it fits through.
 ##
 ## The base's floor is a collision shape named "FloorShape", which is where
 ## a hiding creature sits.
@@ -33,6 +33,13 @@ func _ready() -> void:
 
 func lid_on() -> bool:
 	return to_local(lid.global_position).distance_to(_lid_seat) < lid_off_distance
+
+
+## How wide a gap the lid has opened (m): the most it has slid off the rim or
+## lifted off its seat. A creature inside waits for a gap it fits through.
+func opening_gap() -> float:
+	var shift: Vector3 = (to_local(lid.global_position) - _lid_seat).abs()
+	return maxf(shift.y, maxf(shift.x, shift.z))
 
 
 ## Top of the floor inside, in the box's own coordinates.

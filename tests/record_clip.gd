@@ -17,8 +17,28 @@ var _main: Node
 var _player: CharacterBody3D
 var _head: Node3D
 var _beam: Beam
-## Where the view is pointed, so moves can ease from it.
+## The camera rig: the script moves an aim point (`_aim`, eased from one
+## spot to the next by _turn_to), and the view chases it on a spring each
+## physics tick, so it lags a touch, settles, and overshoots a quick flick,
+## like a hand on a mouse. A slow sway and a slight creep forward on top.
+const SPRING_HZ: float = 2.4
+## Below 1 overshoots a little.
+const SPRING_DAMPING: float = 0.75
+## Handheld sway, in radians, and how fast it wanders.
+const SWAY: float = 0.008
+const SWAY_SPEED: float = 0.35
+## How fast the player edges toward what it's looking at, metres a second.
+const CREEP: float = 0.05
+
+## The spot the last _turn_to was heading for, so the next eases from it.
 var _target: Vector3 = Vector3.ZERO
+var _aim: Vector3 = Vector3.ZERO
+var _rig_on: bool = false
+## The view's yaw and pitch, and how fast each is turning.
+var _view := Vector2.ZERO
+var _view_speed := Vector2.ZERO
+var _sway := FastNoiseLite.new()
+var _clock: float = 0.0
 ## Holds the player at this crouch (0 stand, 0.5 crouched); < 0 leaves it be.
 var _crouch: float = -1.0
 var _first_frame: int = 0
@@ -31,6 +51,23 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _crouch >= 0.0:
 		_player.set("crouch", _crouch)
+
+
+func _physics_process(delta: float) -> void:
+	if not _rig_on:
+		return
+	_clock += delta
+	var wanted: Vector2 = _angles_to(_aim)
+	# A damped spring: pulled toward where it's wanted, slowed by its speed.
+	var w: float = TAU * SPRING_HZ
+	_view_speed += ((wanted - _view) * w * w - _view_speed * 2.0 * SPRING_DAMPING * w) * delta
+	_view += _view_speed * delta
+	var sway := Vector2(_sway.get_noise_1d(_clock * SWAY_SPEED * 100.0),
+		_sway.get_noise_1d(_clock * SWAY_SPEED * 100.0 + 500.0)) * SWAY
+	_player.rotation.y = _view.x + sway.x
+	_head.rotation.x = _view.y + sway.y
+	var ahead := Vector3(-sin(_view.x), 0.0, -cos(_view.x))
+	_player.global_position += ahead * CREEP * delta
 
 
 func _run() -> void:
@@ -107,6 +144,7 @@ func _clip_wardrobe() -> void:
 		handles.append(door.to_global(Vector3(-0.03, 0.05, 0.36)))
 	var middle: Vector3 = (handles[0] + handles[1]) * 0.5
 	var out: Vector3 = -wardrobe.global_basis.x
+	_back_on(wardrobe)
 	var floor_mid := Vector3(middle.x, 0.0, middle.z)
 	_crouch = 0.3
 	await _frames(20)
@@ -150,7 +188,7 @@ func _clip_bookcase() -> void:
 	# Tip it toward us, then yank it the rest of the way down.
 	await _turn_to(top + out * 0.5 + Vector3.DOWN * 0.4, 0.35)
 	await _turn_to(foot + out * 1.3 + Vector3.UP * 0.2, 0.2)
-	_throw()
+	await _throw()
 	await _turn_to(foot + out * 1.0 + Vector3.UP * 0.1, 0.5)
 	await _wait(1.6)
 
@@ -176,7 +214,7 @@ func _clip_picture() -> void:
 	await _reel(-0.4, 0.3)
 	# Flung off to the open side, away from the bookcase.
 	await _turn_to(at + out * 0.6 + Vector3(0.0, -0.2, 1.1), 0.3)
-	_throw()
+	await _throw()
 	await _turn_to(at + Vector3.DOWN * 0.3, 0.35)
 	await _turn_to(floor_below + out * 0.9 + Vector3(0.0, 0.1, -0.3), 0.8)
 	await _wait(0.8)
@@ -203,7 +241,7 @@ func _clip_bin() -> void:
 	await _wait(0.2)
 	# And the bin goes flying after it.
 	await _turn_to(away_to + Vector3.UP * 0.4, 0.35)
-	_throw()
+	await _throw()
 	await _turn_to(away_to + Vector3(0.3, 0.1, -0.2), 0.5)
 	await _wait(1.0)
 
@@ -222,7 +260,7 @@ func _clip_chair() -> void:
 	_grab(chair, seat)
 	await _turn_to(seat + Vector3(0.3, 0.7, -0.3), 0.4)
 	await _turn_to(gang_at + Vector3.UP * 0.55, 0.4)
-	_throw()
+	await _throw()
 	await _turn_to(gang_at + Vector3.UP * 0.1, 0.4)
 	await _wait(1.8)
 
@@ -240,7 +278,7 @@ func _clip_bin_throw() -> void:
 	_grab(bin, top)
 	await _turn_to(top + Vector3(0.0, 0.8, -0.2), 0.4)
 	await _turn_to(gang_at + Vector3.UP * 0.6, 0.45)
-	_throw()
+	await _throw()
 	await _turn_to(gang_at + Vector3.UP * 0.1, 0.4)
 	await _wait(1.8)
 
@@ -254,30 +292,38 @@ func _start() -> void:
 
 ## Stands the player at `feet` looking at `target`, and lets it settle.
 func _place(feet: Vector3, target: Vector3) -> void:
+	_rig_on = false
 	_player.global_position = Vector3(feet.x, 0.05, feet.z)
 	_player.reset_physics_interpolation()
 	await _frames(5)
 	_target = target
-	_point_at(target)
+	_aim = target
+	_view = _angles_to(target)
+	_view_speed = Vector2.ZERO
+	_sway.seed = randi()
+	_sway.frequency = 0.01
+	_rig_on = true
 	await _frames(25)
 
 
-## Eases the view from where it points now to `target` over `seconds`, a
-## physics tick at a time like a mouse turn, so a held thing swings with it.
+## Eases the aim from where it was last sent to `target` over `seconds`; the
+## view follows on its spring, so a held thing swings with it.
 func _turn_to(target: Vector3, seconds: float) -> void:
 	var from: Vector3 = _target
 	var ticks: int = maxi(roundi(seconds * Engine.physics_ticks_per_second), 1)
 	for i in ticks:
-		var t: float = smoothstep(0.0, 1.0, float(i + 1) / ticks)
-		_point_at(from.lerp(target, t))
+		_aim = from.lerp(target, smoothstep(0.0, 1.0, float(i + 1) / ticks))
 		await get_tree().physics_frame
 	_target = target
 
 
-func _point_at(target: Vector3) -> void:
+## Yaw and pitch that look from the eye at `target`; the yaw is kept within
+## half a turn of the view's, so the spring never goes the long way round.
+func _angles_to(target: Vector3) -> Vector2:
 	var dir: Vector3 = (target - _head.global_position).normalized()
-	_player.rotation.y = atan2(-dir.x, -dir.z)
-	_head.rotation.x = asin(dir.y)
+	var yaw: float = atan2(-dir.x, -dir.z)
+	yaw = _view.x + wrapf(yaw - _view.x, -PI, PI)
+	return Vector2(yaw, asin(dir.y))
 
 
 ## Grabs `prop` at `point`, as a click on it would.
@@ -300,7 +346,13 @@ func _let_go() -> void:
 	await get_tree().physics_frame
 
 
+## Throws where the view points, so first lets the spring catch up with the
+## aim (briefly: a player's throw comes at the end of the swing).
 func _throw() -> void:
+	for i in 12:
+		if (_angles_to(_aim) - _view).length() < 0.03:
+			break
+		await get_tree().physics_frame
 	if _beam.held != null:
 		_beam._throw()
 	_beam._grab_armed = false
@@ -329,6 +381,30 @@ func _arc(c: Creature, via: Vector3, to: Vector3, snap: bool = false) -> void:
 		c.set("_escape_left", 1.0)
 		await get_tree().physics_frame
 	c.set("_escape_left", 0.0)
+
+
+## Gives the wardrobe a back, in its own wood. It really has none: it's the
+## way through to the box room, which the clips keep as a surprise.
+func _back_on(wardrobe: Node3D) -> void:
+	const SIZE := Vector3(0.02, 2.04, 1.74)
+	var wood: Material = null
+	for m in wardrobe.find_children("*", "MeshInstance3D", true, false):
+		wood = (m as MeshInstance3D).get_active_material(0)
+		if wood != null:
+			break
+	var back := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	(shape.shape as BoxShape3D).size = SIZE
+	back.add_child(shape)
+	var panel := MeshInstance3D.new()
+	panel.mesh = BoxMesh.new()
+	(panel.mesh as BoxMesh).size = SIZE
+	panel.material_override = wood
+	back.add_child(panel)
+	wardrobe.add_child(back)
+	# Just inside the side walls, behind the two hiding there.
+	back.position = Vector3(0.28, 0.0, 0.0)
 
 
 ## Brings the named creatures out into the open round `at`, faces to the

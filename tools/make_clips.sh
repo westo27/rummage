@@ -43,16 +43,7 @@ for clip in "${clips[@]}"; do
 	done
 done
 
-# Every clip back to back, wide and tall: one post with the lot.
-for suffix in "" "_tall"; do
-	inputs=(); filter=""; n=0
-	for clip in $(grep -o 'const CLIPS.*' tests/record_clip.gd | grep -o '"[a-z_]*"' | tr -d '"'); do
-		[ -f "$OUT/$clip$suffix.mp4" ] || continue
-		inputs+=(-i "$OUT/$clip$suffix.mp4"); filter+="[$n:v][$n:a]"; n=$((n + 1))
-	done
-	[ "$n" -gt 1 ] || continue
-	"$FFMPEG" -v error -y "${inputs[@]}" -filter_complex "${filter}concat=n=$n:v=1:a=1[v][a]" \
-		-map "[v]" -map "[a]" -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p \
-		-c:a aac -b:a 192k -movflags +faststart "$OUT/montage$suffix.mp4"
-	echo "RESULT $OUT/montage$suffix.mp4 ($n clips)"
-done
+# The montage, once the whole set has been made.
+if [ $# -eq 0 ]; then
+	"/c/Program Files (x86)/Python313-32/python.exe" -I tools/make_montage.py "$FFMPEG"
+fi

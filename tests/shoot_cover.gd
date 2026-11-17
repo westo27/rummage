@@ -158,9 +158,16 @@ func _shot_burst() -> void:
 		[-0.06, 0.18, 0.22, PURPLE]]
 	for f: Array in flyers:
 		var at: Vector3 = near.call(f[0], f[1], f[2])
-		var c := _pose(at, f[3], WIDE, 0.6)
-		_turn(c, randf_range(-0.35, 0.35), randf_range(-0.8, 0.8))
-		_speed_lines(at, (at - burst_from).normalized(), randf_range(0.09, 0.16), Creature.BODY_COLORS[f[3]])
+		var dir: Vector3 = (at - burst_from).normalized()
+		var c := _pose(at, f[3], WIDE)
+		# Face turned partway toward where it's flying (still mostly to you),
+		# eyes on the way ahead.
+		var to_camera: Vector3 = at.direction_to(_camera.global_position)
+		(c.get_node("Visual") as Node3D).look_at(at + to_camera * 0.6 + dir * 0.4, Vector3.UP)
+		_turn(c, 0.0, randf_range(-0.5, 0.5))
+		_eyes(c).look_target = at + dir
+		_refresh_eyes(c)
+		_speed_lines(at, dir, randf_range(0.09, 0.16), Creature.BODY_COLORS[f[3]])
 
 	# The grabbed one, lifted clear and pulled toward your hand (just below
 	# the bottom of the frame, as in play), stretched along the beam, held in
@@ -168,6 +175,9 @@ func _shot_burst() -> void:
 	var hand: Vector3 = _from_camera(Vector3(0.06, -0.29, -0.7))
 	var grabbed_at: Vector3 = near.call(0.13, 0.2, 0.3)
 	var grabbed := _pose(grabbed_at, PINK, WIDE, 0.0)
+	# Startled even on a drawn face (which _pose otherwise leaves as drawn).
+	_eyes(grabbed).mood = WIDE
+	_refresh_eyes(grabbed)
 	_stretch(grabbed, (hand - grabbed_at).normalized(), 1.15)
 	var aura := MeshInstance3D.new()
 	var blob := SphereMesh.new()

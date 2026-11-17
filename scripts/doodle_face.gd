@@ -100,8 +100,8 @@ static var _drawn_loaded: bool = false
 static var only: Array[String] = []
 
 ## The faces the press images use.
-const PRESS_FACES: Array[String] = ["doodle_01", "doodle_06", "doodle_07", "doodle_08",
-	"doodle_26", "doodle_34"]
+const PRESS_FACES: Array[String] = ["doodle_01", "doodle_02", "doodle_03", "doodle_05",
+	"doodle_06", "doodle_07", "doodle_08", "doodle_09", "doodle_12", "doodle_17", "doodle_26"]
 
 
 static func random() -> DoodleFace:

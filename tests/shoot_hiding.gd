@@ -7,7 +7,7 @@ const OUT: String = "user://shots"
 
 # name, where the player stands, what they look at
 const VIEWS: Array = [
-	["hide_bowl", Vector3(-1.5, 0.05, 1.2), Vector3(-2.35, 0.08, 1.85)],
+	["hide_bowl", Vector3(1.47, 0.05, 0.6), Vector3(1.47, 0.82, 1.6)],
 	["hide_rug_lump", Vector3(-3.1, 0.05, 1.45), Vector3(-2.4, 0.05, 0.62)],
 ]
 

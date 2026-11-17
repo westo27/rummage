@@ -38,7 +38,7 @@ func _run() -> void:
 	var spilled: int = 0
 	for i in 9:
 		var m := _props.get_node("BowlMarble%d" % (i + 1)) as Prop
-		if _flat(m.global_position, bowl.global_position) > 0.2 or m.global_position.y > 0.3:
+		if _flat(m.global_position, bowl.global_position) > 0.2 or m.global_position.y > bowl.global_position.y + 0.25:
 			spilled += 1
 	_check("the plain marbles stay in the bowl", spilled == 0, "%d out" % spilled)
 	var plain := (_props.get_node("BowlMarble1/Mesh") as MeshInstance3D).material_override as ShaderMaterial

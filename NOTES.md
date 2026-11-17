@@ -30,7 +30,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 │           └─ BeamMesh the curved beam ribbon, rebuilt each frame
 ├─ Landing             scenes/landing.tscn: the lesson's box, bin, creature and clutter
 ├─ MainRoomProps        scenes/main_room_props.tscn: playroom and bedroom props
-├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (13 playroom, 8 bedroom)
+├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (12 playroom, 9 bedroom)
 ├─ SideRoomProps        scenes/side_room_props.tscn: the box room
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
@@ -704,7 +704,7 @@ Seven of the plainer "behind a prop" spots were swapped for these:
   soft body sleeps through it otherwise). The rug can't be lifted while the
   table pins it, so a rug lump is found by treading on it (`TREAD_DISTANCE`)
   or by anything landing on it; its tell is a twitch.
-- **A bowl of marbles** (`marble_bowl.tscn`, nine `glass_marble.tscn`: the
+- **A bowl of marbles** on the bedroom desk (`marble_bowl.tscn`, nine `glass_marble.tscn`: the
   creatures' glass with `face_shown` off). InMarbleBowl sits among them
   facing the wall (`hidden_yaw` 180); its peeks and glows give it away. Knock
   the bowl or a marble and it bolts, passing through the bowl's sides.

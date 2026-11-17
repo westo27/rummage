@@ -26,8 +26,6 @@ Tick items off as they land. Tom decides the order inside each phase.
       startled jump), if the eyes weren't enough.
 - [x] Design call: heavy things. Furniture is fixed: search in and under it; under the bed by looking, the box room through the wardrobe.
 - [ ] Clue quality: do tells and ping beat checking every bin?
-- [ ] Trapdoor under the rug opens to a hidden space with something to find
-      (Grace's idea).
 
 ## 4. itch release
 - [x] Decided: Windows, Linux, Mac and web (web uses the Compatibility renderer; Mac is unsigned, so players right-click > Open).

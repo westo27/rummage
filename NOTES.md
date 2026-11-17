@@ -30,7 +30,7 @@ Main  (scripts/main.gd: game flow, catch count, timer, win, restart)
 │           └─ BeamMesh the curved beam ribbon, rebuilt each frame
 ├─ Landing             scenes/landing.tscn: the lesson's box, bin, creature and clutter
 ├─ MainRoomProps        scenes/main_room_props.tscn: playroom and bedroom props
-├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (12 playroom, 9 bedroom)
+├─ MainRoomCreatures    scenes/main_room_creatures.tscn: 21 creatures (11 playroom, 10 bedroom)
 ├─ SideRoomProps        scenes/side_room_props.tscn: the box room
 ├─ SideRoomCreatures    scenes/side_room_creatures.tscn: 4 creatures
 ├─ Ping                 scripts/ping.gd
@@ -296,7 +296,7 @@ as a real room). Ceilings stay 3 m. Plan: `tests/shoot_rooms.tscn` renders
 each room (needs a window).
 - **Playroom** (x -5.1..-0.1, 5 × 4.5 m), through the landing door: a beanbag in the north-west
   corner, a toy bin, a school bag by the north wall, the bookcase on the west
-  wall, a beanbag, the play table on the rug over the trapdoor, two bins. Planks.
+  wall, a beanbag, the play table, two bins. Planks.
 - **Bedroom** (x 0.1..5.1, 5 × 4.2 m), through a stable door at z=0
   (`scripts/stable_door.gd`, House/StableDoor: the glazed top half is bolted
   shut from 1.1 m up; the bottom half starts shut, a 3.5 kg Prop on a
@@ -589,11 +589,10 @@ subtractions in main.tscn): one hides a creature (BehindPicture, moved from
 under a bin, so the count is unchanged), the other two toy blocks. A hidden
 creature has no gravity, so it waits in the hole until revealed.
 
-## The rug and the trapdoor
+## The rug
 
 The rug is cloth: a 1.8 m square `SoftBody3D` (`rug.tscn`, `scripts/rug.gd`)
-under the table, and both sit over a closed trapdoor (House/Trapdoor in
-main.tscn, meshes only; it doesn't open yet).
+in front of the bed, under the slippers. (The playroom trapdoor is gone.)
 - The beam only holds Props, so the rug has an invisible Prop, its Grip
   (`scripts/rug_grip.gd`). Aiming at the cloth offers the grip; just before
   the grab (`Prop.prepare_grab`) it jumps to that spot and pins the cloth
@@ -601,7 +600,7 @@ main.tscn, meshes only; it doesn't open yet).
   grip each tick (`soft_body_move_point`: Jolt ignores pin attachments).
 - It can't be lifted while anything of 5 kg or more stands on it
   (`PIN_DOWN_MASS`): the crosshair says "SOMETHING'S ON IT" and the beam
-  strains (`Prop.why_stuck`). Move the table off first.
+  strains (`Prop.why_stuck`). Nothing that heavy sits on it now.
 - A flat rug is level with the floor, so the beam takes the rug when a
   rug-only ray hits within 5 cm of where the floor was hit.
 - The rug's own physics layer (6) meets only the floor, so things on it stay
@@ -701,11 +700,11 @@ Seven of the plainer "behind a prop" spots were swapped for these:
   ball, so the coarse cloth shows a bump; the ball itself is hidden, as it
   would poke through. The lump rises from under the floor so the cloth ends
   up on top, and the rug is woken while it moves (`rug.wake()`: a resting
-  soft body sleeps through it otherwise). The rug can't be lifted while the
-  table pins it, so a rug lump is found by treading on it (`TREAD_DISTANCE`)
-  or by anything landing on it; its tell is a twitch.
+  soft body sleeps through it otherwise). A rug lump bolts when the rug is
+  lifted, when you tread on it (`TREAD_DISTANCE`)
+  or when something lands on it; its tell is a twitch.
 - **A bowl of marbles** on the bedroom desk (`marble_bowl.tscn`, nine `glass_marble.tscn`: the
-  creatures' glass with `face_shown` off). InMarbleBowl sits among them
+  creatures' glass in grey with `face_shown` off). InMarbleBowl sits among them
   facing the wall (`hidden_yaw` 180); its peeks and glows give it away. Knock
   the bowl or a marble and it bolts, passing through the bowl's sides.
   Escaping creatures now pass through every small cover for a second.

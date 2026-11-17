@@ -70,31 +70,6 @@ shader_parameter/plank_length = 1.6
 [sub_resource type="StandardMaterial3D" id="Mat_floor_side"]
 albedo_color = Color(0.3, 0.64, 0.62, 1)
 
-[sub_resource type="StandardMaterial3D" id="Mat_trap_gap"]
-albedo_color = Color(0.1, 0.06, 0.035, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_trap_gap"]
-size = Vector3(0.94, 0.002, 0.94)
-
-[sub_resource type="StandardMaterial3D" id="Mat_trap_wood"]
-albedo_color = Color(0.56, 0.36, 0.19, 1)
-roughness = 0.7
-
-[sub_resource type="BoxMesh" id="Mesh_trap_door"]
-size = Vector3(0.88, 0.002, 0.88)
-
-[sub_resource type="StandardMaterial3D" id="Mat_trap_iron"]
-albedo_color = Color(0.22, 0.22, 0.24, 1)
-metallic = 0.6
-roughness = 0.4
-
-[sub_resource type="BoxMesh" id="Mesh_trap_strap"]
-size = Vector3(0.88, 0.001, 0.06)
-
-[sub_resource type="TorusMesh" id="Mesh_trap_ring"]
-inner_radius = 0.04
-outer_radius = 0.055
-
 [sub_resource type="BoxMesh" id="Mesh_frame_h"]
 size = Vector3(2.2, 0.06, 0.12)
 
@@ -332,34 +307,6 @@ surface_material_override/0 = SubResource("Mat_brass")
 [node name="StableDoor" type="StaticBody3D" parent="House"]
 script = ExtResource("17_stable_door")
 
-[node name="Trapdoor" type="Node3D" parent="House" unique_id=883748040]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 0, -0.05)
-
-[node name="Gap" type="MeshInstance3D" parent="House/Trapdoor" unique_id=1666491799]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
-material_override = SubResource("Mat_trap_gap")
-mesh = SubResource("Mesh_trap_gap")
-
-[node name="Door" type="MeshInstance3D" parent="House/Trapdoor" unique_id=1192192190]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
-material_override = SubResource("Mat_trap_wood")
-mesh = SubResource("Mesh_trap_door")
-
-[node name="StrapA" type="MeshInstance3D" parent="House/Trapdoor" unique_id=1878819514]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0035, -0.25)
-material_override = SubResource("Mat_trap_iron")
-mesh = SubResource("Mesh_trap_strap")
-
-[node name="StrapB" type="MeshInstance3D" parent="House/Trapdoor" unique_id=347654743]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0035, 0.25)
-material_override = SubResource("Mat_trap_iron")
-mesh = SubResource("Mesh_trap_strap")
-
-[node name="Ring" type="MeshInstance3D" parent="House/Trapdoor" unique_id=71030780]
-transform = Transform3D(1, 0, 0, 0, 0.15, 0, 0, 0, 1, 0, 0.0045, 0.34)
-material_override = SubResource("Mat_trap_iron")
-mesh = SubResource("Mesh_trap_ring")
-
 [node name="Window" type="Node3D" parent="House" unique_id=1894942518]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 1.75, -2.45)
 
@@ -493,17 +440,17 @@ position = Vector3(3.3, 0.056, -1.95)
 script = ExtResource("18_nook")
 
 [node name="UnderRugA" type="Marker3D" parent="HideNooks"]
-position = Vector3(-1.65, 0.054, 0.65)
+position = Vector3(1.9, 0.054, 0.35)
 script = ExtResource("18_nook")
 kind = 1
 
 [node name="UnderRugB" type="Marker3D" parent="HideNooks"]
-position = Vector3(-3.15, 0.054, -0.75)
+position = Vector3(3.25, 0.054, 0.35)
 script = ExtResource("18_nook")
 kind = 1
 
 [node name="UnderRugC" type="Marker3D" parent="HideNooks"]
-position = Vector3(-1.65, 0.054, -0.75)
+position = Vector3(3.25, 0.054, -0.95)
 script = ExtResource("18_nook")
 kind = 1
 

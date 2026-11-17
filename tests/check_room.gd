@@ -2,8 +2,8 @@ extends Node
 ## Headless check for the room's new parts: the window holds things in, the
 ## props are glossy, the bedside lamp stands on its table, the table's
 ## drawer and the chest's drawers slide out and back by physics, the wardrobe doors swing open, and
-## pictures come off the wall to show what's behind, and the rug drags away
-## to show a trapdoor. (How the room looks can only be judged in
+## pictures come off the wall to show what's behind, and the rug in front of
+## the bed drags away. (How the room looks can only be judged in
 ## tests/shoot.tscn's pictures.) Not part of the game.
 ## Run: Godot --headless --path . res://tests/check_room.tscn
 
@@ -166,51 +166,38 @@ func _run() -> void:
 	_check("which reveals the creature behind it", behind.state != Creature.State.HIDDEN, "state=%s" % behind.state)
 	beam._release()
 
-	# --- The rug lifts away to show a trapdoor; what's on it stays put ---
+	# --- The rug in front of the bed drags away; the slippers on it stay put ---
 	var rug: Node = _main.get_node("MainRoomProps/Rug")
-	var table_on_rug := _main.get_node("MainRoomProps/Table") as Node3D
-	var table_at: Vector3 = table_on_rug.global_position
-	var trapdoor := _main.get_node("House/Trapdoor") as Node3D
-	_check("the rug lies flat on the floor", absf(rug.centre().y) < 0.02, "y=%.3f" % rug.centre().y)
-	_check("the table stands on the rug", Vector2(table_at.x - rug.centre().x, table_at.z - rug.centre().z).length() < 0.1, "")
-	_check("the trapdoor is under the rug", absf(trapdoor.global_position.x - rug.centre().x) < 1.5
-		and absf(trapdoor.global_position.z - rug.centre().z) < 1.0, "")
-	# Crouched in the stable door's open bottom half, looking at the rug's
-	# east edge.
-	_main.get_node("House/StableDoor").swing_open()
-	await _wait(1.5)
-	player.global_position = Vector3(0.1, 0.05, -0.05)
+	var slipper := _main.get_node("MainRoomProps/SlipperR") as Node3D
+	var slipper_at: Vector3 = slipper.global_position
+	var rug_start: Vector2 = Vector2(rug.centre().x, rug.centre().z)
+	_check("the rug lies flat on the floor", absf(rug.centre().y) < 0.03, "y=%.3f" % rug.centre().y)
+	_check("the rug lies in front of the bed", absf(rug.centre().x - 2.55) < 0.2 and rug.centre().z > -1.0
+		and rug.centre().z < 0.3, "centre %s" % rug.centre())
+	# Standing south of the rug, looking at its near edge.
+	player.global_position = Vector3(2.55, 0.05, 1.3)
 	player.reset_physics_interpolation()
-	Input.action_press("crouch")
-	await _wait(1.0)
-	var rug_edge: Vector3 = Vector3(-1.6, 0.006, -0.05)
+	await _wait(0.3)
+	var rug_edge: Vector3 = Vector3(2.55, 0.006, 0.3)  # in from the edge, which droops
 	look = (rug_edge - head.global_position).normalized()
 	player.rotation.y = atan2(-look.x, -look.z)
 	head.rotation.x = asin(look.y)
 	await _wait(0.1)
 	beam._grab_armed = true
 	_check("aiming at the cloth offers its grip", beam._find_aimed_prop() == rug.grip, "got %s" % beam._find_aimed_prop())
-	_check("but not while the table stands on it", not beam._can_lift(rug.grip)
-		and beam._refusal(rug.grip) == "SOMETHING'S ON IT", beam._refusal(rug.grip))
-	table_on_rug.global_position += Vector3(0, 0, 1.35)  # lift the table off, out of the way
-	(table_on_rug as RigidBody3D).sleeping = false
-	await _wait(0.5)
-	table_at = table_on_rug.global_position
-	_check("with the table off, the rug comes free", beam._can_lift(rug.grip), beam._refusal(rug.grip))
+	_check("nothing heavy on it, so it comes free", beam._can_lift(rug.grip), beam._refusal(rug.grip))
 	beam._grab(rug.grip, rug_edge)
-	for i in 60:  # back off, dragging the rug out from under the table
-		player.global_position.x += 0.03
+	for i in 60:  # back off, dragging the rug away from the bed
+		player.global_position.z += 0.03
 		await get_tree().physics_frame
 	beam._grab_armed = false  # let go of the button too, or it grabs again
 	beam._release()
-	Input.action_release("crouch")
 	await _wait(1.5)
 	var rug_flat: Vector2 = Vector2(rug.centre().x, rug.centre().z)
-	var trap_flat: Vector2 = Vector2(trapdoor.global_position.x, trapdoor.global_position.z)
-	_check("dragging the rug uncovers the trapdoor", rug_flat.distance_to(trap_flat) > 1.4,
-		"rug %.2f m from the trapdoor" % rug_flat.distance_to(trap_flat))
-	_check("the table stays where it was put", table_on_rug.global_position.distance_to(table_at) < 0.05,
-		"moved %.3f m" % table_on_rug.global_position.distance_to(table_at))
+	_check("dragging moves the rug", rug_flat.distance_to(rug_start) > 0.8,
+		"moved %.2f m" % rug_flat.distance_to(rug_start))
+	_check("the slippers on it stay where they were put", slipper.global_position.distance_to(slipper_at) < 0.05,
+		"moved %.3f m" % slipper.global_position.distance_to(slipper_at))
 	_check("the rug lands back on the floor", absf(rug.centre().y) < 0.1, "y=%.3f" % rug.centre().y)
 	_check("let go, it lets go of the cloth", rug._pinned.is_empty() and rug.grip.freeze, "pins %d, frozen %s, held %s" % [rug._pinned.size(), rug.grip.freeze, beam.held])
 

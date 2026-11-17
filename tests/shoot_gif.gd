@@ -28,6 +28,10 @@ func _ready() -> void:
 func _run() -> void:
 	# Press images show the chosen faces.
 	DoodleFace.only = DoodleFace.PRESS_FACES
+	# The game opens fullscreen; at the screen's size each frame costs more
+	# and a non-16:9 screen would squash the GIF.
+	get_window().mode = Window.MODE_WINDOWED
+	get_window().size = SIZE * 3 / 2
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()

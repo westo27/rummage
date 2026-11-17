@@ -46,6 +46,9 @@ func _run() -> void:
 	# Press images show the chosen faces, at full resolution unless asked for
 	# the pixel look (`-- pixel`: filter at its finest, dithered).
 	DoodleFace.only = DoodleFace.PRESS_FACES
+	# The game opens fullscreen, which would save at the screen's size.
+	get_window().mode = Window.MODE_WINDOWED
+	get_window().size = Vector2i(1920, 1080)
 	var pixel: bool = "pixel" in OS.get_cmdline_user_args()
 	_suffix = "_pixel" if pixel else ""
 	var settings := Game.settings

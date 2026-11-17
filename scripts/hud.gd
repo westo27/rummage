@@ -16,7 +16,7 @@ extends CanvasLayer
 ## The drawstring bag in the bottom-right corner that caught creatures drop
 ## into. See marble_bag.gd.
 var _bag: MarbleBag
-## "12 of 26" in glass text just above the bag.
+## "12 of 28" in glass text just above the bag.
 var _count_label: Label
 ## The win screen, built in code by _build_win_screen: the room dimmed, with
 ## the bag, the heading, the time and two clickable glass words floating over

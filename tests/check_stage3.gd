@@ -25,10 +25,10 @@ func _run() -> void:
 	_creatures = _main.get_node("MainRoomCreatures")
 
 	# --- Setup: all hidden, nothing reveals by itself while the room settles ---
-	_check("21 creatures in the main room", _creatures.get_child_count() == 21, "%d" % _creatures.get_child_count())
+	_check("23 creatures in the main room", _creatures.get_child_count() == 23, "%d" % _creatures.get_child_count())
 	await _wait(2.0)
 	var hidden: int = _count_state(Creature.State.HIDDEN)
-	_check("all stay hidden while the room settles", hidden == 21, "%d hidden" % hidden)
+	_check("all stay hidden while the room settles", hidden == 23, "%d hidden" % hidden)
 	var catchable: int = 0
 	for c: Creature in _creatures.get_children():
 		if c._pick_zone.collision_layer != 0:
@@ -36,7 +36,7 @@ func _run() -> void:
 	_check("hidden creatures can't be aimed at", catchable == 0, "%d catchable" % catchable)
 	var no_covers: Array[String] = []
 	for c: Creature in _creatures.get_children():
-		if c._covers.is_empty() and c.drawer_furniture.is_empty():  # a drawer is its own cover
+		if c._covers.is_empty() and c.drawer_furniture.is_empty() and c.hiding_box.is_empty():  # a drawer or box is its own cover
 			no_covers.append(c.name)
 	_check("every hidden creature found a covering prop", no_covers.is_empty(), "missing: %s" % ", ".join(no_covers))
 
@@ -124,7 +124,7 @@ func _run() -> void:
 	_release("grab")
 	_check("clicking catches the creature", not is_instance_valid(under), "")
 	var hud_text: String = (_main.get_node("HUD") as Hud).caught_text()
-	_check("bag tag shows caught count", hud_text == "1 / 26", "'%s'" % hud_text)
+	_check("bag tag shows caught count", hud_text == "1 / 28", "'%s'" % hud_text)
 	_check("capture didn't grab the bin behind it", _beam.held == null, "held=%s" % _beam.held)
 
 	# --- Chaos reveals: a thrown book hitting a bag scares out the creature behind ---

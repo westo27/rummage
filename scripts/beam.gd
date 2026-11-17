@@ -18,6 +18,8 @@ signal lift_limit_changed(kg: float)
 ## For the landing lesson (tutorial.gd): you picked something up, or threw it.
 signal grabbed(prop: Prop)
 signal thrown(prop: Prop)
+## Let go of without a throw: the button released while holding.
+signal dropped(prop: Prop)
 
 enum AimState { IDLE, CAN_GRAB, TOO_HEAVY, HOLDING, CREATURE }
 
@@ -402,7 +404,9 @@ func _push_point_to_velocity(point: Vector3, wanted: Vector3) -> void:
 func _let_go() -> void:
 	held.linear_velocity *= Game.tune.release_speed_keep
 	held.angular_velocity *= Game.tune.release_speed_keep
+	var prop: Prop = held
 	_release()
+	dropped.emit(prop)
 
 
 ## Stops driving the object; it keeps whatever velocity it has.

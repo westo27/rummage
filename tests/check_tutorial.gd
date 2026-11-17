@@ -59,12 +59,25 @@ func _run() -> void:
 	_check("the teddy is grabbed", _beam.held == box, "held=%s" % _beam.held)
 	await _wait(0.6)
 	_check("hint moves on to throwing", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.THROW], "'%s'" % _hud.hint_text())
+	# Just letting go also moves on.
+	_release("grab")
+	await _wait(0.6)
+	_check("dropping it moves on to ping", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.PING], "'%s'" % _hud.hint_text())
+
+	# Back to the throw hint, to check the throw path too.
+	_tutorial.step = Tutorial.Step.THROW
+	await _wait(0.5)
+	_aim_at(box.global_position)
+	await _wait(0.1)
+	_press("grab")
+	await _wait(0.5)
+	_check("the teddy is grabbed again", _beam.held == box, "held=%s" % _beam.held)
 	_press("throw")
 	await _wait(0.1)
 	_release("throw")
 	_release("grab")
 	await _wait(0.6)
-	_check("hint moves on to ping", _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.PING], "'%s'" % _hud.hint_text())
+	_check("throwing it moves on to ping", _tutorial.step == Tutorial.Step.PING and _hud.hint_text() == Tutorial.HINTS[Tutorial.Step.PING], "'%s'" % _hud.hint_text())
 
 	_press("ping")
 	await _wait(0.1)

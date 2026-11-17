@@ -240,6 +240,9 @@ func _run() -> void:
 	var toy_chest: Node = _main.get_node("MainRoomProps/ToyChest")
 	var lid: Prop = toy_chest.lid
 	_check("the toy chest's lid rests shut", toy_chest.lid_angle() < 0.05, "%.2f rad" % toy_chest.lid_angle())
+	var in_chest := _main.get_node("MainRoomCreatures/InToyChest") as Creature
+	_check("a creature hides in the shut chest", in_chest.state == Creature.State.HIDDEN
+		and (toy_chest as Node3D).to_local(in_chest.global_position).y < 0.0, "state=%s" % in_chest.state)
 	var teddy := _main.get_node("MainRoomProps/Teddy") as Node3D
 	_check("the teddy sits on the lid", teddy.global_position.y > 0.6, "y=%.3f" % teddy.global_position.y)
 	teddy.global_position = Vector3(-1.5, 0.3, 0.8)  # out of the way
@@ -256,6 +259,7 @@ func _run() -> void:
 	for i in 20:  # look up, lifting the lid's front edge
 		head.rotation.x += 0.025
 		await get_tree().physics_frame
+	_check("lifting the lid lets the creature out", in_chest.state != Creature.State.HIDDEN, "state=%s" % in_chest.state)
 	_check("the beam lifts the lid", toy_chest.lid_angle() > 0.4, "%.2f rad, held %s" % [toy_chest.lid_angle(), beam.held])
 	beam._grab_armed = false
 	beam._release()

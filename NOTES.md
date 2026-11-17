@@ -220,7 +220,7 @@ Three more hints, each shown by tutorial.gd once the lesson is done:
   there.
 - "Press Q to ping", once only, after 10 s with no creature found while the
   ping is ready. It goes when you ping or after 6 s. The lesson creature counts like any other
-(29 in all), so its lift arrives before the house. The timer runs from the
+(30 in all), so its lift arrives before the house. The timer runs from the
 start. A ping from the landing can reach a couple of playroom creatures
 through the wall.
 
@@ -327,7 +327,8 @@ each room (needs a window).
 - Playroom toys after Elebits' kid's room (built from primitives, not its
   models): a **toy chest** (`toy_chest.gd`, 12 kg furniture) on the north
   wall, its 1.6 kg lid on a hinge along the back (drops shut short of
-  upright, rests open past it), three blocks inside and the teddy on top; a
+  upright, rests open past it), three blocks and a hiding creature inside
+  (it's a LiddedBox; lifting the front edge lets it out) and the teddy on top; a
   **jack-in-the-box** on the table (`jack_in_the_box.gd`: a knock of 2 m/s or
   more flips the lid and the clown springs out, posed from code, for good;
   `Prop._knocked()` is the hook); a tin **robot**; a **hero** and a

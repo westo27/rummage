@@ -23,10 +23,10 @@ func _run() -> void:
 	await _wait(1.0)
 
 	# --- Totals and HUD ---
-	_check("29 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 29, "")
+	_check("30 creatures in total", get_tree().get_nodes_in_group("creatures").size() == 30, "")
 	_check("4 of them in the box room", _main.get_node("SideRoomCreatures").get_child_count() == 4, "")
-	_check("bag tag shows 0 / 29", _hud.caught_text() == "0 / 29", "'%s'" % _hud.caught_text())
-	_check("counter label shows 0 of 29", (_hud.get_node("CountLabel") as Label).text == "0 of 29", "")
+	_check("bag tag shows 0 / 30", _hud.caught_text() == "0 / 30", "'%s'" % _hud.caught_text())
+	_check("counter label shows 0 of 30", (_hud.get_node("CountLabel") as Label).text == "0 of 30", "")
 	_check("HUD hides the lift limit", not (_hud.get_node("LiftLabel") as Label).visible, "")
 	_check("timer is counting up", _label("TimerLabel") != "0:00.0", "'%s'" % _label("TimerLabel"))
 	_check("HUD shows ping ready", _label("PingLabel").begins_with("Ping ready"), "'%s'" % _label("PingLabel"))
@@ -86,7 +86,7 @@ func _run() -> void:
 		"%s" % [win_pills])
 	_check("the player stops grabbing the cursor after winning",
 		not _player.is_processing_input() and not _beam.is_processing_unhandled_input(), "")
-	_check("bag tag shows 29 / 29", _hud.caught_text() == "29 / 29", "'%s'" % _hud.caught_text())
+	_check("bag tag shows 30 / 30", _hud.caught_text() == "30 / 30", "'%s'" % _hud.caught_text())
 	var t1: String = _label("TimerLabel")
 	await _wait(0.5)
 	_check("timer stops after winning", _label("TimerLabel") == t1, "%s -> %s" % [t1, _label("TimerLabel")])
@@ -95,7 +95,7 @@ func _run() -> void:
 	# Batches of catches queue up and drop one at a time, so give the last of
 	# them time to fall and stop rolling.
 	await _wait(6.0)
-	_check("one ball in the bag per catch", _hud._bag.marble_count() == 29,
+	_check("one ball in the bag per catch", _hud._bag.marble_count() == 30,
 		"%d balls" % _hud._bag.marble_count())
 	_check("every ball stays inside the bag", _hud._bag.all_inside(), "")
 	_check("the bag has moved onto the win card",
@@ -107,7 +107,7 @@ func _run() -> void:
 	await _wait(0.5)
 	_main = get_tree().current_scene
 	_bind()
-	_check("R reloads a fresh game", _hud.caught_text() == "0 / 29" and not (_main.get_node("HUD/WinPanel") as Control).visible,
+	_check("R reloads a fresh game", _hud.caught_text() == "0 / 30" and not (_main.get_node("HUD/WinPanel") as Control).visible,
 		"'%s'" % _hud.caught_text())
 	_check("lift is reset after restart", is_equal_approx(_beam.lift_limit, 4.0), "%.0f" % _beam.lift_limit)
 	_check("the bag is empty after restart", _hud._bag.marble_count() == 0,

@@ -567,10 +567,10 @@ transform = Transform3D(-0.3746, 0, -0.9272, 0, 1, 0, 0.9272, 0, -0.3746, -3.1, 
 transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, -2.72, 0.096, -1.95)
 
 [node name="ChestBlock2" parent="." instance=ExtResource("toy_block")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.48, 0.096, -2.05)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8, 0.096, -2.07)
 
 [node name="ChestBlock3" parent="." instance=ExtResource("toy_block")]
-transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, -2.3, 0.096, -1.88)
+transform = Transform3D(0.866, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866, -2.2, 0.096, -1.9)
 
 [node name="PotPencil1" parent="." instance=ExtResource("pencil")]
 transform = Transform3D(0.8425, 0.5157, -0.1559, -0.5324, 0.8412, -0.0947, 0.0823, 0.1628, 0.9832, 1.0178, 0.833, 1.7563)

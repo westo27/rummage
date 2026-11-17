@@ -169,10 +169,12 @@ func _shot_burst() -> void:
 		_refresh_eyes(c)
 		_speed_lines(at, dir, randf_range(0.09, 0.16), Creature.BODY_COLORS[f[3]])
 
-	# The grabbed one, lifted clear and pulled toward your hand (just below
+	# The grabbed one, lifted clear and pulled toward your hand (below
 	# the bottom of the frame, as in play), stretched along the beam, held in
 	# the beam's glow.
-	var hand: Vector3 = _from_camera(Vector3(0.06, -0.29, -0.7))
+	# Well below the edge: the beam fades in over its first stretch, so a hand
+	# right at the edge leaves a gap.
+	var hand: Vector3 = _from_camera(Vector3(0.05, -0.45, -0.65))
 	var grabbed_at: Vector3 = near.call(0.13, 0.2, 0.3)
 	var grabbed := _pose(grabbed_at, PINK, WIDE, 0.0)
 	# Startled even on a drawn face (which _pose otherwise leaves as drawn).

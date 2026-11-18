@@ -17,7 +17,7 @@ var _page: Control = null
 
 func _ready() -> void:
 	# Coming back from a game: the cursor was captured, and time may be paused.
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Game.capture_mouse(false)
 	get_tree().paused = false
 
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

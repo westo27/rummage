@@ -92,7 +92,7 @@ func open() -> void:
 	_open = true
 	_root.visible = true
 	get_tree().paused = true
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Game.capture_mouse(false)
 	_set_hud_visible(false)
 
 
@@ -102,7 +102,7 @@ func close() -> void:
 	_open = false
 	_root.visible = false
 	get_tree().paused = false
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Game.capture_mouse(true)
 	_set_hud_visible(true)
 
 

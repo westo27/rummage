@@ -63,7 +63,7 @@ func _ready() -> void:
 	_crouch_query.collision_mask = collision_mask
 	_crouch_query.exclude = [get_rid()]
 	_touch_query.exclude = [get_rid()]
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Game.capture_mouse(true)
 	_place_camera(head.global_position)
 
 
@@ -84,16 +84,18 @@ func _place_camera(origin: Vector3) -> void:
 # click is handled here so it's swallowed before the beam (which listens in
 # _unhandled_input) ever sees it, and so can't also fire the grab beam.
 func _input(event: InputEvent) -> void:
-	var captured: bool = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	var captured: bool = Game.mouse_captured()
 	if event is InputEventMouseButton and event.pressed and not captured:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Game.capture_mouse(true)
 		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	var captured: bool = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	var captured: bool = Game.mouse_captured()
 
-	if event is InputEventMouseMotion and captured:
+	# No test moves the mouse, so in a hands-off run all motion is the real
+	# mouse passing over the window.
+	if event is InputEventMouseMotion and captured and not Game.hands_off:
 		var motion := event as InputEventMouseMotion
 		# From the player's saved settings, not the tunable: the tunable is only
 		# the starting value for a new player. Esc is handled by the pause menu.

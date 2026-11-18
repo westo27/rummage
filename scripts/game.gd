@@ -23,10 +23,19 @@ var main_scene: PackedScene
 var kept: Array[Resource] = []
 ## Temporary: number keys switch looks (see look_switcher.gd).
 var looks: LookSwitcher
+## Set by the user arg `hands_off` (tools/run_tests.sh passes it): the window
+## can't take focus and never really captures the mouse, and real mouse
+## movement is ignored, so a test can run beside you while you work.
+## Tests drive input with Input.parse_input_event, which still arrives.
+var hands_off: bool = "hands_off" in OS.get_cmdline_user_args()
+## Whether the mouse counts as captured while hands_off (see capture_mouse).
+var _fake_captured: bool = false
 
 
 func _ready() -> void:
 	_setup_input_map()
+	if hands_off:
+		get_window().unfocusable = true
 	# Settings reads its default sensitivity from `tune`, so it's built after
 	# the preload above has run.
 	settings = Settings.new()
@@ -41,6 +50,22 @@ func _ready() -> void:
 	add_child(looks)
 	impacts = ImpactAudio.new()
 	add_child(impacts)
+
+
+## Captures the mouse for mouse look, or frees it for menus. Use this rather
+## than setting Input.mouse_mode, so hands_off runs can fake it: a real
+## capture would grab the cursor even in a window without focus.
+func capture_mouse(on: bool) -> void:
+	if hands_off:
+		_fake_captured = on
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if on else Input.MOUSE_MODE_VISIBLE
+
+
+func mouse_captured() -> bool:
+	if hands_off:
+		return _fake_captured
+	return Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 
 
 ## Lets go of the held scene and shaders on quit, so Godot doesn't report them

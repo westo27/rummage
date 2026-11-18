@@ -56,7 +56,7 @@ for t in "$@"; do
 	# Git Bash's kill can't reach the real Godot process, so the run is tagged
 	# with a throwaway user arg and found by its Windows process id instead.
 	tag="run_tests_$$_$t"
-	"$G" --path . --resolution "$GAME_RES" --position "$GAME_POS" "res://tests/check_$t.tscn" -- "$tag" > "$raw" 2>&1 &
+	"$G" --path . --resolution "$GAME_RES" --position "$GAME_POS" "res://tests/check_$t.tscn" -- "$tag" hands_off > "$raw" 2>&1 &
 	# Git Bash's stand-in for the game lives as long as the game does, so the
 	# reader stops (and the pipe drains) once the game has closed.
 	tail -n +1 -f --pid=$! "$raw" | grep --line-buffered -E "^(PASS|FAIL|RESULT)|SCRIPT ERROR" | colour | tee -a "$log" &

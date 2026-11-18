@@ -265,7 +265,7 @@ func show_win(seconds: float, total: int) -> void:
 	_crosshair.visible = false
 	# Hand the cursor back so the words can be clicked. main.gd stops the
 	# player grabbing it again on the next click.
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Game.capture_mouse(false)
 
 
 ## 125.34 -> "2:05.3"

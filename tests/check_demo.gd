@@ -31,9 +31,14 @@ func _run() -> void:
 		if not WebDemo._in_bedroom(creature.global_position):
 			outside += 1
 	_check("every marble left is in the bedroom", outside == 0, "%d outside" % outside)
-	_check("the bedroom's ten plus the lesson's are counted",
-		creatures.size() == 11 and _main.get("_total_creatures") == 11,
+	_check("ten marbles, all counted",
+		creatures.size() == 10 and _main.get("_total_creatures") == 10,
 		"%d in group, %d counted" % [creatures.size(), _main.get("_total_creatures")])
+	var in_drawers: int = 0
+	for creature: Node3D in creatures:
+		if not (creature.get("drawer_furniture") as NodePath).is_empty():
+			in_drawers += 1
+	_check("a marble in each of the four drawers", in_drawers == 4, "%d" % in_drawers)
 	var player := _main.get_node("Player") as Node3D
 	_check("the player starts in the bedroom", WebDemo._in_bedroom(player.global_position),
 		"%s" % player.global_position)

@@ -489,7 +489,7 @@ child up past your bedtime". So it's night.
   bin and marble move onto the bedroom floor beside the player's start (no
   tutorial hints: the Tutorial node is dropped), the
   box-room doorway gets a plain door and the stable door is held shut. No
-  lamp or moon shadows, 256 shadow atlas. 11 marbles. The win screen adds a
+  lamp or moon shadows, 256 shadow atlas. 10 marbles, one in each of the four drawers (drawer and box marbles are judged by where their prop is, since they settle a frame later). The win screen adds a
   line pointing to the full game on itch. Graphics are held on Low with the
   filter on (Settings.hold_web_demo_graphics) and its settings page has no
   Graphics section. The title backdrop is cut down

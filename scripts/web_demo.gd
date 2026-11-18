@@ -24,6 +24,10 @@ const STRIP_HOUSE: Array[String] = ["LampPlayroom", "LampSide", "LampLanding",
 	"ReflectionsPlayroom", "ReflectionsSide", "ReflectionsLanding"]
 const STRIP_CHILDREN_OF: Array[String] = ["MainRoomProps", "MainRoomCreatures",
 	"SideRoomProps", "SideRoomCreatures", "Landing"]
+## Bedroom marbles left out, so the demo has ten: one in each drawer (four),
+## the lesson's, and five more.
+const DROP_CREATURES: Array[String] = ["UnderBed2", "UnderBed4", "UnderPillow",
+	"UnderBin03", "InWardrobe2", "InShoeBox"]
 ## The box room's doorway (DoorBoxRoom in main.tscn): a door to fill it.
 const BOX_ROOM_DOOR := Vector3(5.2, 1.05, 0.0)
 const BOX_ROOM_DOOR_SIZE := Vector3(0.08, 2.1, 1.0)
@@ -52,7 +56,9 @@ static func strip(house: Node3D, player: Node3D = null) -> void:
 		for child in parent.get_children():
 			if child == lesson_bin or child == lesson_creature:
 				continue
-			if child is Node3D and not _in_bedroom((child as Node3D).global_position):
+			if child.name in DROP_CREATURES and parent.name == "MainRoomCreatures":
+				_drop(child)
+			elif child is Node3D and not _in_bedroom(_where(child as Node3D)):
 				_drop(child)
 	# The lesson: the bin over its marble, now on the bedroom floor.
 	# Its lid is top_level (lidded_box.gd), so it has to be moved too, or the
@@ -87,6 +93,19 @@ static func light(house: Node) -> void:
 	var moon := house.get_node_or_null("Moonlight") as Light3D
 	if moon != null:
 		moon.shadow_enabled = false
+
+
+## Where a node really is. A marble hiding in a drawer, box or other prop has
+## no position of its own yet (it moves there a frame later), so it counts
+## as wherever that prop is.
+static func _where(node: Node3D) -> Vector3:
+	if node is Creature:
+		for key in ["drawer_furniture", "hiding_box", "inside"]:
+			var path: NodePath = node.get(key)
+			if not path.is_empty():
+				var host := node.get_node_or_null(path) as Node3D
+				return host.global_position if host != null else Vector3.INF
+	return node.global_position
 
 
 static func _in_bedroom(at: Vector3) -> bool:

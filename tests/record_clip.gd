@@ -8,6 +8,7 @@ extends Node
 ## Setting up happens on camera too, so it prints "CLIP <first> <last>": the
 ## frames worth keeping, for the cut.
 
+const PressLook = preload("res://tests/press_look.gd")
 const SEED: int = 4
 const Drawers := preload("res://scripts/drawers.gd")
 const CreatureScene: PackedScene = preload("res://scenes/creature.tscn")
@@ -99,6 +100,7 @@ func _physics_process(delta: float) -> void:
 
 func _run() -> void:
 	DoodleFace.only = DoodleFace.PRESS_FACES
+	PressLook.use()
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var clip: String = args[0] if not args.is_empty() else CLIPS[0]
 	seed(SEED)

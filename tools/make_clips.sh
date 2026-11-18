@@ -28,7 +28,7 @@ for clip in "${clips[@]}"; do
 		if [ "$shape" = wide ]; then w=1920; h=1080; name="$clip"; else w=1080; h=1920; name="${clip}_tall"; fi
 		printf '[display]\n\nwindow/size/viewport_width=%d\nwindow/size/viewport_height=%d\nwindow/size/mode=0\n' "$w" "$h" > override.cfg
 		line=$(timeout 300 "$GODOT" --path . --write-movie "$RAW/$name.avi" --fixed-fps 60 \
-			res://tests/record_clip.tscn -- "$clip" 2>&1 | grep -E '^CLIP ' || true)
+			res://tests/record_clip.tscn -- "$clip" hands_off 2>&1 | grep -E '^CLIP ' || true)
 		rm -f override.cfg
 		if [ -z "$line" ]; then echo "FAIL $name: no CLIP line"; continue; fi
 		read -r _ first last <<< "$line"

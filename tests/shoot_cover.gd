@@ -6,6 +6,7 @@ extends Node
 ## Run: Godot --path . --resolution 1260x1000 res://tests/shoot_cover.tscn
 
 const PressLogo = preload("res://tests/press_logo.gd")
+const PressLook = preload("res://tests/press_look.gd")
 const OUT: String = "user://shots"
 const COVER_SIZE := Vector2i(630, 500)
 const SEED: int = 3
@@ -39,6 +40,7 @@ func _run() -> void:
 	# squash every marble when scaled to the cover.
 	get_window().mode = Window.MODE_WINDOWED
 	get_window().size = COVER_SIZE * 2
+	PressLook.use()
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()

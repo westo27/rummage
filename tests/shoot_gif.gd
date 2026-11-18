@@ -5,6 +5,7 @@ extends Node
 ## turns them into press/lost_marbles.gif. Needs a real window.
 ## Run: Godot --path . --resolution 960x540 --fixed-fps 15 res://tests/shoot_gif.tscn
 
+const PressLook = preload("res://tests/press_look.gd")
 const OUT: String = "user://shots"
 const SIZE := Vector2i(640, 360)
 const SEED: int = 2
@@ -32,6 +33,7 @@ func _run() -> void:
 	# and a non-16:9 screen would squash the GIF.
 	get_window().mode = Window.MODE_WINDOWED
 	get_window().size = SIZE * 3 / 2
+	PressLook.use()
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()

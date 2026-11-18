@@ -128,6 +128,10 @@ func _run() -> void:
 		(settings_menu._value_labels["pixel_strength"] as Label).text == str(Settings.PIXEL_STRENGTH_MIN), "")
 	steppers[9].pressed.emit()
 	await _wait(0.05)
+	_check("Soft draws the 3D at its own resolution",
+		is_equal_approx(get_tree().root.scaling_3d_scale,
+			Game.settings.render_scale(get_tree().root.size.y))
+		and Game.settings.render_scale(1080.0) == 0.5, "%.2f" % get_tree().root.scaling_3d_scale)
 	_check("Screen filter steps on to Soft",
 		Game.settings.soft_filter and Game.pixel_filter.visible and Game.pixel_filter.is_soft()
 		and (settings_menu._value_labels["pixel"] as Label).text == "Soft",
@@ -142,6 +146,8 @@ func _run() -> void:
 	await _wait(0.05)
 	_check("Pixel filter toggles off and hides",
 		not Game.settings.pixel_filter and not Game.pixel_filter.visible, "")
+	_check("with no filter the 3D is drawn at full resolution",
+		get_tree().root.scaling_3d_scale == 1.0, "%.2f" % get_tree().root.scaling_3d_scale)
 
 	# Clamping at the ends.
 	for i in 40:

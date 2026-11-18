@@ -168,7 +168,51 @@ func apply_pixel_filter() -> void:
 	# Texel-snapped patterns only suit square pixels; Soft keeps them smooth.
 	RenderingServer.global_shader_parameter_set("pixel_texels",
 		PIXEL_TEXELS_PER_METRE if pixel_filter and not soft_filter else 0.0)
+	apply_render_scale()
 	pixel_filter_changed.emit()
+
+
+## With a filter on, the 3D is drawn at the filter's resolution and stretched
+## to the window (the HUD and menus are 2D, so they stay sharp). That's where
+## the filter saves GPU time: shadows, SSAO and TAA all cost per pixel drawn.
+## Called again when the window changes size.
+func apply_render_scale() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	tree.root.scaling_3d_scale = render_scale(tree.root.size.y)
+	if tree.current_scene != null:
+		var world := tree.current_scene.find_child("WorldEnvironment", true, false) as WorldEnvironment
+		if world != null:
+			match_glow(world.environment)
+
+
+## Glow levels are blurs a set number of *rendered* pixels wide, so at a lower
+## 3D resolution the bloom would spread wider across the screen. Each halving
+## of the resolution moves the weights down one level to keep it the same
+## size. The scene's own levels are remembered on the environment as metadata
+## the first time.
+func match_glow(env: Environment) -> void:
+	if not env.has_meta("base_glow_levels"):
+		var levels: Array[float] = []
+		for i in 7:
+			levels.append(env.get_glow_level(i))
+		env.set_meta("base_glow_levels", levels)
+	var base: Array = env.get_meta("base_glow_levels")
+	var root: Window = (Engine.get_main_loop() as SceneTree).root
+	var shift: int = maxi(0, roundi(log(1.0 / root.scaling_3d_scale) / log(2.0)))
+	for i in 7:
+		env.set_glow_level(i, base[i + shift] if i + shift < 7 else 0.0)
+
+
+## The 3D resolution as a fraction of the window's, for a window `height`
+## pixels tall. Pixel mode draws two pixels across each chunky block: with
+## only one, Godot's rounding of the render size lets the block's sample land
+## between two drawn pixels and the picture smears.
+func render_scale(height: float) -> float:
+	if not pixel_filter or height <= 0.0:
+		return 1.0
+	if soft_filter:
+		return clampf(pixel_rows() / height, 0.1, 1.0)
+	return minf(1.0, 2.0 / maxf(1.0, round(height / pixel_rows())))
 
 
 ## Puts the lighting setting into effect. The renderer-wide parts (shadow
@@ -202,3 +246,4 @@ func apply_lighting(scene: Node = null) -> void:
 	var world := scene.find_child("WorldEnvironment", true, false) as WorldEnvironment
 	if world != null:
 		world.environment.ssao_enabled = not low
+		match_glow(world.environment)

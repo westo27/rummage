@@ -467,8 +467,12 @@ child up past your bedtime". So it's night.
   −100 under the Game autoload; its shader (`shaders/pixel_filter.gdshader`)
   point-samples the screen in whole-pixel blocks, so only the 3D is
   pixelated and the HUD and menus stay crisp. Size n makes the screen
-  1080/(n+1) blocks tall (default 3 = 270). Off by default. It's a look, not
-  a saving: the 3D still renders at full resolution.
+  1080/(n+1) blocks tall (default 3 = 270). Off by default.
+  With a filter on, the 3D renders at the filter's resolution
+  (`Viewport.scaling_3d_scale`, `Settings.render_scale`; Pixel at two drawn
+  pixels per block, or Godot's size rounding smears it). The glow levels
+  shift down one per halving (`Settings.match_glow`) so bloom keeps its size.
+  bench_gpu at 2560x1438, Medium: 2.0 ms off, 0.6 ms Soft 1, 1.0 ms Pixel 1.
   The row is **Screen filter: Off / Pixel / Soft**. Soft
   (`shaders/soft_filter.gdshader`, `Settings.soft_filter`) is the Wii-on-a-TV
   look: the same low resolution blended smoothly between its pixels, a little

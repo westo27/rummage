@@ -45,6 +45,7 @@ func _ready() -> void:
 	pixel_filter = PixelFilter.new()
 	add_child(pixel_filter)
 	settings.apply_pixel_filter()
+	get_tree().root.size_changed.connect(settings.apply_render_scale)
 	# Temporary: 1/2/3 switch looks while choosing an art direction.
 	looks = LookSwitcher.new()
 	add_child(looks)

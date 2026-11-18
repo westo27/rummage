@@ -54,6 +54,16 @@ func _run() -> void:
 		"%d lamps, %d shadowed" % [lamps.size(), shadowed])
 	_check("the moon casts no shadow",
 		not (_main.get_node("Moonlight") as Light3D).shadow_enabled, "")
+	_check("no tutorial, and no hint showing",
+		_main.get_node_or_null("Tutorial") == null
+		and not (_main.get_node("HUD").get("_hint_label") as Label).visible, "")
+	var page := SettingsMenu.new()
+	add_child(page)
+	await get_tree().process_frame
+	_check("the settings page has no Graphics rows",
+		not page._value_labels.has("lighting") and page._value_labels.has("volume"),
+		"%s" % [page._value_labels.keys()])
+	page.queue_free()
 	_check("the win screen points to the full game",
 		_main.get_node("HUD").find_child("DemoNote", true, false) != null, "")
 	_check("the box room has a door",

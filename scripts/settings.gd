@@ -63,6 +63,7 @@ func _init() -> void:
 	if OS.has_feature("web") or \
 			RenderingServer.get_video_adapter_type() == RenderingDevice.DEVICE_TYPE_INTEGRATED_GPU:
 		lighting = Lighting.LOW
+	hold_web_demo_graphics()
 
 
 ## Radians of turn per pixel of mouse movement, what player.gd actually uses.
@@ -83,6 +84,16 @@ func load_from_disk() -> void:
 	filter_size = clampi(int(cfg.get_value("graphics", "filter_size", filter_size)),
 		FILTER_SIZE_MIN, FILTER_SIZE_MAX)
 	_loaded_from_disk = true
+	hold_web_demo_graphics()
+
+
+## The web demo (web_demo.gd) is held on Low lighting with the screen filter
+## on, whatever was saved: it's for low-powered laptops, and its settings page
+## has no Graphics section.
+func hold_web_demo_graphics() -> void:
+	if WebDemo.active():
+		lighting = Lighting.LOW
+		screen_filter = true
 
 
 func save() -> void:
@@ -102,7 +113,8 @@ func apply_audio() -> void:
 	# Bus 0 is "Master". Volume is in decibels, a logarithmic scale, so a
 	# percentage has to be converted rather than used directly.
 	var bus: int = AudioServer.get_bus_index("Master")
-	if volume_percent <= 0:
+	# Test runs (Game.hands_off) stay silent while you work beside them.
+	if volume_percent <= 0 or Game.hands_off:
 		AudioServer.set_bus_mute(bus, true)
 	else:
 		AudioServer.set_bus_mute(bus, false)

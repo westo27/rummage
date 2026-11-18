@@ -22,6 +22,7 @@ section rather than the whole file.
 
 ## Tests (headless scenes in tests/)
 Run: `godot --headless --path . res://tests/<name>.tscn`, grep `FAIL|RESULT|SCRIPT ERROR`.
+The `hands_off` user arg (run_tests.sh passes it) keeps test windows unfocusable and muted.
 Run only the suites the change touches; the full set once before committing.
 For Tom to watch, run `tools/run_tests.sh [suite ...]` via run_in_terminal (game
 window plus a results console beside it; stops a suite on SCRIPT ERROR or a stall).

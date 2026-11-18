@@ -4,8 +4,9 @@ extends RefCounted
 ## so it runs on low-powered laptops. The house is cut down after loading, so
 ## main.tscn stays the one level for both.
 ##
-## The first-minute lesson (the bin and its marble from the landing) is moved
-## into the bedroom, and the player starts beside it. The doorways out are
+## The landing's lesson bin and its marble are moved into the bedroom as one
+## more hiding place beside the player's start. There are no tutorial hints
+## (the Tutorial node is dropped). The doorways out are
 ## shut: the stable door's bottom half is held closed and the box room gets a
 ## plain door.
 ## Add the user arg `demo` to try it on desktop: Godot --path . -- demo
@@ -66,6 +67,11 @@ static func strip(house: Node3D, player: Node3D = null) -> void:
 			node.global_position += shift
 			node.reset_physics_interpolation()
 	_shut_doorways(house)
+	# No tutorial hints. It has already put its first one up, so that goes too.
+	_drop(house.get_node_or_null("Tutorial"))
+	var hud := house.get_node_or_null("HUD")
+	if hud != null:
+		hud.hide_hint()
 	if player != null:
 		player.global_position = SPAWN
 		var dir: Vector3 = SPAWN_LOOK - SPAWN

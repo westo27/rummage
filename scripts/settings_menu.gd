@@ -43,10 +43,12 @@ func _ready() -> void:
 	column.add_child(_build_row("invert", "Invert look (Y)"))
 	column.add_child(_build_section("Sound"))
 	column.add_child(_build_row("volume", "Volume"))
-	column.add_child(_build_section("Graphics"))
-	column.add_child(_build_row("lighting", "Lighting"))
-	column.add_child(_build_row("filter", "Screen filter"))
-	column.add_child(_build_row("filter_size", "Filter size"))
+	# The web demo is held on Low graphics, so it has no Graphics section.
+	if not WebDemo.active():
+		column.add_child(_build_section("Graphics"))
+		column.add_child(_build_row("lighting", "Lighting"))
+		column.add_child(_build_row("filter", "Screen filter"))
+		column.add_child(_build_row("filter_size", "Filter size"))
 
 	var spacer2 := Control.new()
 	spacer2.custom_minimum_size = Vector2(0.0, 40.0)
@@ -142,9 +144,10 @@ func _refresh() -> void:
 	(_value_labels["look"] as Label).text = str(Game.settings.sensitivity_step)
 	(_value_labels["volume"] as Label).text = "%d%%" % Game.settings.volume_percent
 	(_value_labels["invert"] as Label).text = "On" if Game.settings.invert_look else "Off"
-	(_value_labels["lighting"] as Label).text = Settings.LIGHTING_NAMES[Game.settings.lighting]
-	(_value_labels["filter"] as Label).text = "On" if Game.settings.screen_filter else "Off"
-	(_value_labels["filter_size"] as Label).text = str(Game.settings.filter_size)
+	if _value_labels.has("lighting"):
+		(_value_labels["lighting"] as Label).text = Settings.LIGHTING_NAMES[Game.settings.lighting]
+		(_value_labels["filter"] as Label).text = "On" if Game.settings.screen_filter else "Off"
+		(_value_labels["filter_size"] as Label).text = str(Game.settings.filter_size)
 
 
 func _unhandled_input(event: InputEvent) -> void:

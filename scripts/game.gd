@@ -16,6 +16,11 @@ var settings: Settings
 var impacts: ImpactAudio
 ## The chunky-pixel look, switched by Graphics > Pixel filter.
 var pixel_filter: PixelFilter
+## main.tscn once the title has loaded it. Holding it keeps its resources
+## (and so their compiled shaders) alive across the change to the game.
+var main_scene: PackedScene
+## Shaders the title warmed up, held so they stay compiled for the game.
+var kept: Array[Resource] = []
 ## Temporary: number keys switch looks (see look_switcher.gd).
 var looks: LookSwitcher
 
@@ -36,6 +41,13 @@ func _ready() -> void:
 	add_child(looks)
 	impacts = ImpactAudio.new()
 	add_child(impacts)
+
+
+## Lets go of the held scene and shaders on quit, so Godot doesn't report them
+## as leaked.
+func _exit_tree() -> void:
+	main_scene = null
+	kept.clear()
 
 
 ## Controls are defined here in code rather than in Project Settings > Input Map

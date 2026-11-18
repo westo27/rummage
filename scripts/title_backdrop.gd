@@ -22,6 +22,13 @@ const DRIFT := Vector3(0.22, 0.04, 0.12)
 const LOOK_DRIFT := Vector3(0.2, 0.05, 0.0)
 const DRIFT_RATE: float = 0.07
 
+## Shaders the game uses that the title's house doesn't draw (see
+## _warm_up_shaders), and how many frames they're drawn for.
+const WARM_SHADERS: Array[String] = ["res://shaders/beam.gdshader",
+	"res://shaders/beam_aura.gdshader", "res://shaders/glow_dot.gdshader",
+	"res://shaders/glass_marble.gdshader"]
+const WARM_FRAMES: int = 4
+
 var _camera: Camera3D
 ## A stand-in for the player at the camera: creatures look at whatever's in the
 ## "player" group, so this makes their peeks land on you.
@@ -31,7 +38,10 @@ var _time: float = 0.0
 
 
 func _ready() -> void:
-	var house: Node3D = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	# Kept on Game so the house's materials and shaders outlive the title:
+	# otherwise Play frees them and the game compiles them all over again.
+	Game.main_scene = load("res://scenes/main.tscn")
+	var house: Node3D = Game.main_scene.instantiate()
 	for node_name in STRIP:
 		var node := house.get_node_or_null(node_name)
 		if node != null:
@@ -67,6 +77,33 @@ func _ready() -> void:
 	_time = randf() * 60.0
 	_place_camera()
 	_face_the_camera()
+	_warm_up_shaders()
+
+
+## Draws the game's own shaders that the title never shows (the beam, its
+## aura, the bag's glass marbles) on specks in front of the camera for a few
+## frames, so they compile here rather than in the stall after Play, or on the
+## first grab. Shaders compile on first draw; holding them on Game keeps them
+## compiled after the title is gone.
+func _warm_up_shaders() -> void:
+	var specks := Node3D.new()
+	_camera.add_child(specks)
+	for path in WARM_SHADERS:
+		var shader: Shader = load(path)
+		if not shader in Game.kept:
+			Game.kept.append(shader)
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		var quad := QuadMesh.new()
+		quad.size = Vector2.ONE * 0.002  # far too small to see
+		var speck := MeshInstance3D.new()
+		speck.mesh = quad
+		speck.material_override = mat
+		speck.position = Vector3(0.0, 0.0, -0.5)
+		specks.add_child(speck)
+	for i in WARM_FRAMES:
+		await get_tree().process_frame
+	specks.queue_free()
 
 
 func _process(delta: float) -> void:

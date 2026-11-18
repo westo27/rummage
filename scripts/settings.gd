@@ -38,6 +38,9 @@ const LIGHTING_NAMES: Array[String] = ["Low", "Medium", "High"]
 ## tall: 1 is 540 rows (subtle), 3 is 270, 8 is 120 (very chunky).
 const PIXEL_STRENGTH_MIN: int = 1
 const PIXEL_STRENGTH_MAX: int = 8
+## Graphics > Screen filter, as the menu steps through it.
+enum ScreenFilter { OFF, PIXEL, SOFT }
+const SCREEN_FILTER_NAMES: Array[String] = ["Off", "Pixel", "Soft"]
 
 var sensitivity_step: int = 8
 var volume_percent: int = 80
@@ -53,6 +56,9 @@ var pixel_strength: int = 1
 ## Graphics > Dither: limits the pixel filter's colours to a few shades with a
 ## checkered dither between them. On by default.
 var pixel_dither: bool = true
+## Draws the filter soft (smoothly upscaled, like an old TV) instead of in
+## square pixels. Pixel size still sets the resolution; Dither is Pixel only.
+var soft_filter: bool = false
 
 var _loaded_from_disk: bool = false
 
@@ -89,6 +95,7 @@ func load_from_disk() -> void:
 	pixel_strength = clampi(int(cfg.get_value("graphics", "pixel_strength", pixel_strength)),
 		PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
 	pixel_dither = bool(cfg.get_value("graphics", "pixel_dither", pixel_dither))
+	soft_filter = bool(cfg.get_value("graphics", "soft_filter", soft_filter))
 	_loaded_from_disk = true
 
 
@@ -101,6 +108,7 @@ func save() -> void:
 	cfg.set_value("graphics", "pixel_filter", pixel_filter)
 	cfg.set_value("graphics", "pixel_strength", pixel_strength)
 	cfg.set_value("graphics", "pixel_dither", pixel_dither)
+	cfg.set_value("graphics", "soft_filter", soft_filter)
 	cfg.save(PATH)
 
 
@@ -134,6 +142,20 @@ func adjust_pixel_strength(by: int) -> void:
 	pixel_strength = clampi(pixel_strength + by, PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
 
 
+func screen_filter() -> ScreenFilter:
+	if not pixel_filter:
+		return ScreenFilter.OFF
+	return ScreenFilter.SOFT if soft_filter else ScreenFilter.PIXEL
+
+
+## Steps Off -> Pixel -> Soft, wrapping round at either end.
+func step_screen_filter(by: int) -> void:
+	var mode: int = posmod(screen_filter() + by, ScreenFilter.size())
+	pixel_filter = mode != ScreenFilter.OFF
+	if pixel_filter:
+		soft_filter = mode == ScreenFilter.SOFT
+
+
 ## How many chunky pixels tall the screen is at the current strength.
 func pixel_rows() -> float:
 	return 1080.0 / (pixel_strength + 1)
@@ -146,10 +168,12 @@ const PIXEL_TEXELS_PER_METRE: float = 32.0
 
 func apply_pixel_filter() -> void:
 	Game.pixel_filter.visible = pixel_filter
+	Game.pixel_filter.set_soft(soft_filter)
 	Game.pixel_filter.set_rows(pixel_rows())
 	Game.pixel_filter.set_dither(pixel_dither)
+	# Texel-snapped patterns only suit square pixels; Soft keeps them smooth.
 	RenderingServer.global_shader_parameter_set("pixel_texels",
-		PIXEL_TEXELS_PER_METRE if pixel_filter else 0.0)
+		PIXEL_TEXELS_PER_METRE if pixel_filter and not soft_filter else 0.0)
 	pixel_filter_changed.emit()
 
 

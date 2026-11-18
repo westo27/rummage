@@ -45,7 +45,7 @@ func _ready() -> void:
 	column.add_child(_build_row("volume", "Volume"))
 	column.add_child(_build_section("Graphics"))
 	column.add_child(_build_row("lighting", "Lighting"))
-	column.add_child(_build_row("pixel", "Pixel filter"))
+	column.add_child(_build_row("pixel", "Screen filter"))
 	column.add_child(_build_row("pixel_strength", "Pixel size"))
 	column.add_child(_build_row("dither", "Dither"))
 
@@ -131,7 +131,7 @@ func _adjust(key: String, by: int) -> void:
 			# Straight away, so from the pause menu you see the change.
 			Game.settings.apply_lighting(get_tree().current_scene)
 		"pixel":
-			Game.settings.pixel_filter = not Game.settings.pixel_filter
+			Game.settings.step_screen_filter(by)
 			Game.settings.apply_pixel_filter()
 		"pixel_strength":
 			Game.settings.adjust_pixel_strength(by)
@@ -147,7 +147,8 @@ func _refresh() -> void:
 	(_value_labels["volume"] as Label).text = "%d%%" % Game.settings.volume_percent
 	(_value_labels["invert"] as Label).text = "On" if Game.settings.invert_look else "Off"
 	(_value_labels["lighting"] as Label).text = Settings.LIGHTING_NAMES[Game.settings.lighting]
-	(_value_labels["pixel"] as Label).text = "On" if Game.settings.pixel_filter else "Off"
+	(_value_labels["pixel"] as Label).text = \
+		Settings.SCREEN_FILTER_NAMES[Game.settings.screen_filter()]
 	(_value_labels["pixel_strength"] as Label).text = str(Game.settings.pixel_strength)
 	(_value_labels["dither"] as Label).text = "On" if Game.settings.pixel_dither else "Off"
 

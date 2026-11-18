@@ -465,6 +465,11 @@ child up past your bedtime". So it's night.
   pixelated and the HUD and menus stay crisp. Size n makes the screen
   1080/(n+1) blocks tall (default 3 = 270). Off by default. It's a look, not
   a saving: the 3D still renders at full resolution.
+  The row is **Screen filter: Off / Pixel / Soft**. Soft
+  (`shaders/soft_filter.gdshader`, `Settings.soft_filter`) is the Wii-on-a-TV
+  look: the same low resolution blended smoothly between its pixels, a little
+  sideways colour bleed, faint scanlines and a vignette. Pixel size sets its
+  resolution too; Dither and texel snapping are Pixel only.
   **Graphics > Dither** (off by default) adds the old colour limit: 16 shades
   per channel with a 4x4 Bayer dither (`shaders/dither.gdshaderinc`), on the
   3D. Off, there's no colour limit.

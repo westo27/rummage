@@ -16,7 +16,7 @@ func _ready() -> void:
 func _run() -> void:
 	_saved = [Game.settings.sensitivity_step, Game.settings.volume_percent, Game.settings.invert_look,
 		Game.settings.lighting, Game.settings.pixel_filter, Game.settings.pixel_strength,
-		Game.settings.pixel_dither]
+		Game.settings.pixel_dither, Game.settings.soft_filter]
 
 	# The UI is sized for a large design space; if the setting is lost, Godot's
 	# 1152x648 default makes everything about twice too big.
@@ -135,6 +135,18 @@ func _run() -> void:
 	steppers[12].pressed.emit()
 	await _wait(0.05)
 	_check("Dither toggles off", not Game.settings.pixel_dither, "")
+	steppers[9].pressed.emit()
+	await _wait(0.05)
+	_check("Screen filter steps on to Soft",
+		Game.settings.soft_filter and Game.pixel_filter.visible and Game.pixel_filter.is_soft()
+		and (settings_menu._value_labels["pixel"] as Label).text == "Soft",
+		"%s/%s/%s" % [Game.settings.soft_filter, Game.pixel_filter.is_soft(),
+			(settings_menu._value_labels["pixel"] as Label).text])
+	steppers[8].pressed.emit()
+	await _wait(0.05)
+	_check("Screen filter steps back to Pixel",
+		not Game.settings.soft_filter and not Game.pixel_filter.is_soft()
+		and (settings_menu._value_labels["pixel"] as Label).text == "Pixel", "")
 	steppers[8].pressed.emit()
 	await _wait(0.05)
 	_check("Pixel filter toggles off and hides",
@@ -258,6 +270,7 @@ func _run() -> void:
 	Game.settings.pixel_filter = _saved[4]
 	Game.settings.pixel_strength = _saved[5]
 	Game.settings.pixel_dither = _saved[6]
+	Game.settings.soft_filter = _saved[7]
 	Game.settings.apply_pixel_filter()
 	Game.settings.save()
 	Game.settings.apply_lighting()

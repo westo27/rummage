@@ -16,7 +16,7 @@ func _ready() -> void:
 func _run() -> void:
 	_saved = [Game.settings.sensitivity_step, Game.settings.volume_percent, Game.settings.invert_look,
 		Game.settings.lighting, Game.settings.pixel_filter, Game.settings.pixel_strength,
-		Game.settings.pixel_dither, Game.settings.soft_filter]
+		Game.settings.soft_filter]
 
 	# The UI is sized for a large design space; if the setting is lost, Godot's
 	# 1152x648 default makes everything about twice too big.
@@ -54,7 +54,7 @@ func _run() -> void:
 	var settings_menu: SettingsMenu = _settings_under(title)
 	_check("Settings opens the settings page", settings_menu != null, "")
 	var steppers: Array[MenuPanel] = _panels_under(settings_menu)
-	_check("settings page has 7 rows of steppers plus Back", steppers.size() == 15,
+	_check("settings page has 6 rows of steppers plus Back", steppers.size() == 13,
 		"%d panels" % steppers.size())
 	var section_titles: Array[String] = []
 	for label in settings_menu.find_children("*", "Label", true, false):
@@ -126,15 +126,6 @@ func _run() -> void:
 		Game.settings.pixel_strength == Settings.PIXEL_STRENGTH_MIN, "%d" % Game.settings.pixel_strength)
 	_check("the Pixel size row shows its value",
 		(settings_menu._value_labels["pixel_strength"] as Label).text == str(Settings.PIXEL_STRENGTH_MIN), "")
-	Game.settings.pixel_dither = false
-	steppers[13].pressed.emit()  # the "+" of the Dither row (a toggle)
-	await _wait(0.05)
-	_check("Dither toggles on and reaches the filter",
-		Game.settings.pixel_dither and Game.pixel_filter._material.get_shader_parameter("dither") == true
-		and (settings_menu._value_labels["dither"] as Label).text == "On", "")
-	steppers[12].pressed.emit()
-	await _wait(0.05)
-	_check("Dither toggles off", not Game.settings.pixel_dither, "")
 	steppers[9].pressed.emit()
 	await _wait(0.05)
 	_check("Screen filter steps on to Soft",
@@ -164,7 +155,7 @@ func _run() -> void:
 		Game.settings.sensitivity_step == Settings.SENSITIVITY_MAX, "%d" % Game.settings.sensitivity_step)
 
 	# --- Back closes it and writes the file ---
-	steppers[14].pressed.emit()  # Back
+	steppers[12].pressed.emit()  # Back
 	await _wait(0.2)
 	_check("Back closes the settings page", _settings_under(title) == null, "")
 	_check("the title panels come back", _panels_under(title).size() == 4, "")
@@ -269,8 +260,7 @@ func _run() -> void:
 	Game.settings.lighting = _saved[3]
 	Game.settings.pixel_filter = _saved[4]
 	Game.settings.pixel_strength = _saved[5]
-	Game.settings.pixel_dither = _saved[6]
-	Game.settings.soft_filter = _saved[7]
+	Game.settings.soft_filter = _saved[6]
 	Game.settings.apply_pixel_filter()
 	Game.settings.save()
 	Game.settings.apply_lighting()

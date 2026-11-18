@@ -53,11 +53,8 @@ var lighting: Lighting = Lighting.MEDIUM
 ## On by default at the finest size; strength is how big the pixels are.
 var pixel_filter: bool = true
 var pixel_strength: int = 1
-## Graphics > Dither: limits the pixel filter's colours to a few shades with a
-## checkered dither between them. On by default.
-var pixel_dither: bool = true
 ## Draws the filter soft (smoothly upscaled, like an old TV) instead of in
-## square pixels. Pixel size still sets the resolution; Dither is Pixel only.
+## square pixels. Pixel size sets the resolution of both.
 var soft_filter: bool = false
 
 var _loaded_from_disk: bool = false
@@ -94,7 +91,6 @@ func load_from_disk() -> void:
 	pixel_filter = bool(cfg.get_value("graphics", "pixel_filter", pixel_filter))
 	pixel_strength = clampi(int(cfg.get_value("graphics", "pixel_strength", pixel_strength)),
 		PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
-	pixel_dither = bool(cfg.get_value("graphics", "pixel_dither", pixel_dither))
 	soft_filter = bool(cfg.get_value("graphics", "soft_filter", soft_filter))
 	_loaded_from_disk = true
 
@@ -107,7 +103,6 @@ func save() -> void:
 	cfg.set_value("graphics", "lighting", lighting)
 	cfg.set_value("graphics", "pixel_filter", pixel_filter)
 	cfg.set_value("graphics", "pixel_strength", pixel_strength)
-	cfg.set_value("graphics", "pixel_dither", pixel_dither)
 	cfg.set_value("graphics", "soft_filter", soft_filter)
 	cfg.save(PATH)
 
@@ -170,7 +165,6 @@ func apply_pixel_filter() -> void:
 	Game.pixel_filter.visible = pixel_filter
 	Game.pixel_filter.set_soft(soft_filter)
 	Game.pixel_filter.set_rows(pixel_rows())
-	Game.pixel_filter.set_dither(pixel_dither)
 	# Texel-snapped patterns only suit square pixels; Soft keeps them smooth.
 	RenderingServer.global_shader_parameter_set("pixel_texels",
 		PIXEL_TEXELS_PER_METRE if pixel_filter and not soft_filter else 0.0)

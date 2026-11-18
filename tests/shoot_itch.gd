@@ -44,7 +44,7 @@ func _process(_delta: float) -> void:
 
 func _run() -> void:
 	# Press images show the chosen faces, at full resolution unless asked for
-	# the pixel look (`-- pixel`: filter at its finest, dithered).
+	# the pixel look (`-- pixel`: filter at its finest).
 	DoodleFace.only = DoodleFace.PRESS_FACES
 	# The game opens fullscreen, which would save at the screen's size.
 	get_window().mode = Window.MODE_WINDOWED
@@ -52,10 +52,9 @@ func _run() -> void:
 	var pixel: bool = "pixel" in OS.get_cmdline_user_args()
 	_suffix = "_pixel" if pixel else ""
 	var settings := Game.settings
-	var saved: Array = [settings.pixel_filter, settings.pixel_strength, settings.pixel_dither]
+	var saved: Array = [settings.pixel_filter, settings.pixel_strength]
 	settings.pixel_filter = pixel
 	settings.pixel_strength = 1
-	settings.pixel_dither = true
 	settings.apply_pixel_filter()
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
@@ -158,7 +157,6 @@ func _run() -> void:
 
 	settings.pixel_filter = saved[0]
 	settings.pixel_strength = saved[1]
-	settings.pixel_dither = saved[2]
 	print("RESULT itch shots in %s" % ProjectSettings.globalize_path(OUT))
 	get_tree().quit()
 

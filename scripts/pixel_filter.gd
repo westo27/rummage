@@ -42,6 +42,3 @@ func is_soft() -> bool:
 func set_rows(rows: float) -> void:
 	_material.set_shader_parameter("target_rows", rows)
 
-
-func set_dither(on: bool) -> void:
-	_material.set_shader_parameter("dither", on)

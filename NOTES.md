@@ -395,6 +395,10 @@ child up past your bedtime". So it's night.
   they make pools of light, dimmer shade and bulb glow, moonlight 1.8 with
   blurred edges, exposure 0.85, wider shadow softness (light size 0.3, 0.45
   on High), saturation back to 1.0.
+  Wii pass: saturation 0.88, contrast 1.0, and a colour-correction gradient
+  (main.tscn, `Gradient_grade`) that lifts the blacks and warms the whites.
+  Bloom wider and hazier (more weight on levels 4–6, threshold 1.15,
+  Bloom 0.06, intensity 0.8). Camera FOV 65 (was 75), nearer a console's.
 - **Bloom** catches only things brighter than white: the lamp bulbs and
   shades, the moon, the creatures (whose glow was raised to 0.8 so they're
   little lights in the dark), the beam and the sparkles.
@@ -469,10 +473,8 @@ child up past your bedtime". So it's night.
   (`shaders/soft_filter.gdshader`, `Settings.soft_filter`) is the Wii-on-a-TV
   look: the same low resolution blended smoothly between its pixels, a little
   sideways colour bleed, faint scanlines and a vignette. Pixel size sets its
-  resolution too; Dither and texel snapping are Pixel only.
-  **Graphics > Dither** (off by default) adds the old colour limit: 16 shades
-  per channel with a 4x4 Bayer dither (`shaders/dither.gdshaderinc`), on the
-  3D. Off, there's no colour limit.
+  resolution too; texel snapping is Pixel only. (The old Dither option, a
+  16-shade Bayer colour limit, was removed.)
   While it's on, the wallpaper, floor, rug and pictures snap to a texel grid
   (`Settings.PIXEL_TEXELS_PER_METRE`, 32; the wallpaper uses twice that) via
   the `pixel_texels` shader global (Project Settings > Shader Globals) and

@@ -29,7 +29,7 @@ window plus a results console beside it; stops a suite on SCRIPT ERROR or a stal
 - stage1 movement/walls · stage2 beam grab/throw/arc · stage3 creatures ·
   stage4 gates/win/bag · floor_clutter · smoothness · menus (settings, pause;
   writes then restores the real settings file) · grab_point · impacts ·
-  catch · furniture · beam_look · beam_sound · room · lamp · tutorial · boxes · hiding_places
+  catch · furniture · beam_look · beam_sound · room · lamp · tutorial · boxes · hiding_places · demo (web demo cut-down)
 - In tests, wait two `process_frame`s before reading anything drawn per frame.
 
 ## Visual checks (need a real window, not --headless)

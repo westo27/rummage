@@ -16,7 +16,7 @@ ERROR_GRACE=2
 if [ $# -eq 0 ]; then
 	set -- stage1 stage2 stage3 stage4 floor_clutter smoothness menus grab_point \
 		impacts catch furniture beam_look beam_sound room lamp tutorial boxes \
-		hiding_places bump
+		hiding_places bump demo
 fi
 
 # Game on the left, results on the right.

@@ -196,7 +196,8 @@ func apply_lighting(scene: Node = null) -> void:
 	else:
 		viewport.use_taa = not low
 		viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if low else Viewport.SCREEN_SPACE_AA_DISABLED
-	viewport.positional_shadow_atlas_size = 4096
+	# The demo casts no lamp shadows, so it keeps the shadow memory tiny.
+	viewport.positional_shadow_atlas_size = 256 if WebDemo.active() else 4096
 	# SSAO quality is global (all environments). High samples more, at full
 	# resolution; Medium is Godot's default (half resolution). Low turns it off below.
 	RenderingServer.environment_set_ssao_quality(

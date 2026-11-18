@@ -482,6 +482,16 @@ child up past your bedtime". So it's night.
   Menus, buttons and the in-game HUD stay crisp (they're on higher layers).
   `tests/shoot_filter.tscn` renders it off and at each size. In the browser
   (Compatibility renderer, no TAA) 3D edges get 4x MSAA instead.
+- **Web demo** (`scripts/web_demo.gd`): the browser build is the bedroom
+  only, after the full game crashed a low-spec work laptop's browser. After
+  main.tscn loads, everything outside the bedroom is freed (props,
+  creatures, three lamps and their reflection probes), the landing's lesson
+  bin and marble move onto the bedroom floor beside the player's start, the
+  box-room doorway gets a plain door and the stable door is held shut. No
+  lamp or moon shadows, 256 shadow atlas. 11 marbles. The win screen adds a
+  line pointing to the full game on itch. The title backdrop is cut down
+  the same way. `-- demo` (or `WebDemo.forced` in tests) gives it on
+  desktop; `tests/check_demo.tscn` checks it.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.
 - **Readability**: a darker room makes props and creatures harder to spot,

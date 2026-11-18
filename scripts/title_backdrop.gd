@@ -58,6 +58,9 @@ func _ready() -> void:
 	# (counting catches, the timer, restart) runs.
 	house.set_script(null)
 	add_child(house)
+	if WebDemo.active():
+		WebDemo.strip(house)
+		WebDemo.light(house)
 	MainScript.set_up_world(house)
 	Game.settings.apply_lighting(house)
 

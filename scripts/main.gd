@@ -19,6 +19,10 @@ func _ready() -> void:
 	# not on each body. Setting it here means the value comes from tunables.tres
 	# instead of a second copy in Project Settings.
 	set_up_world(self)
+	# The browser build is the bedroom-only demo (see web_demo.gd).
+	if WebDemo.active():
+		WebDemo.strip(self, $Player)
+		WebDemo.light(self)
 
 	# connect() subscribes a function to a signal: whenever the beam emits
 	# aim_changed, hud.set_aim is called with the same arguments.

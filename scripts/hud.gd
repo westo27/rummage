@@ -195,6 +195,13 @@ func _build_win_screen() -> void:
 	_win_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(_win_label)
 
+	if WebDemo.active():
+		var note := UiStyle.label("That was the bedroom. The full game has four rooms to search:\ndownload it from the itch.io page.",
+			UiStyle.HINT_FONT_SIZE, UiStyle.CREAM_SOFT, 400)
+		note.name = "DemoNote"
+		note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		column.add_child(note)
+
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0.0, 30.0)
 	column.add_child(gap)

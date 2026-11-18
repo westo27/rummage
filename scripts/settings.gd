@@ -49,13 +49,14 @@ var invert_look: bool = false
 ## Medium by default, so the game runs well on most machines out of the box
 ## (Low in a browser or on integrated graphics: see _init).
 var lighting: Lighting = Lighting.MEDIUM
-## Graphics > Pixel filter: the chunky low-resolution look (see pixel_filter.gd).
-## On by default at the finest size; strength is how big the pixels are.
+## Graphics > Screen filter: draws the 3D at a low resolution (see
+## pixel_filter.gd). On by default, as Soft at the finest size; strength is
+## how low the resolution goes.
 var pixel_filter: bool = true
 var pixel_strength: int = 1
 ## Draws the filter soft (smoothly upscaled, like an old TV) instead of in
 ## square pixels. Pixel size sets the resolution of both.
-var soft_filter: bool = false
+var soft_filter: bool = true
 
 var _loaded_from_disk: bool = false
 

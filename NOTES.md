@@ -467,7 +467,7 @@ child up past your bedtime". So it's night.
   −100 under the Game autoload; its shader (`shaders/pixel_filter.gdshader`)
   point-samples the screen in whole-pixel blocks, so only the 3D is
   pixelated and the HUD and menus stay crisp. Size n makes the screen
-  1080/(n+1) blocks tall (default 3 = 270). Off by default.
+  1080/(n+1) blocks tall. On by default as Soft at size 1 (720 rows).
   With a filter on, the 3D renders at the filter's resolution
   (`Viewport.scaling_3d_scale`, `Settings.render_scale`; Pixel at two drawn
   pixels per block, or Godot's size rounding smears it). The glow levels

@@ -2,8 +2,7 @@ extends Node
 ## Renders the itch.io page screenshots: five staged moments of play with the
 ## HUD showing. Needs a real window (no --headless).
 ## Run: Godot --path . --resolution 1920x1080 res://tests/shoot_itch.tscn
-## In the game's default look (Soft filter); add `-- pixel` for the
-## pixel-filter set, saved as itch_*_pixel.png.
+## In the game's default look (the screen filter at size 1).
 
 const PressLook = preload("res://tests/press_look.gd")
 const OUT: String = "user://shots"
@@ -28,8 +27,6 @@ var _beam: Beam
 var _peekers: Array[Creature] = []
 ## Holds the player at this crouch (0 stand, 0.5 crouched); < 0 leaves it be.
 var _crouch: float = -1.0
-## Added to each file name ("_pixel" for the pixel-filter set).
-var _suffix: String = ""
 
 
 func _ready() -> void:
@@ -45,15 +42,12 @@ func _process(_delta: float) -> void:
 
 
 func _run() -> void:
-	# Press images show the chosen faces, in the default look unless asked for
-	# the pixel look (`-- pixel`: filter at its finest).
+	# Press images show the chosen faces, in the default look.
 	DoodleFace.only = DoodleFace.PRESS_FACES
 	# The game opens fullscreen, which would save at the screen's size.
 	get_window().mode = Window.MODE_WINDOWED
 	get_window().size = Vector2i(1920, 1080)
-	var pixel: bool = "pixel" in OS.get_cmdline_user_args()
-	_suffix = "_pixel" if pixel else ""
-	PressLook.use(pixel)
+	PressLook.use()
 	DirAccess.make_dir_recursive_absolute(OUT)
 	seed(SEED)
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
@@ -166,7 +160,7 @@ func _stand(eye: Vector3, target: Vector3, settle: int = 25) -> void:
 
 
 func _shoot(shot_name: String) -> void:
-	get_viewport().get_texture().get_image().save_png("%s/%s%s.png" % [OUT, shot_name, _suffix])
+	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [OUT, shot_name])
 
 
 func _look(target: Vector3) -> void:

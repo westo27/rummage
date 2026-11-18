@@ -49,7 +49,10 @@ void fragment() {
 
 	// One soft dark line per low-res row, made up for with a small lift so
 	// the picture isn't dimmer overall.
-	col *= 1.0 + scanlines * 0.5 - scanlines * (0.5 + 0.5 * cos(p.y * 6.2831853));
+	// Faded out as rows get under two screen pixels tall, where the lines
+	// would beat against the screen's own pixels as moiré.
+	float scan = scanlines * clamp((block - 1.5) * 2.0, 0.0, 1.0);
+	col *= 1.0 + scan * 0.5 - scan * (0.5 + 0.5 * cos(p.y * 6.2831853));
 
 	vec2 from_mid = SCREEN_UV - 0.5;
 	col *= 1.0 - vignette * dot(from_mid, from_mid) * 2.0;

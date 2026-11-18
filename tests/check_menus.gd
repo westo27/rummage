@@ -15,8 +15,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	_saved = [Game.settings.sensitivity_step, Game.settings.volume_percent, Game.settings.invert_look,
-		Game.settings.lighting, Game.settings.pixel_filter, Game.settings.pixel_strength,
-		Game.settings.soft_filter]
+		Game.settings.lighting, Game.settings.screen_filter, Game.settings.filter_size]
 
 	# The UI is sized for a large design space; if the setting is lost, Godot's
 	# 1152x648 default makes everything about twice too big.
@@ -107,46 +106,39 @@ func _run() -> void:
 	_check("Low switches TAA off and FXAA on",
 		not get_viewport().use_taa and get_viewport().screen_space_aa == Viewport.SCREEN_SPACE_AA_FXAA, "")
 
-	# --- Graphics > Pixel filter ---
-	Game.settings.pixel_filter = false
-	Game.settings.pixel_strength = 3
-	steppers[9].pressed.emit()  # the "+" of the Pixel filter row (a toggle)
+	# --- Graphics > Screen filter ---
+	Game.settings.screen_filter = false
+	Game.settings.filter_size = 2
+	steppers[9].pressed.emit()  # the "+" of the Screen filter row (a toggle)
 	await _wait(0.05)
-	_check("Pixel filter toggles on and shows",
-		Game.settings.pixel_filter and Game.pixel_filter.visible, "")
-	steppers[11].pressed.emit()  # the "+" of the Pixel size row
+	_check("Screen filter toggles on and shows",
+		Game.settings.screen_filter and Game.screen_filter.visible
+		and (settings_menu._value_labels["filter"] as Label).text == "On", "")
+	steppers[11].pressed.emit()  # the "+" of the Filter size row
 	await _wait(0.05)
-	_check("Pixel size + makes the pixels bigger (fewer rows)",
-		Game.settings.pixel_strength == 4 and Game.settings.pixel_rows() < 1080.0 / 4.0,
-		"%d" % Game.settings.pixel_strength)
-	for i in 20:
+	_check("Filter size + lowers the resolution",
+		Game.settings.filter_size == 3 and Game.settings.filter_rows() == 360.0,
+		"%d" % Game.settings.filter_size)
+	steppers[11].pressed.emit()
+	await _wait(0.05)
+	_check("Filter size stops at its maximum",
+		Game.settings.filter_size == Settings.FILTER_SIZE_MAX, "%d" % Game.settings.filter_size)
+	for i in 10:
 		steppers[10].pressed.emit()
 	await _wait(0.05)
-	_check("Pixel size stops at its minimum",
-		Game.settings.pixel_strength == Settings.PIXEL_STRENGTH_MIN, "%d" % Game.settings.pixel_strength)
-	_check("the Pixel size row shows its value",
-		(settings_menu._value_labels["pixel_strength"] as Label).text == str(Settings.PIXEL_STRENGTH_MIN), "")
-	steppers[9].pressed.emit()
-	await _wait(0.05)
-	_check("Soft draws the 3D at its own resolution",
+	_check("Filter size stops at its minimum",
+		Game.settings.filter_size == Settings.FILTER_SIZE_MIN, "%d" % Game.settings.filter_size)
+	_check("the Filter size row shows its value",
+		(settings_menu._value_labels["filter_size"] as Label).text == str(Settings.FILTER_SIZE_MIN), "")
+	_check("the filter draws the 3D at its own resolution",
 		is_equal_approx(get_tree().root.scaling_3d_scale,
 			Game.settings.render_scale(get_tree().root.size.y))
 		and is_equal_approx(Game.settings.render_scale(1080.0), 720.0 / 1080.0),
 		"%.2f" % get_tree().root.scaling_3d_scale)
-	_check("Screen filter steps on to Soft",
-		Game.settings.soft_filter and Game.pixel_filter.visible and Game.pixel_filter.is_soft()
-		and (settings_menu._value_labels["pixel"] as Label).text == "Soft",
-		"%s/%s/%s" % [Game.settings.soft_filter, Game.pixel_filter.is_soft(),
-			(settings_menu._value_labels["pixel"] as Label).text])
 	steppers[8].pressed.emit()
 	await _wait(0.05)
-	_check("Screen filter steps back to Pixel",
-		not Game.settings.soft_filter and not Game.pixel_filter.is_soft()
-		and (settings_menu._value_labels["pixel"] as Label).text == "Pixel", "")
-	steppers[8].pressed.emit()
-	await _wait(0.05)
-	_check("Pixel filter toggles off and hides",
-		not Game.settings.pixel_filter and not Game.pixel_filter.visible, "")
+	_check("Screen filter toggles off and hides",
+		not Game.settings.screen_filter and not Game.screen_filter.visible, "")
 	_check("with no filter the 3D is drawn at full resolution",
 		get_tree().root.scaling_3d_scale == 1.0, "%.2f" % get_tree().root.scaling_3d_scale)
 
@@ -189,7 +181,7 @@ func _run() -> void:
 		reloaded.sensitivity_step == Game.settings.sensitivity_step \
 		and reloaded.volume_percent == Game.settings.volume_percent \
 		and reloaded.invert_look == Game.settings.invert_look 		and reloaded.lighting == Game.settings.lighting \
-		and reloaded.pixel_strength == Game.settings.pixel_strength,
+		and reloaded.filter_size == Game.settings.filter_size,
 		"%d/%d/%s/%d" % [reloaded.sensitivity_step, reloaded.volume_percent, reloaded.invert_look, reloaded.lighting])
 
 	title.queue_free()
@@ -265,10 +257,9 @@ func _run() -> void:
 	Game.settings.volume_percent = _saved[1]
 	Game.settings.invert_look = _saved[2]
 	Game.settings.lighting = _saved[3]
-	Game.settings.pixel_filter = _saved[4]
-	Game.settings.pixel_strength = _saved[5]
-	Game.settings.soft_filter = _saved[6]
-	Game.settings.apply_pixel_filter()
+	Game.settings.screen_filter = _saved[4]
+	Game.settings.filter_size = _saved[5]
+	Game.settings.apply_screen_filter()
 	Game.settings.save()
 	Game.settings.apply_lighting()
 

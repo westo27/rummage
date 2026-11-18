@@ -1,15 +1,10 @@
 class_name LookSwitcher
 extends CanvasLayer
 ## Temporary art-direction tool: number keys switch between the looks being
-## compared. Doesn't save to the settings file; the Graphics menu takes over
-## again as soon as it's touched. Remove once a look is chosen.
-##   1 = filter off (smooth, Wii-like)
-##   2 = smooth pixels at 270p (no texel snap)
-##   3 = smooth pixels at 360p
-##   4 = rim light and gloss on/off (on top of any of the above)
+## compared. Doesn't save to the settings file. Remove once a look is chosen.
+##   4 = rim light and gloss on/off
 ##   5 = edge rounding filter on/off (edge_round.gd)
-## Starts with 4 on and 5 off, reapplied each time a scene loads. The pixel
-## filter is left to Graphics > Pixel filter / Pixel size (full res when off).
+## Starts with 4 on and 5 off, reapplied each time a scene loads.
 
 var _label: Label
 var _hide_at: float = 0.0
@@ -46,20 +41,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not key.pressed or key.echo:
 		return
 	match key.keycode:
-		KEY_1: set_look("1: filter off", false, 3)
-		KEY_2: set_look("2: smooth 270p", true, 3)
-		KEY_3: set_look("3: smooth 360p", true, 2)
 		KEY_4: set_wii_finish(not wii_finish)
 		KEY_5: set_edge_round(not edge_round)
-
-
-func set_look(title: String, filter: bool, strength: int) -> void:
-	Game.settings.pixel_filter = filter
-	Game.settings.pixel_strength = strength
-	Game.settings.apply_pixel_filter()
-	# No texel snapping on surfaces (apply_pixel_filter just turned it on).
-	RenderingServer.global_shader_parameter_set("pixel_texels", 0.0)
-	_show(title)
 
 
 ## The Wii's "toy" finish: a soft sheen round each object's edge (Godot's
@@ -82,6 +65,11 @@ func set_edge_round(on: bool) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if cam:
 		var quad: Node = cam.get_node_or_null("EdgeRound")
+		# Not built until wanted: its shader needs Forward+, so it fails in
+		# the browser.
+		if quad == null and not on:
+			_show("5: edge rounding off")
+			return
 		if quad == null:
 			quad = EdgeRound.new()
 			quad.name = "EdgeRound"

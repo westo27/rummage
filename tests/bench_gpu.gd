@@ -40,8 +40,7 @@ func _run() -> void:
 	await get_tree().create_timer(1.0).timeout
 
 	var saved: Settings.Lighting = Game.settings.lighting
-	var saved_filter: Array = [Game.settings.pixel_filter, Game.settings.soft_filter,
-		Game.settings.pixel_strength]
+	var saved_filter: Array = [Game.settings.screen_filter, Game.settings.filter_size]
 	var rows: Array = []
 	# The three Graphics > Lighting levels, as players get them.
 	for level in [Settings.Lighting.HIGH, Settings.Lighting.MEDIUM, Settings.Lighting.LOW]:
@@ -61,16 +60,14 @@ func _run() -> void:
 	rows.append(["High, no bloom", await _measure(high, {"glow": false})])
 	# Screen filters draw the 3D at their own resolution.
 	var medium := Settings.Lighting.MEDIUM
-	rows.append(["Medium, Soft filter, size 1", await _measure(medium, {"screen": [true, 1]})])
-	rows.append(["Medium, Soft filter, size 2", await _measure(medium, {"screen": [true, 2]})])
-	rows.append(["Medium, Pixel filter, size 1", await _measure(medium, {"screen": [false, 1]})])
-	rows.append(["Medium, Pixel filter, size 3", await _measure(medium, {"screen": [false, 3]})])
-	rows.append(["Low, Soft filter, size 1", await _measure(Settings.Lighting.LOW, {"screen": [true, 1]})])
+	rows.append(["Medium, screen filter, size 1", await _measure(medium, {"screen": 1})])
+	rows.append(["Medium, screen filter, size 2", await _measure(medium, {"screen": 2})])
+	rows.append(["Medium, screen filter, size 3", await _measure(medium, {"screen": 3})])
+	rows.append(["Low, screen filter, size 1", await _measure(Settings.Lighting.LOW, {"screen": 1})])
 	Game.settings.lighting = saved
-	Game.settings.pixel_filter = saved_filter[0]
-	Game.settings.soft_filter = saved_filter[1]
-	Game.settings.pixel_strength = saved_filter[2]
-	Game.settings.apply_pixel_filter()
+	Game.settings.screen_filter = saved_filter[0]
+	Game.settings.filter_size = saved_filter[1]
+	Game.settings.apply_screen_filter()
 	Game.settings.apply_lighting(_main)
 
 	print("
@@ -85,11 +82,10 @@ GPU time per frame, %dx%d, lamps swinging:" % [get_viewport().size.x, get_viewpo
 ## changes on top, and returns the average GPU time per frame (ms).
 func _measure(level: Settings.Lighting, changes: Dictionary) -> float:
 	Game.settings.lighting = level
-	Game.settings.pixel_filter = changes.has("screen")
+	Game.settings.screen_filter = changes.has("screen")
 	if changes.has("screen"):
-		Game.settings.soft_filter = changes.screen[0]
-		Game.settings.pixel_strength = changes.screen[1]
-	Game.settings.apply_pixel_filter()
+		Game.settings.filter_size = changes.screen
+	Game.settings.apply_screen_filter()
 	_env.glow_enabled = true
 	_moon.shadow_enabled = true
 	_moon.light_size = 0.4

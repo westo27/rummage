@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/shoot_filter.gd" id="1"]
+
+[node name="ShootFilter" type="Node"]
+script = ExtResource("1")

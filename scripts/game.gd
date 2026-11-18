@@ -14,8 +14,8 @@ var tune: Tunables = preload("res://config/tunables.tres")
 var settings: Settings
 ## Plays the knocks when props hit things. See scripts/impact_audio.gd.
 var impacts: ImpactAudio
-## The chunky-pixel look, switched by Graphics > Pixel filter.
-var pixel_filter: PixelFilter
+## The soft low-res look, switched by Graphics > Screen filter.
+var screen_filter: ScreenFilter
 ## main.tscn once the title has loaded it. Holding it keeps its resources
 ## (and so their compiled shaders) alive across the change to the game.
 var main_scene: PackedScene
@@ -42,9 +42,9 @@ func _ready() -> void:
 	settings.load_from_disk()
 	settings.apply_audio()
 	settings.apply_lighting()
-	pixel_filter = PixelFilter.new()
-	add_child(pixel_filter)
-	settings.apply_pixel_filter()
+	screen_filter = ScreenFilter.new()
+	add_child(screen_filter)
+	settings.apply_screen_filter()
 	get_tree().root.size_changed.connect(settings.apply_render_scale)
 	# Temporary: 1/2/3 switch looks while choosing an art direction.
 	looks = LookSwitcher.new()

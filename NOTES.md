@@ -462,36 +462,26 @@ child up past your bedtime". So it's night.
   so its shaders stay compiled for the game, and draws the beam, aura, glow
   and glass-marble shaders on hidden specks for a few frames (`WARM_SHADERS`
   in title_backdrop.gd) so they compile there too.
-- **Settings > Graphics > Pixel filter (On/Off) and Pixel size (1–8)**: the
-  chunky low-res look. `scripts/pixel_filter.gd` is a CanvasLayer at layer
-  −100 under the Game autoload; its shader (`shaders/pixel_filter.gdshader`)
-  point-samples the screen in whole-pixel blocks, so only the 3D is
-  pixelated and the HUD and menus stay crisp. Size n makes the screen
-  1080/(n+1) blocks tall. On by default as Soft at size 1 (720 rows).
-  With a filter on, the 3D renders at the filter's resolution
-  (`Viewport.scaling_3d_scale`, `Settings.render_scale`; Pixel at two drawn
-  pixels per block, or Godot's size rounding smears it). The glow levels
-  shift down one per halving (`Settings.match_glow`) so bloom keeps its size.
-  bench_gpu at 2560x1438, Medium: 2.0 ms off, 1.0 ms Pixel 1 (Soft at 540
-  rows was 0.6 ms).
-  The row is **Screen filter: Off / Pixel / Soft**. Soft
-  (`shaders/soft_filter.gdshader`, `Settings.soft_filter`) is the Wii-on-a-TV
-  look: the same low resolution blended smoothly between its pixels, a little
-  sideways colour bleed, faint scanlines and a vignette. Pixel size sets its
-  resolution, on its own scale: 1440/(n+1) rows, so 720, 480 (a Wii's), 360.
-  Its upscale has a `sharpness` uniform (0.6) so edges stay crisp. Texel
-  snapping is Pixel only. (The old Dither option, a
-  16-shade Bayer colour limit, was removed.)
-  While it's on, the wallpaper, floor, rug and pictures snap to a texel grid
-  (`Settings.PIXEL_TEXELS_PER_METRE`, 32; the wallpaper uses twice that) via
-  the `pixel_texels` shader global (Project Settings > Shader Globals) and
-  `shaders/pixel_art.gdshaderinc`.
-  The marble bag is not pixelated (you asked for it to stay smooth).
+- **Settings > Graphics > Screen filter (On/Off) and Filter size (1–3)**:
+  the Wii-on-a-TV look. `scripts/screen_filter.gd` is a CanvasLayer at layer
+  −100 under the Game autoload; its shader (`shaders/soft_filter.gdshader`)
+  blends a low resolution smoothly between its pixels, with a little
+  sideways colour bleed, faint scanlines and a vignette; only the 3D is
+  filtered, the HUD and menus stay crisp. Size n is 1440/(n+1) rows: 720,
+  480 (a Wii's), 360. On by default at size 1. A `sharpness` uniform (0.6)
+  keeps edges crisp.
+  The 3D renders at the filter's resolution (`Viewport.scaling_3d_scale`,
+  `Settings.render_scale`), and glow levels shift down one per halving
+  (`Settings.match_glow`) so bloom keeps its size. bench_gpu at 2560x1438,
+  Medium: 2.0 ms off, about 0.6 ms at 540 rows.
+  (Removed: the chunky Pixel mode with its texel-snapped wallpaper, floor,
+  rug and pictures, and the Dither colour limit.)
   The bag is shown at 0.75 size (`MarbleBag.DISPLAY_SIZE`; drawn and
   simulated in `VIEW_SIZE` coordinates via `size_2d_override`) with no
   shadow under it.
   Menus, buttons and the in-game HUD stay crisp (they're on higher layers).
-  `tests/shoot_pixel.tscn` renders it off and at a few sizes.
+  `tests/shoot_filter.tscn` renders it off and at each size. In the browser
+  (Compatibility renderer, no TAA) 3D edges get 4x MSAA instead.
 - **The window** is a hole cut in the wall with a pane of invisible
   collision in it, so nothing can be thrown out.
 - **Readability**: a darker room makes props and creatures harder to spot,

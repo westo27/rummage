@@ -22,8 +22,6 @@ func _ready() -> void:
 	var canvas := $Art as MeshInstance3D
 	var material := canvas.material_override.duplicate() as ShaderMaterial
 	material.set_shader_parameter("art", art)
-	# Keeps the pixel filter's texels about the same size on every canvas.
-	material.set_shader_parameter("texel_scale", (size.x - 2.0 * FRAME) / (BASE_SIZE.x - 2.0 * FRAME))
 	canvas.material_override = material
 
 

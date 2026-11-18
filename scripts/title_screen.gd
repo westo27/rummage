@@ -66,9 +66,11 @@ func _build() -> void:
 	settings.pressed.connect(_on_settings)
 	stack.add_child(settings)
 
-	var quit := MenuPanel.make_text("Quit")
-	quit.pressed.connect(_on_quit)
-	stack.add_child(quit)
+	# A browser tab can't be closed by the game, so the web build has no Quit.
+	if not OS.has_feature("web"):
+		var quit := MenuPanel.make_text("Quit")
+		quit.pressed.connect(_on_quit)
+		stack.add_child(quit)
 
 	_hint = UiStyle.label("WASD to move  ·  C crouch  ·  Z lie down  ·  hold left mouse to grab  ·  Q to ping  ·  Esc to pause",
 		UiStyle.HINT_FONT_SIZE, UiStyle.CREAM_SOFT, 400)

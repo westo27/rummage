@@ -8,10 +8,6 @@ extends RefCounted
 ##
 ## Held by the Game autoload as `Game.settings`, so it survives scene reloads.
 
-## Fired by apply_pixel_filter, for parts of the UI drawn in the same style
-## (the marble bag).
-signal pixel_filter_changed
-
 const PATH: String = "user://settings.cfg"
 
 ## Look sensitivity as a whole number of steps, which is what the menu shows.
@@ -34,13 +30,10 @@ const VOLUME_STEP: int = 5
 ##           (SSAO), FXAA instead of TAA: about a quarter of High's cost
 enum Lighting { LOW, MEDIUM, HIGH }
 const LIGHTING_NAMES: Array[String] = ["Low", "Medium", "High"]
-## Pixel filter strength. Step n makes the screen 1080 / (n + 1) chunky pixels
-## tall: 1 is 540 rows (subtle), 3 is 270, 8 is 120 (very chunky).
-const PIXEL_STRENGTH_MIN: int = 1
-const PIXEL_STRENGTH_MAX: int = 8
-## Graphics > Screen filter, as the menu steps through it.
-enum ScreenFilter { OFF, PIXEL, SOFT }
-const SCREEN_FILTER_NAMES: Array[String] = ["Off", "Pixel", "Soft"]
+## Graphics > Filter size. Size n draws the 3D 1440 / (n + 1) rows tall:
+## 1 is 720, 2 is 480 (a Wii's), 3 is 360.
+const FILTER_SIZE_MIN: int = 1
+const FILTER_SIZE_MAX: int = 3
 
 var sensitivity_step: int = 8
 var volume_percent: int = 80
@@ -49,14 +42,11 @@ var invert_look: bool = false
 ## Medium by default, so the game runs well on most machines out of the box
 ## (Low in a browser or on integrated graphics: see _init).
 var lighting: Lighting = Lighting.MEDIUM
-## Graphics > Screen filter: draws the 3D at a low resolution (see
-## pixel_filter.gd). On by default, as Soft at the finest size; strength is
-## how low the resolution goes.
-var pixel_filter: bool = true
-var pixel_strength: int = 1
-## Draws the filter soft (smoothly upscaled, like an old TV) instead of in
-## square pixels. Pixel size sets the resolution of both.
-var soft_filter: bool = true
+## Graphics > Screen filter: draws the 3D at a low resolution, smoothly
+## upscaled like an old TV (see screen_filter.gd). On by default at the
+## finest size; filter_size is how low the resolution goes.
+var screen_filter: bool = true
+var filter_size: int = 1
 
 var _loaded_from_disk: bool = false
 
@@ -89,10 +79,9 @@ func load_from_disk() -> void:
 	invert_look = bool(cfg.get_value("look", "invert", invert_look))
 	volume_percent = clampi(int(cfg.get_value("audio", "volume_percent", volume_percent)), 0, 100)
 	lighting = clampi(int(cfg.get_value("graphics", "lighting", lighting)), 0, 2) as Lighting
-	pixel_filter = bool(cfg.get_value("graphics", "pixel_filter", pixel_filter))
-	pixel_strength = clampi(int(cfg.get_value("graphics", "pixel_strength", pixel_strength)),
-		PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
-	soft_filter = bool(cfg.get_value("graphics", "soft_filter", soft_filter))
+	screen_filter = bool(cfg.get_value("graphics", "screen_filter", screen_filter))
+	filter_size = clampi(int(cfg.get_value("graphics", "filter_size", filter_size)),
+		FILTER_SIZE_MIN, FILTER_SIZE_MAX)
 	_loaded_from_disk = true
 
 
@@ -102,9 +91,8 @@ func save() -> void:
 	cfg.set_value("look", "invert", invert_look)
 	cfg.set_value("audio", "volume_percent", volume_percent)
 	cfg.set_value("graphics", "lighting", lighting)
-	cfg.set_value("graphics", "pixel_filter", pixel_filter)
-	cfg.set_value("graphics", "pixel_strength", pixel_strength)
-	cfg.set_value("graphics", "soft_filter", soft_filter)
+	cfg.set_value("graphics", "screen_filter", screen_filter)
+	cfg.set_value("graphics", "filter_size", filter_size)
 	cfg.save(PATH)
 
 
@@ -134,44 +122,19 @@ func adjust_lighting(by: int) -> void:
 	lighting = clampi(lighting + by, 0, 2) as Lighting
 
 
-func adjust_pixel_strength(by: int) -> void:
-	pixel_strength = clampi(pixel_strength + by, PIXEL_STRENGTH_MIN, PIXEL_STRENGTH_MAX)
+func adjust_filter_size(by: int) -> void:
+	filter_size = clampi(filter_size + by, FILTER_SIZE_MIN, FILTER_SIZE_MAX)
 
 
-func screen_filter() -> ScreenFilter:
-	if not pixel_filter:
-		return ScreenFilter.OFF
-	return ScreenFilter.SOFT if soft_filter else ScreenFilter.PIXEL
+## How many rows tall the filter draws the 3D at the current size.
+func filter_rows() -> float:
+	return 1440.0 / (filter_size + 1)
 
 
-## Steps Off -> Pixel -> Soft, wrapping round at either end.
-func step_screen_filter(by: int) -> void:
-	var mode: int = posmod(screen_filter() + by, ScreenFilter.size())
-	pixel_filter = mode != ScreenFilter.OFF
-	if pixel_filter:
-		soft_filter = mode == ScreenFilter.SOFT
-
-
-## How many low-res pixels tall the screen is at the current strength.
-## Soft steps from a finer start: 720, 480 (a Wii's), 360, ...
-func pixel_rows() -> float:
-	return (1440.0 if soft_filter else 1080.0) / (pixel_strength + 1)
-
-
-## Texels per metre on the room's surfaces (wallpaper, floor, rug, pictures)
-## while the filter is on, so their patterns read as pixel art too.
-const PIXEL_TEXELS_PER_METRE: float = 32.0
-
-
-func apply_pixel_filter() -> void:
-	Game.pixel_filter.visible = pixel_filter
-	Game.pixel_filter.set_soft(soft_filter)
-	Game.pixel_filter.set_rows(pixel_rows())
-	# Texel-snapped patterns only suit square pixels; Soft keeps them smooth.
-	RenderingServer.global_shader_parameter_set("pixel_texels",
-		PIXEL_TEXELS_PER_METRE if pixel_filter and not soft_filter else 0.0)
+func apply_screen_filter() -> void:
+	Game.screen_filter.visible = screen_filter
+	Game.screen_filter.set_rows(filter_rows())
 	apply_render_scale()
-	pixel_filter_changed.emit()
 
 
 ## With a filter on, the 3D is drawn at the filter's resolution and stretched
@@ -206,15 +169,11 @@ func match_glow(env: Environment) -> void:
 
 
 ## The 3D resolution as a fraction of the window's, for a window `height`
-## pixels tall. Pixel mode draws two pixels across each chunky block: with
-## only one, Godot's rounding of the render size lets the block's sample land
-## between two drawn pixels and the picture smears.
+## pixels tall.
 func render_scale(height: float) -> float:
-	if not pixel_filter or height <= 0.0:
+	if not screen_filter or height <= 0.0:
 		return 1.0
-	if soft_filter:
-		return clampf(pixel_rows() / height, 0.1, 1.0)
-	return minf(1.0, 2.0 / maxf(1.0, round(height / pixel_rows())))
+	return clampf(filter_rows() / height, 0.1, 1.0)
 
 
 ## Puts the lighting setting into effect. The renderer-wide parts (shadow
@@ -230,8 +189,13 @@ func apply_lighting(scene: Node = null) -> void:
 		RenderingServer.SHADOW_QUALITY_SOFT_ULTRA if high
 		else RenderingServer.SHADOW_QUALITY_SOFT_MEDIUM)
 	var viewport: Viewport = tree.root
-	viewport.use_taa = not low
-	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if low else Viewport.SCREEN_SPACE_AA_DISABLED
+	# The browser's renderer (Compatibility) has neither TAA nor FXAA, so
+	# edges would stair-step: multisampling smooths them there instead.
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+		viewport.msaa_3d = Viewport.MSAA_4X
+	else:
+		viewport.use_taa = not low
+		viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if low else Viewport.SCREEN_SPACE_AA_DISABLED
 	viewport.positional_shadow_atlas_size = 4096
 	# SSAO quality is global (all environments). High samples more, at full
 	# resolution; Medium is Godot's default (half resolution). Low turns it off below.

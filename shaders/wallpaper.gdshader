@@ -7,8 +7,6 @@
 // The pattern is laid out in metres in the world, not stretched over each
 // surface, so the dots are the same size everywhere.
 shader_type spatial;
-#include "res://shaders/pixel_art.gdshaderinc"
-
 uniform vec3 paper : source_color = vec3(0.97, 0.92, 0.82);
 uniform vec3 star_color : source_color = vec3(0.98, 0.76, 0.36);
 uniform vec3 dot_color : source_color = vec3(0.96, 0.82, 0.66);
@@ -64,8 +62,6 @@ void fragment() {
 		// z on walls facing east or west; up is height.
 		vec2 p = abs(world_normal.x) > abs(world_normal.z)
 			? vec2(world_pos.z, world_pos.y) : vec2(world_pos.x, world_pos.y);
-		// Finer than the floor, so the little stars still have a shape.
-		p = pixel_snap(p, 2.0);
 		// A grid of stars with every other row shifted by half, each one
 		// turned a little at random, and a tiny dot between them.
 		vec2 cell = p / star_spacing;
@@ -80,7 +76,8 @@ void fragment() {
 		d_dot = min(d_dot, length(fract(cell) - vec2(1.0, 0.0)) * star_spacing - dot_radius);
 		d_dot = min(d_dot, length(fract(cell) - vec2(0.0, 1.0)) * star_spacing - dot_radius);
 		d_dot = min(d_dot, length(fract(cell) - vec2(1.0, 1.0)) * star_spacing - dot_radius);
-		float aa = pixel_edge(d);
+		// About one screen pixel of blur (fwidth: how much d changes per pixel).
+		float aa = fwidth(d) + 0.0005;
 		float star_amount = 1.0 - smoothstep(-aa, aa, d);
 		float dot_amount = 1.0 - smoothstep(-aa, aa, d_dot);
 		ALBEDO = mix(mix(paper, dot_color, dot_amount), star_color, star_amount);

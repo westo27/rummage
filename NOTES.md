@@ -485,9 +485,8 @@ child up past your bedtime". So it's night.
 - **Web demo** (`scripts/web_demo.gd`): the browser build is the bedroom
   only, after the full game crashed a low-spec work laptop's browser. After
   main.tscn loads, everything outside the bedroom is freed (props,
-  creatures, three lamps and their reflection probes), the landing's lesson
-  bin and marble move onto the bedroom floor beside the player's start (no
-  tutorial hints: the Tutorial node is dropped), the
+  creatures, three lamps and their reflection probes), no big bins (the
+  lesson bin and Bin03 go; no tutorial hints: the Tutorial node is dropped), the
   box-room doorway gets a plain door and the stable door is held shut. No
   lamp or moon shadows, 256 shadow atlas. 10 marbles, one in each of the four drawers (drawer and box marbles are judged by where their prop is, since they settle a frame later). The win screen adds a
   line pointing to the full game on itch. Graphics are held on Low with the

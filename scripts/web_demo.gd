@@ -4,9 +4,8 @@ extends RefCounted
 ## so it runs on low-powered laptops. The house is cut down after loading, so
 ## main.tscn stays the one level for both.
 ##
-## The landing's lesson bin and its marble are moved into the bedroom as one
-## more hiding place beside the player's start. There are no tutorial hints
-## (the Tutorial node is dropped). The doorways out are
+## No big boxes: the landing's lesson bin (and its marble) and the bedroom's
+## bin are cut. There are no tutorial hints (the Tutorial node is dropped). The doorways out are
 ## shut: the stable door's bottom half is held closed and the box room gets a
 ## plain door.
 ## Add the user arg `demo` to try it on desktop: Godot --path . -- demo
@@ -14,19 +13,18 @@ extends RefCounted
 ## The bedroom's floor, inside its walls (the cubby in the south wall too).
 const BEDROOM_MIN := Vector2(0.05, -2.3)
 const BEDROOM_MAX := Vector2(5.15, 2.3)
-## Where the player starts and what they face, and where the lesson goes:
-## clear floor at the edge of the rug, between the desk and the bed.
+## Where the player starts and what they face: clear floor at the edge of
+## the rug, between the desk and the bed.
 const SPAWN := Vector3(0.9, 0.05, 0.3)
 const SPAWN_LOOK := Vector3(4.0, 0.3, 1.6)
-const LESSON_BIN := Vector3(2.4, 0.18, 0.95)
 ## Groups of house parts that belong to the rooms left out.
 const STRIP_HOUSE: Array[String] = ["LampPlayroom", "LampSide", "LampLanding",
 	"ReflectionsPlayroom", "ReflectionsSide", "ReflectionsLanding"]
 const STRIP_CHILDREN_OF: Array[String] = ["MainRoomProps", "MainRoomCreatures",
 	"SideRoomProps", "SideRoomCreatures", "Landing"]
-## Bedroom marbles left out, so the demo has ten: one in each drawer (four),
-## the lesson's, and five more.
-const DROP_CREATURES: Array[String] = ["UnderBed2", "UnderBed4", "UnderPillow",
+## Bedroom things left out: the big bin, and marbles, so the demo has ten
+## (one in each of the four drawers and six more).
+const DROP_BEDROOM: Array[String] = ["Bin03", "UnderBed2", "UnderBed4",
 	"UnderBin03", "InWardrobe2", "InShoeBox"]
 ## The box room's doorway (DoorBoxRoom in main.tscn): a door to fill it.
 const BOX_ROOM_DOOR := Vector3(5.2, 1.05, 0.0)
@@ -45,8 +43,6 @@ static func active() -> bool:
 ## Cuts `house` (main.tscn's root, before it counts its creatures) down to the
 ## bedroom. `player` is moved to the bedroom if given.
 static func strip(house: Node3D, player: Node3D = null) -> void:
-	var lesson_bin: Node3D = house.get_node_or_null("Landing/LessonBin")
-	var lesson_creature: Node3D = house.get_node_or_null("Landing/LessonCreature")
 	for name in STRIP_HOUSE:
 		_drop(house.get_node_or_null("House/" + name))
 	for name in STRIP_CHILDREN_OF:
@@ -54,24 +50,10 @@ static func strip(house: Node3D, player: Node3D = null) -> void:
 		if parent == null:
 			continue
 		for child in parent.get_children():
-			if child == lesson_bin or child == lesson_creature:
-				continue
-			if child.name in DROP_CREATURES and parent.name == "MainRoomCreatures":
+			if child.name in DROP_BEDROOM and parent.name.begins_with("MainRoom"):
 				_drop(child)
 			elif child is Node3D and not _in_bedroom(_where(child as Node3D)):
 				_drop(child)
-	# The lesson: the bin over its marble, now on the bedroom floor.
-	# Its lid is top_level (lidded_box.gd), so it has to be moved too, or the
-	# marble sees an open bin and leaves.
-	if lesson_bin != null and lesson_creature != null:
-		var shift: Vector3 = LESSON_BIN - lesson_bin.global_position
-		var moving: Array[Node3D] = [lesson_bin, lesson_creature]
-		var lid := lesson_bin.get("lid") as Node3D
-		if lid != null:
-			moving.append(lid)
-		for node in moving:
-			node.global_position += shift
-			node.reset_physics_interpolation()
 	_shut_doorways(house)
 	# No tutorial hints. It has already put its first one up, so that goes too.
 	_drop(house.get_node_or_null("Tutorial"))

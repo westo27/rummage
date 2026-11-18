@@ -1,6 +1,6 @@
 extends Node
 ## Check for the web demo (web_demo.gd): only the bedroom is left, the
-## lesson is beside the player, nothing casts a moving shadow, and the
+## big bins are gone, nothing casts a moving shadow, and the
 ## doorways are shut. Not part of the game. In a real window it also saves
 ## user://shots/demo_start.png.
 ## Run: Godot --headless --path . res://tests/check_demo.tscn
@@ -42,13 +42,12 @@ func _run() -> void:
 	var player := _main.get_node("Player") as Node3D
 	_check("the player starts in the bedroom", WebDemo._in_bedroom(player.global_position),
 		"%s" % player.global_position)
-	var bin := _main.get_node("Landing/LessonBin") as Node3D
-	_check("the lesson bin is near the player",
-		bin.global_position.distance_to(player.global_position) < 2.5,
-		"%.2f m" % bin.global_position.distance_to(player.global_position))
-	_check("the lesson marble is still under its bin",
-		(_main.get_node("Landing/LessonCreature") as Node3D).global_position.distance_to(
-			bin.global_position) < 0.3, "%s vs %s" % [(_main.get_node("Landing/LessonCreature") as Node3D).global_position, bin.global_position])
+	var bins: int = 0
+	for prop in get_tree().get_nodes_in_group("props"):
+		if prop.name == "Bin03" or prop.name == "LessonBin":
+			bins += 1
+	_check("no big bins", bins == 0 and _main.get_node_or_null("Landing/LessonBin") == null
+		and _main.get_node_or_null("MainRoomProps/Bin03") == null, "%d" % bins)
 
 	var lamps: Array[Node] = get_tree().get_nodes_in_group("lamps")
 	var shadowed: int = 0

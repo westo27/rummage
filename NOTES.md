@@ -443,7 +443,7 @@ child up past your bedtime". So it's night.
   | Medium (default) | 1.2 ms | lamp size 0.3, Medium filtering, TAA, SSAO Medium half res, atlas 4096 |
   | Low | 0.56 ms | no lamp size, a plain even shadow blur, no SSAO, FXAA instead of TAA, atlas 4096 |
   It applies straight away, including from the pause menu, and is saved
-  with the other settings. New players start on Medium (Low in a browser); your own saved
+  with the other settings. New players start on Medium (Low in a browser or on integrated graphics); your own saved
   settings will also start on Medium, so switch to High if you prefer it.
   `tests/shoot_lamp.tscn` renders the ceiling
   around the lamp, still and mid-swing, for checking.
@@ -454,7 +454,10 @@ child up past your bedtime". So it's night.
 - **Play → game** (`scripts/scene_fade.gd`): fades to black with "Loading…"
   in the corner, swaps the scene, fades in. In a browser it goes to black at
   once: the web build has one thread, and a first visit compiles shaders for
-  20–30 s while nothing draws.
+  20–30 s while nothing draws. The title holds main.tscn on `Game.main_scene`
+  so its shaders stay compiled for the game, and draws the beam, aura, glow
+  and glass-marble shaders on hidden specks for a few frames (`WARM_SHADERS`
+  in title_backdrop.gd) so they compile there too.
 - **Settings > Graphics > Pixel filter (On/Off) and Pixel size (1–8)**: the
   chunky low-res look. `scripts/pixel_filter.gd` is a CanvasLayer at layer
   −100 under the Game autoload; its shader (`shaders/pixel_filter.gdshader`)

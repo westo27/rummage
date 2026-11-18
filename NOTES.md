@@ -472,12 +472,15 @@ child up past your bedtime". So it's night.
   (`Viewport.scaling_3d_scale`, `Settings.render_scale`; Pixel at two drawn
   pixels per block, or Godot's size rounding smears it). The glow levels
   shift down one per halving (`Settings.match_glow`) so bloom keeps its size.
-  bench_gpu at 2560x1438, Medium: 2.0 ms off, 0.6 ms Soft 1, 1.0 ms Pixel 1.
+  bench_gpu at 2560x1438, Medium: 2.0 ms off, 1.0 ms Pixel 1 (Soft at 540
+  rows was 0.6 ms).
   The row is **Screen filter: Off / Pixel / Soft**. Soft
   (`shaders/soft_filter.gdshader`, `Settings.soft_filter`) is the Wii-on-a-TV
   look: the same low resolution blended smoothly between its pixels, a little
   sideways colour bleed, faint scanlines and a vignette. Pixel size sets its
-  resolution too; texel snapping is Pixel only. (The old Dither option, a
+  resolution, on its own scale: 1440/(n+1) rows, so 720, 480 (a Wii's), 360.
+  Its upscale has a `sharpness` uniform (0.6) so edges stay crisp. Texel
+  snapping is Pixel only. (The old Dither option, a
   16-shade Bayer colour limit, was removed.)
   While it's on, the wallpaper, floor, rug and pictures snap to a texel grid
   (`Settings.PIXEL_TEXELS_PER_METRE`, 32; the wallpaper uses twice that) via

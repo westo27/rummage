@@ -131,7 +131,8 @@ func _run() -> void:
 	_check("Soft draws the 3D at its own resolution",
 		is_equal_approx(get_tree().root.scaling_3d_scale,
 			Game.settings.render_scale(get_tree().root.size.y))
-		and Game.settings.render_scale(1080.0) == 0.5, "%.2f" % get_tree().root.scaling_3d_scale)
+		and is_equal_approx(Game.settings.render_scale(1080.0), 720.0 / 1080.0),
+		"%.2f" % get_tree().root.scaling_3d_scale)
 	_check("Screen filter steps on to Soft",
 		Game.settings.soft_filter and Game.pixel_filter.visible and Game.pixel_filter.is_soft()
 		and (settings_menu._value_labels["pixel"] as Label).text == "Soft",

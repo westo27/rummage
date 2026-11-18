@@ -151,9 +151,10 @@ func step_screen_filter(by: int) -> void:
 		soft_filter = mode == ScreenFilter.SOFT
 
 
-## How many chunky pixels tall the screen is at the current strength.
+## How many low-res pixels tall the screen is at the current strength.
+## Soft steps from a finer start: 720, 480 (a Wii's), 360, ...
 func pixel_rows() -> float:
-	return 1080.0 / (pixel_strength + 1)
+	return (1440.0 if soft_filter else 1080.0) / (pixel_strength + 1)
 
 
 ## Texels per metre on the room's surfaces (wallpaper, floor, rug, pictures)

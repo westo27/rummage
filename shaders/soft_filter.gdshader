@@ -10,9 +10,12 @@ uniform sampler2D screen_tex : hint_screen_texture, filter_linear;
 uniform float target_rows = 540.0;
 // Colour smears sideways further than brightness, as over a TV cable:
 // how far, in low-res pixels.
-uniform float bleed = 0.6;
+uniform float bleed = 0.3;
 // How much each low-res row darkens between scanlines (0 = none).
-uniform float scanlines = 0.06;
+uniform float scanlines = 0.04;
+// How crisp the upscale is: 0 blends evenly between low-res pixels (softest),
+// 1 holds each pixel's colour longer and blends only near its edges.
+uniform float sharpness = 0.6;
 // How much darker the corners are than the middle.
 uniform float vignette = 0.2;
 
@@ -21,6 +24,10 @@ uniform float vignette = 0.2;
 vec3 low_res(vec2 p, float block, vec2 px_size) {
 	vec2 i = floor(p - 0.5);
 	vec2 f = p - 0.5 - i;
+	// Narrows the blend towards the pixel's edge, so edges read crisper
+	// without showing blocks.
+	float edge = 0.5 * sharpness * 0.8;
+	f = smoothstep(vec2(edge), vec2(1.0 - edge), f);
 	vec3 a = texture(screen_tex, (i + vec2(0.5, 0.5)) * block * px_size).rgb;
 	vec3 b = texture(screen_tex, (i + vec2(1.5, 0.5)) * block * px_size).rgb;
 	vec3 c = texture(screen_tex, (i + vec2(0.5, 1.5)) * block * px_size).rgb;

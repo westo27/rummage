@@ -43,7 +43,8 @@ var sensitivity_step: int = 8
 var volume_percent: int = 80
 ## When on, moving the mouse down looks up, as in a flight sim.
 var invert_look: bool = false
-## Medium by default, so the game runs well on most machines out of the box.
+## Medium by default, so the game runs well on most machines out of the box
+## (Low in a browser: see _init).
 var lighting: Lighting = Lighting.MEDIUM
 ## Graphics > Pixel filter: the chunky low-resolution look (see pixel_filter.gd).
 ## On by default at the finest size; strength is how big the pixels are.
@@ -62,6 +63,10 @@ func _init() -> void:
 	sensitivity_step = clampi(
 		int(round(Game.tune.mouse_sensitivity / SENSITIVITY_PER_STEP)),
 		SENSITIVITY_MIN, SENSITIVITY_MAX)
+	# A browser runs the basic renderer on one thread, so it starts on Low
+	# (fewer shaders to compile on a first visit). A saved choice still wins.
+	if OS.has_feature("web"):
+		lighting = Lighting.LOW
 
 
 ## Radians of turn per pixel of mouse movement, what player.gd actually uses.
